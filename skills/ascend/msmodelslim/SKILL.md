@@ -1,70 +1,61 @@
 ---
 name: msmodelslim
-description: msmodelslim 量化工具，使用一键量化或编写脚本
-disable-model-invocation: true
-argument-hint: "模型量化 / 量化报错 / 模型结构咨询 / 源码调试"
+description: msmodelslim 量化工具调试
+argument-hint: "模型量化 / 量化报错 / 模型结构咨询"
 ---
 
-msmodelslim (MindStudio ModelSlim) 昇腾模型压缩工具。
+# 前置环境检查
 
-官方文档：https://msmodelslim.readthedocs.io/zh-cn/latest/
+在执行任何量化准备前，Agent 需要验证或提醒用户检查以下环境：
 
-## 一键量化（优先使用）
+- NPU 状态：运行 npu-smi info 确保昇腾 NPU 可用。
+- 依赖库：确保已安装 msmodelslim、torch_npu、transformers 等必要依赖。
 
-推荐先尝试[一键量化](https://msmodelslim.readthedocs.io/zh-cn/latest/zh/feature_guide/quick_quantization_v1/usage/)，命令格式：`msmodelslim quant [ARGS]`
+在开始具体的量化操作前，Agent 必须先询问或判断用户的使用场景，并基于此推荐或采用相应的量化策略：
 
-使用 `-h` 参数查看帮助，了解可用参数：
+无额外要求/默认场景：建议优先使用 一键量化 (V1)。工具内部会自动集成最合适的算法组合，极大降低使用门槛。
 
-```bash
+追求极致精度或长序列推理：使用手动编写 Python 脚本的方式，允许用户根据模型特点和需求灵活选择量化算法和参数。
+
+# 一键量化
+
+对于无额外要求或默认场景，msmodelslim 提供了高度封装的 CLI 工具。Agent 应该首先尝试使用命令行工具来处理任务，这种方式最稳妥且不易出错。
+
+Agent 可在终端中执行以下命令查看帮助，了解当前环境支持的可用参数：
+
+```
 msmodelslim quant -h
 ```
 
-或者阅读[官方文档](https://msmodelslim.readthedocs.io/zh-cn/latest/zh/feature_guide/quick_quantization_v1/usage/)确定参数后执行。
+或者直接阅读[官方文档](https://www.google.com/search?q=https://msmodelslim.readthedocs.io/zh-cn/latest/zh/feature_guide/quick_quantization_v1/usage/)确定参数。
 
-由于量化十分耗时，当确定参数之后，可以杀掉进程，然后将正确的运行参数告诉用户，让用户自行运行。
+根据实际模型路径和前一步确定的量化策略（如是否附加 --fa3 等参数），构造准确的量化命令。例如：
 
-## 编写量化脚本
-
-如果一键量化不满足需求，再自己编写脚本。
-
-### 1. 阅读官方文档
-
-### 2. 了解模型结构
-
-使用 `GIT_LFS_SKIP_SMUDGE=1` 克隆模型（只获取模型结构，不下载权重）。
-
-优先从 ModelScope 下载，如果 ModelScope 没有再从 HuggingFace 下载：
-
-```bash
-# 优先尝试 ModelScope
-GIT_LFS_SKIP_SMUDGE=1 git clone https://www.modelscope.cn/Qwen/QwQ-32B.git
-
-# 如果 ModelScope 没有，再尝试 HuggingFace
-GIT_LFS_SKIP_SMUDGE=1 git clone https://huggingface.co/Qwen/QwQ-32B
+```
+msmodelslim quant \
+    --model_path /path/to/original_model \
+    --save_path /path/to/save_quantized_model \
+    --w_bit 8 \
+    --a_bit 8 \
+    --calib_dataset "boolq" \
+    --batch_size 1 \
+    --device_type "npu"
 ```
 
-### 3. 比对模型结构
-阅读 config.json，了解：
-- 模型架构 (Qwen2, Llama, MoE 等)
-- 层数、hidden_size、num_attention_heads 等参数
-- 是否为 MoE 模型
+注意，`save_path` 放在 `/homde/model_weights` 目录下。
 
-### 4. 编写脚本
-参考 `example/` 目录下其他模型的量化脚本，找到一个与待量化模型相近的脚本学习。
+由于大模型量化过程十分耗时，Agent 在确定正确的运行参数之后，应当停止执行（如果是为了测试参数而启动了进程，请杀掉该进程）。随后，Agent 必须将构造好的正确运行参数和完整的命令行告诉用户，让用户自行在后台或终端中运行。
 
-### 5. 运行并调试
+如果测试或用户反馈执行一键量化命令时抛出异常，特别是当终端提示 No best practice found for model_type=xxx 时（这表示一键工具内部暂无该模型架构的最佳实践配置），或者用户明确需要复杂的代码级策略干预，Agent 必须立即终止当前场景，转入手动编写 Python 脚本。
 
-如果遇到问题：
-1. 阅读报错信息
-2. 使用 Grep 搜索相关代码
-3. 阅读源码理解原理
+# 手动编写 Python 脚本
 
-## 源码定位
+查阅[官方文档](https://msmodelslim.readthedocs.io/zh-cn/latest/)或者使用 `pip show msmodelslim`，了解当前版本 msmodelslim 的脚本化 API（如 QuantConfig, Calibrator 等）的用法。
 
-如果需要定位问题，通过 pip show 查看源码位置：
+可以参考 `msmodelslim/example/` 目录下的其他模型量化脚本，找到一个与待量化模型架构最相近的脚本进行学习和微调。
 
-```bash
-pip show msmodelslim
-```
+针对参考模型，使用 GIT_LFS_SKIP_SMUDGE=1 克隆模型仓库（只获取模型结构和配置文件，不下载庞大的权重），优先从 ModelScope 下载，如果没有再从 HuggingFace 下载，然后与我们待量化的模型进行比较。
 
-请描述你遇到的具体问题。
+写好脚本后运行并测试，如果报错自行阅读并修改脚本直到可以运行。
+
+如果服务可以正常拉起，因为该耗时较久，可以自行 kill，让用户自行在后台或终端中运行。
