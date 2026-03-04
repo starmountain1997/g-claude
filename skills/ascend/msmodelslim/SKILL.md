@@ -13,26 +13,15 @@ msmodelslim (MindStudio ModelSlim) 昇腾模型压缩工具。
 
 推荐先尝试[一键量化](https://msmodelslim.readthedocs.io/zh-cn/latest/zh/feature_guide/quick_quantization_v1/usage/)，命令格式：`msmodelslim quant [ARGS]`
 
-### 必选参数
-- `model_path`：模型路径
-- `save_path`：量化权重保存路径（建议输出到 `/home/model_weights` 目录下）
-- `model_type`：模型名称
+使用 `-h` 参数查看帮助，了解可用参数：
 
-### 可选参数
-- `device`：量化设备，默认 "npu"
-- `quant_type`：量化类型（w4a8, w8a8, w8a16 等）
-- `config_path`：自定义配置文件路径
-- `scenario`：场景标签
-
-### 使用示例
 ```bash
-msmodelslim quant \
-  --model_path /path/to/model \
-  --save_path /home/model_weights/qwen2.5-7b-w8a8 \
-  --device npu \
-  --model_type Qwen2.5-7B-Instruct \
-  --quant_type w8a8
+msmodelslim quant -h
 ```
+
+或者阅读[官方文档](https://msmodelslim.readthedocs.io/zh-cn/latest/zh/feature_guide/quick_quantization_v1/usage/)确定参数后执行。
+
+由于量化十分耗时，当确定参数之后，可以杀掉进程，然后将正确的运行参数告诉用户，让用户自行运行。
 
 ## 编写量化脚本
 
