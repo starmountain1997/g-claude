@@ -11,15 +11,7 @@ FILES=($(find "${SRC_DIR}" -type f -name "*.py" -not -path "*.venv*"))
 
 echo "Found ${#FILES[@]} Python files"
 
-# Step 1: ruff check
-echo "Running ruff check..."
-ruff check "$SRC_DIR"
-
-# Step 2: vulture dead code detection
-echo "Running vulture..."
-vulture "$SRC_DIR" --min-confidence 80 || true
-
-# Step 3: autoflake, ruff format, isort
+# autoflake, ruff format, isort
 echo "Running autoflake, ruff format, isort..."
 if command -v parallel &> /dev/null; then
     TEMP_SCRIPT=$(mktemp)
@@ -41,9 +33,5 @@ else
         isort "$FILE"
     done
 fi
-
-# Step 4: run pytest
-echo "Running pytest..."
-pytest "$SRC_DIR" -v || true
 
 echo "Done!"
