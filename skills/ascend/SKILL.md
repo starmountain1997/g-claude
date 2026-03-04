@@ -1,6 +1,6 @@
 ---
 name: ascend
-description: Ascend 推理工具链调试，包括 vLLM 和 msmodelslim
+description: Ascend 推理工具链调试入口，包括 vLLM 和 msmodelslim
 argument-hint: "vllm-ascend 运行问题 / msmodelslim 量化问题 / npu 使用咨询"
 ---
 
