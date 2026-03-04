@@ -5,17 +5,8 @@
 SCRIPT_DIR="$(dirname "$0")"
 SKILLS_DIR="${SCRIPT_DIR}/skills"
 
-# 注册 gen-commit-msg
-SKILL_DIR="$HOME/.claude/skills/gen-commit-msg"
-SOURCE_FILE="${SKILLS_DIR}/gen-commit-msg.md"
-mkdir -p "$SKILL_DIR"
-cp "$SOURCE_FILE" "$SKILL_DIR/SKILL.md"
-echo "已注册 skill: gen-commit-msg (/gen-commit-msg)"
+# 整体拷贝覆盖
+rm -rf "$HOME/.claude/skills"
+cp -r "$SKILLS_DIR" "$HOME/.claude/skills"
 
-# 注册 python-test-flow
-SKILL_DIR="$HOME/.claude/skills/python-test-flow"
-SOURCE_FILE="${SKILLS_DIR}/python-test-flow/python-test-flow.md"
-mkdir -p "$SKILL_DIR/scripts"
-cp "$SOURCE_FILE" "$SKILL_DIR/SKILL.md"
-cp -r "${SKILLS_DIR}/python-test-flow/scripts/"* "$SKILL_DIR/scripts/"
-echo "已注册 skill: python-test-flow (/python-test-flow)"
+echo "所有 skills 注册完成"
