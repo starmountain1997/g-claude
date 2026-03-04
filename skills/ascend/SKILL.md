@@ -14,6 +14,11 @@ Ascend 推理工具链调试入口。
 npu-smi info
 ```
 
+> **提示**：运行 NPU 脚本前，建议先使用 `npu-smi info` 查询可用 NPU。可使用 `ASCEND_RT_VISIBLE_DEVICES` 环境变量指定 NPU 设备，例如：
+> ```bash
+> ASCEND_RT_VISIBLE_DEVICES=0,1 python script.py
+> ```
+
 ## 子技能
 
 - **vllm** - vLLM/vLLM-Ascend 源码定位和运行问题排查
