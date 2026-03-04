@@ -1,10 +1,16 @@
+---
+name: gen-commit-msg
+description: Generate a commit message for staged git changes. Use when user wants to commit code.
+disable-model-invocation: true
+---
+
 Your task is to help the user to generate a commit message and commit the changes using git.
 
 ## Guidelines
 
 - DO NOT add any ads such as "Generated with [Claude Code](https://claude.ai/code)"
 - Only generate the message for staged files/changes
-- Don't add any files using `git add`. The user will decide what to add. 
+- Don't add any files using `git add`. The user will decide what to add.
 - Follow the rules below for the commit message.
 
 
