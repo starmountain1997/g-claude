@@ -1,23 +1,3 @@
----
-name: py-lint
-description: Run Python linting workflow (autoflake, ruff format, isort) on Python files
-disable-model-invocation: true
-argument-hint: [directory]
----
-
-Run Python linting workflow on the project.
-
-## Workflow
-
-1. Find all Python files in the project (excluding .venv directories)
-2. Run the following tools in order:
-   - `autoflake --in-place --remove-unused-variables --remove-all-unused-imports`
-   - `ruff format`
-   - `isort`
-
-## Script
-
-```zsh
 #!/bin/zsh
 export SRC_DIR=${1:-$ARGUMENTS}
 
@@ -31,7 +11,16 @@ FILES=($(find "${SRC_DIR}" -type f -name "*.py" -not -path "*.venv*"))
 
 echo "Found ${#FILES[@]} Python files"
 
-# Check for parallel
+# Step 1: ruff check
+echo "Running ruff check..."
+ruff check "$SRC_DIR"
+
+# Step 2: vulture dead code detection
+echo "Running vulture..."
+vulture "$SRC_DIR" --min-confidence 80 || true
+
+# Step 3: autoflake, ruff format, isort
+echo "Running autoflake, ruff format, isort..."
 if command -v parallel &> /dev/null; then
     TEMP_SCRIPT=$(mktemp)
     cat > "$TEMP_SCRIPT" << 'EOF'
@@ -53,10 +42,8 @@ else
     done
 fi
 
+# Step 4: run pytest
+echo "Running pytest..."
+pytest "$SRC_DIR" -v || true
+
 echo "Done!"
-```
-
-## Requirements
-
-- autoflake, ruff, isort must be installed
-- If any tool is missing, report error
