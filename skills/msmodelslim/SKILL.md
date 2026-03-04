@@ -58,4 +58,6 @@ msmodelslim quant \
 
 写好脚本后运行并测试，如果报错自行阅读并修改脚本直到可以运行。
 
+注意，如果显存不够优先考虑多卡运行或者查阅[官方文档](https://msmodelslim.readthedocs.io/zh-cn/di xian cun方案，不要考虑用CPU量化。
+
 如果服务可以正常拉起，因为该耗时较久，可以自行 kill，让用户自行在后台或终端中运行。
