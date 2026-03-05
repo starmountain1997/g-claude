@@ -12,7 +12,7 @@ Verify hardware and software dependencies before proceeding.
 
 * **NPU Status**: Execute `!npu-smi info`. Ensure Ascend NPU is available. Abort and notify user if missing.
 * **Dependencies**: Execute `!pip show msmodelslim torch_npu transformers` to confirm installations.
-* **Source Installation Resolution**: Execute `pip show msmodelslim` and extract the `Location` path. 
+* **Source Installation Resolution**: Execute `pip show msmodelslim` and extract the `Editable project location` path. 
   * **Mandatory**: Store this path in your context. You must refer to the source code or documentation within this directory (e.g., `<LOCATION>/msmodelslim/docs` or `<LOCATION>/msmodelslim/example`) for all subsequent API lookups or parameter validation.
 
 Assess the user's scenario to select the appropriate quantization strategy.

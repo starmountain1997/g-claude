@@ -15,7 +15,7 @@ vLLM 和 vLLM-Ascend 都是通过 `pip install -e .` 源码安装的。
 ```bash
 pip show vllm-ascend
 ```
-查看 `Location` 字段，即为源码所在目录。
+查看 `Editable project location` 字段，即为源码所在目录。
 
 2. 进入该目录，使用 Grep/Read 阅读源码定位问题。
 
