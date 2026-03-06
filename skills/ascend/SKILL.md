@@ -1,26 +1,31 @@
 ---
 name: ascend
-description: Ascend 推理工具链调试入口，包括 vLLM 和 msmodelslim
-argument-hint: "vllm-ascend 运行问题 / msmodelslim 量化问题 / npu 使用咨询"
+description: Ascend inference toolchain debugging entry, covering vLLM and msmodelslim
+argument-hint: "vllm-ascend runtime issue / msmodelslim quantization issue / npu usage"
 ---
 
-Ascend 推理工具链调试入口。
+Ascend inference toolchain debugging entry.
 
-## 常用命令
+## Common Commands
 
-查看 NPU 使用情况：
+Check NPU usage:
 ```bash
 npu-smi info
 ```
 
-> **提示**：运行 NPU 脚本前，建议先使用 `npu-smi info` 查询可用 NPU。可使用 `ASCEND_RT_VISIBLE_DEVICES` 环境变量指定 NPU 设备，例如：
+> **Tip**: Before running NPU scripts, use `npu-smi info` to check available NPU. Use `ASCEND_RT_VISIBLE_DEVICES` environment variable to specify NPU devices:
 > ```bash
 > ASCEND_RT_VISIBLE_DEVICES=0,1 python script.py
 > ```
 
-## 子技能
+## Source Code Location
 
-- **vllm** - vLLM/vLLM-Ascend 源码定位和运行问题排查
-- **msmodelslim** - msmodelslim 量化工具调试
+1. Run `pip show <package>` to get `Editable project location` - this is the source directory
+2. Check `docs/` in the source directory for documentation
 
-请选择或描述你遇到的具体问题。
+## Sub-Skills
+
+- **vllm** - vLLM/vLLM-Ascend source debugging and runtime issue troubleshooting
+- **msmodelslim** - msmodelslim quantization tool debugging
+
+Please describe the specific issue you are facing.
