@@ -11,12 +11,5 @@ argument-hint: "run / inference / serve / offline / online"
 ## Debug Steps
 
 1. Use offline inference (single-operator mode): `--enforce-eager`
-2. After offline inference works, try graph mode:
-   - ACL Graph: enabled by default in V1 Engine, just don't set `--enforce-eager`
-   - For parameter configuration, refer to `vllm-ascend/docs/source/user_guide/configuration/additional_config.md`
-
-## Online Inference (provide only after confirming offline inference works)
-
-```bash
-vllm serve /path/to/model --enforce-eager
-```
+1. After single operator mode work, try graph mode
+1. if offline inference work, provide a online inference command for user.
