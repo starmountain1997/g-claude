@@ -12,9 +12,10 @@ Run Python test flow on the project.
 
 1. Find all Python files (excluding .venv)
 2. Run `ruff check` to lint
-3. Run `vulture` to detect dead code
-4. Run autoflake, ruff format, isort (via `scripts/python-formatter.sh`)
-5. Run pytest to execute tests
+3. Run `basedpyright` for type checking
+4. Run `vulture` to detect dead code
+5. Run autoflake, ruff format, isort (via `scripts/python-formatter.sh`)
+6. Run pytest to execute tests
 
 ## Usage
 
@@ -30,4 +31,4 @@ zsh ~/.claude/skills/python-test-flow/scripts/python-formatter.sh $ARGUMENTS
 
 ## Requirements
 
-- ruff, vulture, autoflake, isort, pytest must be installed
+- ruff, basedpyright, vulture, autoflake, isort, pytest must be installed
