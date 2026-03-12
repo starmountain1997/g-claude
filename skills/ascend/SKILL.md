@@ -9,7 +9,8 @@ argument-hint: "vllm issue / quantization / npu usage"
 This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usage.
 
 ## Current NPU Status
-!`npu-smi info`
+
+run `npu-smi info`
 
 ## Task Specifics
 
