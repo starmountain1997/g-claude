@@ -1,34 +1,24 @@
 ---
 name: python-test-flow
-description: Run Python test flow: ruff check, vulture, autoflake+format+isort, then pytest
+description: Run Python test flow: ruff check, basedpyright, vulture, autoflake+format+isort, then pytest
 disable-model-invocation: true
-argument-hint: [directory]
-allowed-tools: Bash(zsh *)
 ---
 
-Run Python test flow on the project.
+# Python Test Flow
+
+Execute a full quality check on Python code. If no directory is provided via $ARGUMENTS, use the current directory.
 
 ## Workflow
 
-1. Find all Python files (excluding .venv)
-2. Run `ruff check` to lint
-3. Run `basedpyright` for type checking
-4. Run `vulture` to detect dead code
-5. Run autoflake, ruff format, isort (via `scripts/python-formatter.sh`)
-6. Run pytest to execute tests
+1. **Linting**: Run `ruff check` on the target directory.
+2. **Type Checking**: Run `basedpyright` on the target directory.
+3. **Dead Code**: Run `vulture` to detect dead code.
+4. **Formatting**: Execute the bundled formatter script:
+   ```bash
+   zsh ${CLAUDE_SKILL_DIR}/scripts/python-formatter.sh $ARGUMENTS
+   ```
+5. **Testing**: Run `pytest` on the target directory.
 
-## Usage
+## Supporting Resources
 
-Run the script from the project root:
-
-```zsh
-zsh ~/.claude/skills/python-test-flow/scripts/python-formatter.sh $ARGUMENTS
-```
-
-## Supporting Scripts
-
-- `scripts/python-formatter.sh` - 执行 autoflake, ruff format, isort
-
-## Requirements
-
-- ruff, basedpyright, vulture, autoflake, isort, pytest must be installed
+- For details on tools used, see [reference.md](reference.md)

@@ -1,48 +1,40 @@
-# Commit-As-Prompt 示例
+# Commit-As-Prompt Examples
 
-## 示例 1：OAuth2 登录支持
-
-```bash
-git commit -m "prompt(auth): 支持 OAuth2 登录" -m "WHAT: 重构认证中间件以支持 OAuth2 登录
-WHY: 符合新的安全策略，允许第三方登录，对应需求 #2345
-HOW: 引入 OAuth2 授权码流程替换 BasicAuth；向下兼容旧 Token；通过单元测试验证；需更新客户端配置"
-```
-
-## 示例 2：移除废弃接口
+## Example 1: OAuth2 Support (Prompt Context)
 
 ```bash
-git commit -m "prompt(api): 移除废弃接口" -m "WHAT: 移除废弃 API 端点
-WHY: 为 v2.0 版本做清理，减少维护成本
-HOW: 下线 v1 Legacy 端点并更新 API 文档；版本标识提升至 v2；通知客户端迁移"
+git commit -m "prompt(auth): add OAuth2 login support" -m "WHAT: refactor auth middleware to support OAuth2.
+WHY: required for new security policy #2345.
+HOW: introduced authorization code flow to replace BasicAuth; maintains legacy token compatibility."
 ```
 
-## 示例 3：常规功能提交
+## Example 2: Cleanup (Prompt Context)
 
 ```bash
-git commit -m "feat(ui): 添加深色模式切换" -m "WHAT: 在设置页面添加深色/浅色模式切换开关
-WHY: 用户反馈在暗光环境下使用体验不佳，需求 #1234
-HOW: 使用 CSS 变量实现主题切换；localStorage 持久化用户偏好；添加 smooth 过渡效果"
+git commit -m "prompt(api): remove deprecated endpoints" -m "WHAT: prune legacy v1 API endpoints.
+WHY: reduce maintenance surface for v2 release.
+HOW: dropped v1 handlers and updated docs; bumped version identifier."
 ```
 
-## 示例 4：修复提交
+## Example 3: Standard Feature
 
 ```bash
-git commit -m "fix(auth): 修复 Token 过期后刷新失败" -m "WHAT: 修复 Refresh Token 刷新时返回 401 的问题
-WHY: 生产环境出现用户频繁掉线，影响留存率，issue #567
-HOW: 检查 Token 有效期判断逻辑；修复并发刷新时的竞态条件；添加重试机制"
+git commit -m "feat(ui): add dark mode toggle" -m "WHAT: settings page UI for theme switching.
+WHY: user feedback for low-light accessibility #1234.
+HOW: used CSS variables and localStorage for persistence."
 ```
 
-## 聚合 Prompt 输出
+## AI Context Aggregation (Reference)
 
-多个 `prompt:` 提交聚合后生成：
+When multiple `prompt:` commits are aggregated, they form a clear timeline for AI tools:
 
 ```text
 <Context>
-1. [WHAT] 重构认证中间件以支持 OAuth2 登录
-   [WHY] 符合新的安全策略，允许第三方登录，对应需求 #2345
-   [HOW] 引入 OAuth2 授权码流程替换 BasicAuth；向下兼容旧 Token；通过单元测试验证；需更新客户端配置
-2. [WHAT] 移除废弃 API 端点
-   [WHY] 为 v2.0 版本做清理，减少维护成本
-   [HOW] 下线 v1 Legacy 端点并更新 API 文档；版本标识提升至 v2；通知客户端迁移
+1. [WHAT] refactor auth middleware for OAuth2.
+   [WHY] align with security policy #2345.
+   [HOW] new auth code flow, backwards compatible.
+2. [WHAT] prune legacy v1 API endpoints.
+   [WHY] prepare for v2 release.
+   [HOW] updated documentation and removed handlers.
 </Context>
 ```

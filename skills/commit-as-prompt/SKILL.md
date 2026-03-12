@@ -1,101 +1,38 @@
 ---
 name: commit-as-prompt
-description: 创建符合 WHAT/WHY/HOW 规范的 Git 提交，用于生成 AI 可理解的上下文 Prompt。用于创建结构化提交、整理变更、或将提交历史转化为 AI 上下文。
+description: Create structured Git commits (WHAT/WHY/HOW) optimized for AI context. Use for clean, meaningful history that can be turned into prompts.
 disable-model-invocation: true
-argument-hint: "[commit]"
 ---
 
 # Commit-As-Prompt
 
-此命令帮助您创建格式良好的提交，提交内容可转化为供 AI 参考的问题上下文。
+This skill guides you through creating a high-quality Git commit structured for both humans and AI.
 
-## 快速使用
+## Current Workspace State
 
-```
-/commit-as-prompt
-```
+### Status Summary
+!`git status -s`
 
-或带提交信息：
-```
-/commit-as-prompt 修复登录超时问题
-```
+### Changed Files Impact
+!`git diff --stat`
 
-## 执行步骤
+## Task Instructions
 
-1. **检查工作区变更**
-   ```
-   git status -s
-   git diff
-   git diff --cached
-   ```
+1. **Review Changes**: Analyze the diffs to ensure only relevant changes are included. Remove any temporary logs, debuggers, or "dead" code.
+2. **Stage Files**: If files aren't staged, interact with the user or use `git add` to prepare the commit.
+3. **Draft the Commit Message**: Use the provided summary "$ARGUMENTS" as the starting point.
+4. **Follow WHAT/WHY/HOW**:
+   - **WHAT**: One-sentence imperative description of the change.
+   - **WHY**: Business context, user needs, or bug background.
+   - **HOW**: Technical strategy, compatibility, and verification steps.
+5. **Commit Types**:
+   - `prompt(scope):` for commits intended as AI context.
+   - Standard `feat:`, `fix:`, etc. for regular work.
 
-2. **理解并清理代码**
-   - 删除无用导入、死代码
-   - 移除临时日志 (`console.log`, `debugger` 等)
-   - 重命名临时标识 (`V2`, `TEMP`, `TEST` 等)
-   - 删除临时测试或脚手架
+## References
 
-3. **选择应纳入本次提交的文件**
-   ```
-   git add -p                 # 按块暂存
-   git add <file> ...         # 按文件暂存
-   ```
+- For detailed staging principles, see [reference.md](reference.md)
+- For message examples, see [examples.md](examples.md)
 
-4. **编写提交信息**
-   提交类型：
-   - **Context Prompt 提交**：`prompt:` 开头，如 `prompt(auth): 支持 OAuth2 登录`
-   - **常规提交**：`feat:`, `fix:`, `docs:` 等
-
-   提交正文格式（WHAT/WHY/HOW）：
-   ```
-   WHAT: ...
-   WHY: ...
-   HOW: ...
-   ```
-
-5. **执行提交**
-   ```
-   git commit -m “prompt(auth): 支持 OAuth2 登录” -m “WHAT: ...
-   WHY: ...
-   HOW: ...”
-   git push
-   ```
-
-## WHAT / WHY / HOW 编写要点
-
-| 字段 | 说明 | 示例 |
-|------|------|------|
-| **WHAT** | 一句话描述动作与对象，使用祈使动词 | `重构认证中间件以支持 OAuth2 登录` |
-| **WHY** | 阐述业务需求、用户需求或缺陷背景 | `符合新的安全策略，允许第三方登录，对应需求 #2345` |
-| **HOW** | 整体策略、兼容性、验证方式、风险提示 | `引入 OAuth2 授权码流程替换 BasicAuth；向下兼容旧 Token` |
-
-## 聚合多个提交
-
-多个 `prompt:` 类型提交可聚合为 AI 上下文：
-
-```
-git commit -m “prompt(auth): 支持 OAuth2 登录” -m “WHAT: ...
-WHY: ...
-HOW: ...”
-
-git commit -m “prompt(api): 移除废弃接口” -m “WHAT: ...
-WHY: ...
-HOW: ...”
-```
-
-聚合结果模板：
-```
-<Context>
-1. [WHAT] ...
-   [WHY] ...
-   [HOW] ...
-2. [WHAT] ...
-   [WHY] ...
-   [HOW] ...
-</Context>
-```
-
-## 详细规范
-
-- 详细文件挑选原则见 [reference.md](reference.md)
-- 提交信息最佳实践见 [examples.md](examples.md)
+---
+**Input summary:** $ARGUMENTS
