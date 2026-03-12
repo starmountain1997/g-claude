@@ -2,7 +2,6 @@
 name: ascend
 description: Entry point for Ascend inference toolchain, including vLLM-Ascend, msmodelslim quantization, and NPU debugging.
 argument-hint: "vllm issue / quantization / npu usage"
-allowed-tools: Bash(npu-smi *), Read, Glob, Grep
 ---
 
 # Ascend Inference Toolchain
@@ -16,7 +15,7 @@ This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usag
 
 For detailed instructions on specific tools, refer to:
 
-- **vLLM-Ascend**: See [vllm.md](vllm.md) for installation and running (online/offline).
+- **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
 - **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for the quantization protocol and sensitive layer analysis.
 
 ## Core Tips
