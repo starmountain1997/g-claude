@@ -42,20 +42,12 @@ Guide for running and debugging vLLM on Ascend NPUs. This guide is modular; jump
     Once eager mode passes, remove `--enforce-eager` to enable graph mode for better performance.
   </Step>
 
-  <Step title="Determine Parallelism">
-    Read the `vllm-ascend` source code to determine the supported `tensor-parallel` (`--tp`) and `pipeline-parallel` (`--pp`) parameters for the target model architecture.
-  </Step>
-
   <Step title="Graph Mode Selection">
-    Read the source code to determine optimal graph mode parameters (e.g., `--block-size`, `--max-model-len`).
-  </Step>
-
-  <Step title="Memory Management">
-    Adjust `--gpu-memory-utilization` based on NPU memory reported by `npu-smi`.
+    Read the source code to determine optimal graph mode parameters.
   </Step>
 
   <Step title="Further Tuning">
-    Refer to the official docs for additional performance flags.
+    Refer to the [official docs](https://vllm-ascend.readthedocs.io/) for additional performance flags.
   </Step>
 </Steps>
 
@@ -68,6 +60,6 @@ Guide for running and debugging vLLM on Ascend NPUs. This guide is modular; jump
   </Step>
 
   <Step title="Final Deployment">
-    Ask the user for their preferred `model-served-name` and `port` before providing the final command. Add `--quantization ascend` if the model is quantized.
+    Ask the user for their preferred `model-served-name` and `port` before providing the final command. 
   </Step>
 </Steps>
