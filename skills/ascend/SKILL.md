@@ -1,31 +1,25 @@
 ---
 name: ascend
-description: Ascend inference toolchain debugging entry, covering vLLM and msmodelslim
-argument-hint: "vllm-ascend runtime issue / msmodelslim quantization issue / npu usage"
+description: Entry point for Ascend inference toolchain, including vLLM-Ascend, msmodelslim quantization, and NPU debugging.
+argument-hint: "vllm issue / quantization / npu usage"
+allowed-tools: Bash(npu-smi *), Read, Glob, Grep
 ---
 
-Ascend inference toolchain debugging entry.
+# Ascend Inference Toolchain
 
-## Common Commands
+This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usage.
 
-Check NPU usage:
-```bash
-npu-smi info
-```
+## Current NPU Status
+!`npu-smi info`
 
-> **Tip**: Before running NPU scripts, use `npu-smi info` to check available NPU. Use `ASCEND_RT_VISIBLE_DEVICES` environment variable to specify NPU devices:
-> ```bash
-> ASCEND_RT_VISIBLE_DEVICES=0,1 python script.py
-> ```
+## Task Specifics
 
-## Source Code Location
+For detailed instructions on specific tools, refer to:
 
-1. Run `pip show <package>` to get `Editable project location` - this is the source directory
-2. Check `docs/` in the source directory for documentation
+- **vLLM-Ascend**: See [vllm.md](vllm.md) for installation and running (online/offline).
+- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for the quantization protocol and sensitive layer analysis.
 
-## Sub-Skills
+## Core Tips
 
-- **vllm** - vLLM/vLLM-Ascend source debugging and runtime issue troubleshooting
-- **msmodelslim** - msmodelslim quantization tool debugging
-
-Please describe the specific issue you are facing.
+- **Visible Devices**: Use `ASCEND_RT_VISIBLE_DEVICES=0,1` to isolate NPUs.
+- **Source Debugging**: Use `pip show <package>` to find the editable source location for deep debugging.
