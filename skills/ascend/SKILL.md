@@ -17,7 +17,7 @@ run `npu-smi info`
 For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
-- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols and [msmodelslim-tune.md](msmodelslim-tune.md) for auto precision tuning.
+- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols and [msmodelslim-tune/msmodelslim-tune.md](msmodelslim-tune/msmodelslim-tune.md) for auto precision tuning.
 
 ## Core Tips
 
