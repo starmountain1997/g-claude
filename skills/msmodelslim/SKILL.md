@@ -17,7 +17,8 @@ Verify hardware and software dependencies before proceeding.
 Assess the user's scenario to select the appropriate quantization strategy.
 
 * **One-Click**: Default for standard models without extra requirements.
-* **Python Script**: Required for unsupported models, extreme precision constraints, long-sequence inference, fine-grained sensitive layer exclusion, or when One-Click throws "No best practice found".
+* **Yaml Config**: Required for unsupported models, extreme precision constraints, long-sequence inference, fine-grained sensitive layer exclusion, or when One-Click throws "No best practice found".
+* **Python Script**:
 
 # One-Click Quantization
 
@@ -39,7 +40,7 @@ Append `--fa3` or other specific flags if dictated by local source/doc analysis.
 1. If execution successfully begins: Quantization is highly time-consuming. Kill the process immediately once initialization is confirmed.
 1. Output the exact, validated command to the user and instruct them to run it in their own terminal.
 
-# Custom Python Script (Advanced/Fallback)
+# Yaml Config
 
 ## Reference Model Analysis
 
