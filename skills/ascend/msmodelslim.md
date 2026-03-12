@@ -10,11 +10,17 @@ Verify hardware and software dependencies:
 ## Quantization Strategy Selection
 
 ### 1. One-Click Quantization
+- **Best Practice Library**: Refer to `msmodelslim/lab_practice` for established quantization configurations.
+- **YAML Driven**: One-click quantization is essentially calling pre-configured YAML files. Users can also provide their own custom YAML based on specific requirements.
 - **Discovery**: `msmodelslim quant -h`.
 - **Save Directory**: Default to `/home/model_weights`.
 - **Lifecycle**: Once initialization is confirmed, output the exact command and instruct the user to run it in their terminal. Kill any background process immediately once the main loop starts.
 
-### 2. Custom Python Script
+### 2. Traditional Quantization (Low-level)
+- **Direct Control**: This is the most fundamental method, providing granular control over the quantization process.
+- **Examples**: Refer to the `example` directory in the `msmodelslim` source for implementation details.
+
+### 3. Custom Python Script
 Fallback if "No best practice found" or specific requirements occur.
 
 - **Act Method**: Default to `3` (Auto-mixed).
