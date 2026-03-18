@@ -13,8 +13,7 @@ This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usag
 For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
-- **msmodelslim**:
-  - [msmodelslim.md](msmodelslim.md) for the **Execution Protocol**.
+- **msmodelslim** (quantization): See [msmodelslim.md](msmodelslim.md) for **Execution Protocol** (model quantization, accuracy tuning).
 
 ## Core Tips
 
