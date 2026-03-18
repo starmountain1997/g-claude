@@ -1,89 +1,60 @@
-# msmodelslim Quantization Protocol (Execution)
+# msmodelslim Quantization Protocol
 
-Strict sequential protocol for executing model quantization or debugging on Ascend NPUs.
+Choose one of the two paths below to perform model quantization on Ascend NPUs.
 
-## 1. Pre-execution Validation
+## 1. Preparation
 
-Before starting any quantization task, verify the environment and hardware.
+Verify hardware availability before starting:
 
-### Environment Check
-
-Verify mandatory dependencies:
-
-- `!pip show msmodelslim torch_npu transformers`
-
-### Hardware Status
-
-Ensure NPUs are available:
-
-- `!npu-smi info`
+- `npu-smi info`
+- `pip show msmodelslim torch_npu transformers`
 
 ______________________________________________________________________
 
-## 2. Quantization Strategy Selection
+## 2. Execution Paths
 
-Follow this hierarchy to select the most efficient path:
-
-### Strategy A: One-Click Quantization (Recommended)
+### Path A: One-Click (Automatic)
 
 **Best for**: Established models with existing best-practice configurations.
 
-- **Library**: `msmodelslim/lab_practice` (inside the source code).
+- **Action**: Run `msmodelslim quant` using library defaults.
 - **Workflow**:
   1. Discovery: `msmodelslim quant -h`
-  1. Execution: `msmodelslim quant` with a specific YAML config.
-- **Note**: If a custom YAML is provided, prioritize it.
+  1. Execution: Use a pre-configured YAML from `msmodelslim/lab_practice`.
+- **Default Save**: `/home/model_weights`.
+- **Fallback**: If Path A fails (e.g., accuracy loss or configuration mismatch), proceed to Path B for manual tuning.
 
-### Strategy B: Sensitive Layer Analysis (Accuracy Priority)
+### Path B: Custom YAML (User-Defined)
 
-**Best for**: Models with accuracy drops or requiring custom precision.
+**Best for**: Manual control or specific tuning requirements.
 
-- **Analysis Command**:
-  ```bash
-  msmodelslim analyze --model_type <TYPE> --model_path <PATH> --metrics kurtosis --topk 15 --device npu
-  ```
-- **Action**: Use results to populate the `disable_names` list in your quantization configuration.
-- **Defaults**: `Act Method: 3`, `Anti Method: m2`.
-
-### Strategy C: Traditional Low-Level Quantization
-
-**Best for**: Deep debugging or research.
-
-- **Implementation**: Refer to the `example` directory in `msmodelslim` source.
+- **Reference**: Use existing YAML files in `msmodelslim/lab_practice` as a baseline for your custom configuration.
+- **Action**: Run `msmodelslim quant --config <YOUR_YAML_PATH>`
+- **Configuration Tips**:
+  - **Quantization Method** (Scale Calculation):
+    - `minmax`: Fast, uses global range. Best for **Weights**.
+    - `ssz`: Optimized error search (ModelSlim specialty). Best for **Activation** (accuracy).
+    - `kl`: Information entropy calibration. High accuracy, slow.
+  - **Granularity (Weights)**:
+    ...
+  - **Granularity (Activation)**:
+    - Use `per_token` (dynamic) to prioritize **accuracy**.
+    - Use `per_tensor` (static) to prioritize **performance**.
+  - **Symmetry**: Use `symmetric=True` for most scenarios (especially W8A8 and W4A8) to balance performance and accuracy.
+  - **Act Method**: Set to `3` (Auto-mixed) for balanced performance.
+  - **Anti Method**: Set to `m2` (Enhanced SmoothQuant) to mitigate outliers.
+  - **MoE Optimization** (DeepSeek/Qwen):
+    - **Attention Module**: Use **W8A8** (`per_channel` weights, `per_token` activation) to preserve logic coherence.
+    - **Expert Module**: Use **W4A8** (`per_group` weights, `per_token` activation) to save 80%+ memory and fit larger models on fewer NPUs.
+    - **Performance**: Keep activation at **8-bit** (A8) to leverage native INT8 hardware acceleration.
+  - **Summary**: Use `minmax` for weights; use `ssz` for activation to obtain better inference precision.
+  - **Sensitive Layers**: If accuracy drops, run `msmodelslim analyze` to identify layers to add to your `disable_names` list.
 
 ______________________________________________________________________
 
 ## 3. Hardware & Resource Management
 
-- **NPU Mandatory**: msmodelslim **must** run on Ascend NPUs.
-- **OOM Prevention (7B+ Models)**:
-  1. **Layer-wise**: Enabled by default in One-Click.
-  1. **CPU Offload**: Set `--device cpu` (One-Click) only if NPU memory is strictly insufficient.
-- **Multi-NPU**: Distribute across multiple NPUs:
-  ```bash
-  export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
-  ```
-
-______________________________________________________________________
-
-## 4. Troubleshooting & Output
-
-### Expected Output Structure
-
-```
-├── quant_model_description.json         # Metadata
-├── quant_model_weight_w8a8.safetensors  # Quantized weights
-└── ... (original model files copied)
-```
-
-### Common Checks
-
-- **Weights**: Verify `--model_path` contains Safetensors/Bin.
-- **Version**: `msmodelslim` version must match the installed `CANN`.
-- **Permissions**: Check write access for `--save_path`.
-
-______________________________________________________________________
-
-## Additional Reference
-
-For detailed configuration guides, naming rules, and expert MoE strategies, see [msmodelslim_ref.md](msmodelslim_ref.md).
+- **NPU Mandatory**: All quantization tasks **must** run on Ascend NPUs.
+- **Multi-NPU**: If OOM occurs, set `export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3`.
+- **Weights Path**: Verify `--model_path` contains the correct weights format (Safetensors/Bin).
+- **Permissions**: Ensure write access to the `--save_path`.
