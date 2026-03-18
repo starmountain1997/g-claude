@@ -9,15 +9,17 @@ argument-hint: "vllm issue / quantization / npu usage"
 This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usage.
 
 ## Current NPU Status
-
-run `npu-smi info`
+!`npu-smi info`
 
 ## Task Specifics
 
 For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
-- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols and [msmodelslim-tune/msmodelslim-tune.md](msmodelslim-tune/msmodelslim-tune.md) for auto precision tuning.
+- **msmodelslim**: 
+    - [msmodelslim.md](msmodelslim.md) for the **Execution Protocol**.
+    - [msmodelslim_ref.md](msmodelslim_ref.md) for **Technical Reference** (Naming, Config, MoE strategies).
+    - [msmodelslim-tune/msmodelslim-tune.md](msmodelslim-tune/msmodelslim-tune.md) for auto precision tuning.
 
 ## Core Tips
 
