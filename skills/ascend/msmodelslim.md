@@ -36,7 +36,8 @@ ______________________________________________________________________
     - `ssz`: Optimized error search (ModelSlim specialty). Best for **Activation** (accuracy).
     - `kl`: Information entropy calibration. High accuracy, slow.
   - **Granularity (Weights)**:
-    ...
+    - Use `per_channel` by default for better precision.
+    - **Must** use `per_group` if target is 4-bit.
   - **Granularity (Activation)**:
     - Use `per_token` (dynamic) to prioritize **accuracy**.
     - Use `per_tensor` (static) to prioritize **performance**.
@@ -54,6 +55,7 @@ ______________________________________________________________________
 
 ## 3. Hardware & Resource Management
 
+- **Long-running Tasks**: If a quantization command is expected to take significant time, save it as a local `.sh` script and prompt the user to run it manually (e.g., via `nohup` or `screen`).
 - **NPU Mandatory**: All quantization tasks **must** run on Ascend NPUs.
 - **Multi-NPU**: If OOM occurs, set `export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3`.
 - **Weights Path**: Verify `--model_path` contains the correct weights format (Safetensors/Bin).
