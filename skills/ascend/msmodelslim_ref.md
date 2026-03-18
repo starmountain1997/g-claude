@@ -7,6 +7,7 @@ Technical details and configuration guides for msmodelslim quantization.
 Source: [msmodelslim Source](https://gitcode.com/Ascend/msmodelslim) & [Quick Start Doc](https://msmodelslim.readthedocs.io/zh-cn/latest/zh/getting_started/quantization_quick_start/)
 
 ### Naming Rule
+
 | Character | Meaning |
 |-----------|---------|
 | **w** | weight |
@@ -16,6 +17,7 @@ Source: [msmodelslim Source](https://gitcode.com/Ascend/msmodelslim) & [Quick St
 | **dynamic** | dynamic quantization |
 
 ### Supported Combinations
+
 | Type | Meaning |
 |----------|------|
 | w4a8 | Weight 4-bit + Activation 8-bit |
@@ -28,11 +30,12 @@ Source: [msmodelslim Source](https://gitcode.com/Ascend/msmodelslim) & [Quick St
 
 *Dynamic variants: `w4a8_dynamic`, `w8a8_dynamic`.*
 
----
+______________________________________________________________________
 
 ## 2. Configuration Guide (Deep Dive)
 
 ### Granularity (Scope)
+
 `scope` defines the sharing range of the Scale factor.
 
 | Scope | Target | Description | Precision | Typical Scenario |
@@ -43,6 +46,7 @@ Source: [msmodelslim Source](https://gitcode.com/Ascend/msmodelslim) & [Quick St
 | **per_group** | Weight | Independent Scale per N parameters | Highest | Requirement for 4-bit weight |
 
 ### Calibration Method
+
 `method` determines how to calculate the Scale based on float distribution.
 
 | Method | Description | Precision | Speed | Note |
@@ -52,16 +56,18 @@ Source: [msmodelslim Source](https://gitcode.com/Ascend/msmodelslim) & [Quick St
 | **kl** | KL divergence based | High | Slow | Classic truncation algorithm |
 
 ### Symmetry
+
 | Mode | Config | Zero Point | Precision | Speed | Scenario |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | **Symmetric** | `True` | Fixed at 0 | Lower | **Max** | Weights, LLM dynamic activation |
 | **Asymmetric** | `False` | Dynamically calculated | Higher | Slower | Activations after ReLU/Non-zero mean |
 
----
+______________________________________________________________________
 
 ## 3. Expert Strategies for MoE Models
 
 For models like DeepSeek or Qwen MoE:
+
 - **Attention Modules**: Use **W8A8** (`per_channel` weight, `per_token` activation) for accuracy.
 - **Expert Modules**: Use **W4A8** (`per_group` weight, `per_token` activation) to save 80%+ memory.
 - **Unified A8**: Keep activations at 8-bit to utilize NPU INT8 hardware acceleration.

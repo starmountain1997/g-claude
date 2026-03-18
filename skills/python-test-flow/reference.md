@@ -15,7 +15,7 @@ This skill uses a suite of tools to ensure code quality and correctness.
 ## Recommended Workflow
 
 1. **Linting**: Run `ruff check` first to catch obvious errors.
-2. **Type Checking**: Run `basedpyright` to ensure type safety.
-3. **Dead Code**: Use `vulture` to identify potentially unreachable code.
-4. **Formatting**: Run the `python-formatter.sh` script to clean up imports and format code.
-5. **Testing**: Finally, run `pytest` to verify logic.
+1. **Type Checking**: Run `basedpyright` to ensure type safety.
+1. **Dead Code**: Use `vulture` to identify potentially unreachable code.
+1. **Formatting**: Run the `python-formatter.sh` script to clean up imports and format code.
+1. **Testing**: Finally, run `pytest` to verify logic.
