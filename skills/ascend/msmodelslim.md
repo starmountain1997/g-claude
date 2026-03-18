@@ -37,7 +37,7 @@ ______________________________________________________________________
     - `kl`: Information entropy calibration. High accuracy, slow.
   - **Granularity (Weights)**:
     - Use `per_channel` by default for better precision.
-    - **Must** use `per_group` if target is 4-bit.
+    - In `per_group` mode, `group_size` must be one of: **`[32, 64, 128, 256]`**.
   - **Granularity (Activation)**:
     - Use `per_token` (dynamic) to prioritize **accuracy**.
     - Use `per_tensor` (static) to prioritize **performance**.
