@@ -1,55 +1,64 @@
 # msmodelslim Quantization Protocol
 
-Choose one of the two paths below to perform model quantization on Ascend NPUs.
+Strict sequential protocol for model quantization, structural consultation, or debugging on Ascend NPUs. This protocol ensures high-performance inference while maintaining model accuracy through systematic strategy selection.
 
-## 1. Preparation
+## 1. Pre-execution Validation
 
-Verify hardware availability before starting:
+Before starting any quantization task, verify that the environment and hardware are ready.
 
-- `npu-smi info`
-- `pip show msmodelslim torch_npu transformers`
+### Environment Check
+
+Verify mandatory dependencies:
+
+- `!pip show msmodelslim torch_npu transformers`
+
+### Hardware Status
+
+Ensure NPUs are available and not currently locked by other processes:
+
+- `!npu-smi info`
 
 ______________________________________________________________________
 
-## 2. Execution Paths
+## 2. Quantization Strategy Selection
 
-### Path A: One-Click (Automatic)
+Follow this hierarchy to select the most efficient quantization path:
+
+### Strategy A: One-Click Quantization (Recommended)
 
 **Best for**: Established models with existing best-practice configurations.
 
 - **Best Practice Library**: Refer to `msmodelslim/lab_practice` for pre-configured YAML files.
 - **Workflow**:
   1. Discovery: `msmodelslim quant -h`
-  1. Execution: Use a pre-configured YAML from `msmodelslim/lab_practice`.
-- **Default Save**: `/home/model_weights`.
-- **Fallback**: If Path A fails (e.g., accuracy loss or configuration mismatch), proceed to Path B for manual tuning.
+  1. Execution: Call `msmodelslim quant` with a specific YAML config.
+  1. Default Save Directory: `/home/model_weights`.
+- **Note**: If a custom YAML is provided by the user, prioritize it over library defaults.
 
-### Path B: Custom YAML (User-Defined)
+### Strategy B: Sensitive Layer Analysis (Accuracy Priority)
+
+**Best for**: Models experiencing significant accuracy drops or requiring custom precision tuning.
+
+- **Analysis Command**:
+  ```bash
+  msmodelslim analyze --model_type <TYPE> --model_path <PATH> --metrics kurtosis --topk 15 --device npu
+  ```
+- **Action**: Extract the top results from the analysis to populate the `disable_names` list in your quantization configuration to prevent quantizing sensitive layers.
+- **Defaults**:
+  - `Act Method`: Default to `3` (Auto-mixed).
+  - `Anti Method`: Default to `m2` (Enhanced SmoothQuant).
+
+### Strategy C: Custom YAML Configuration
 
 **Best for**: Fine-grained control over per-layer strategy, mixed precision, or MoE models.
 
-- **Reference**: Use existing YAML files in `msmodelslim/lab_practice` as a baseline for your custom configuration.
-- **Action**: Run `msmodelslim quant --config <YOUR_YAML_PATH>`
-- **Configuration Tips**:
-  - **Quantization Method** (Scale Calculation):
-    - `minmax`: Fast, uses global range. Best for **Weights**.
-    - `ssz`: Optimized error search (ModelSlim specialty). Best for **Activation** (accuracy).
-    - `kl`: Information entropy calibration. High accuracy, slow.
-  - **Granularity (Weights)**:
-    - Use `per_channel` by default for better precision.
-    - In `per_group` mode, `group_size` must be one of: **`[32, 64, 128, 256]`**.
-  - **Granularity (Activation)**:
-    - Use `per_token` (dynamic) to prioritize **accuracy**.
-    - Use `per_tensor` (static) to prioritize **performance**.
-  - **Symmetry**: Use `symmetric=True` for most scenarios (especially W8A8 and W4A8) to balance performance and accuracy.
-  - **Act Method**: Set to `3` (Auto-mixed) for balanced performance.
-  - **Anti Method**: Set to `m2` (Enhanced SmoothQuant) to mitigate outliers.
-  - **MoE Optimization** (DeepSeek/Qwen):
-    - **Attention Module**: Use **W8A8** (`per_channel` weights, `per_token` activation) to preserve logic coherence.
-    - **Expert Module**: Use **W4A8** (`per_group` weights, `per_token` activation) to save 80%+ memory and fit larger models on fewer NPUs.
-    - **Performance**: Keep activation at **8-bit** (A8) to leverage native INT8 hardware acceleration.
-  - **Summary**: Use `minmax` for weights; use `ssz` for activation to obtain better inference precision.
-  - **Sensitive Layers**: If accuracy drops, run `msmodelslim analyze` to identify layers to add to your `disable_names` list.
+- Build a YAML config following the sections below (Granularity, Calibration Method, Mix Quant).
+
+### Strategy D: Traditional Low-Level Quantization
+
+**Best for**: Deep debugging or research requiring granular control.
+
+- **Implementation**: Refer to the `example` directory within the `msmodelslim` source code for Python API usage patterns.
 
 ______________________________________________________________________
 
@@ -214,12 +223,18 @@ ______________________________________________________________________
 
 ## 7. Hardware & Resource Management
 
-- **Long-running Tasks**: If a quantization command is expected to take significant time, save it as a local `.sh` script and prompt the user to run it manually (e.g., via `nohup` or `screen`).
-- **NPU Mandatory**: All quantization tasks **must** run on Ascend NPUs.
-- **Multi-NPU**: If OOM occurs, set `export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3`.
-- **Weights Path**: Verify `--model_path` contains the correct weights format (Safetensors/Bin).
-- **Permissions**: Ensure write access to the `--save_path`.
-- **Lifecycle**: Once a quantization command is initialized, output the exact command for the user to run. Terminate background processes immediately after quantization begins.
+### NPU Mandatory
+
+- **No CPU Quantization**: `msmodelslim` operations **must** run on Ascend NPUs.
+- **Multi-NPU Strategy**: If Out-of-Memory (OOM) occurs on a single device, distribute the process across multiple NPUs:
+  ```bash
+  export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
+  ```
+
+### Lifecycle Management
+
+- Once a quantization command is initialized and confirmed, output the exact command for the user to run in their terminal.
+- **Safety**: Terminate any background processes immediately after the main quantization loop begins to prevent resource contention.
 
 ______________________________________________________________________
 

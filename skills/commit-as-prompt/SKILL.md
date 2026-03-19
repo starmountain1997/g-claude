@@ -14,12 +14,12 @@ This skill guides you through creating a high-quality Git commit structured for 
 
 ### Changed Files Impact
 
-!`git diff --stat`
+!`git diff HEAD --stat`
 
 ## Task Instructions
 
-1. **Review Changes**: Analyze the diffs to ensure only relevant changes are included. Remove any temporary logs, debuggers, or "dead" code.
-1. **Stage Files**: If files aren't staged, interact with the user or use `git add` to prepare the commit.
+1. **Review Changes**: Analyze the diffs to ensure only relevant changes are included. Remove any temporary logs, debuggers, or "dead" code. When running `git diff` on specific files, always use `git diff HEAD -- "filename"` to see all changes (staged or not). Never omit `HEAD` or `--`; omitting `--` causes "ambiguous argument" errors for non-ASCII filenames (e.g., Chinese), and omitting `HEAD` misses staged-only changes.
+1. **Stage Files**: If files aren't staged, interact with the user or use `git add -- "filename"` to prepare the commit.
 1. **Draft the Commit Message**: Use the provided summary "$ARGUMENTS" as the starting point.
 1. **Follow WHAT/WHY/HOW**:
    - **WHAT**: One-sentence imperative description of the change.

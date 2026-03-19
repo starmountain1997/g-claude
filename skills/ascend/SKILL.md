@@ -1,6 +1,6 @@
 ______________________________________________________________________
 
-## name: ascend description: Entry point for Ascend inference toolchain, including vLLM-Ascend, msmodelslim quantization, and NPU debugging. argument-hint: "vllm issue / quantization / npu usage"
+## name: ascend description: Entry point for Ascend NPU inference toolchain. Use when running vLLM on Ascend/NPU, quantizing models with msmodelslim, or debugging NPU errors. argument-hint: "vllm issue / quantization / npu usage"
 
 # Ascend Inference Toolchain
 
@@ -8,14 +8,14 @@ This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usag
 
 ## Current NPU Status
 
-`npu-smi info`
+!`npu-smi info`
 
 ## Task Specifics
 
 For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
-- **msmodelslim** (quantization): See [msmodelslim.md](msmodelslim.md) for **Execution Protocol** (model quantization, accuracy tuning).
+- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols.
 
 ## Core Tips
 
