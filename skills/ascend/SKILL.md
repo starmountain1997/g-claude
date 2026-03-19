@@ -8,7 +8,7 @@ This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usag
 
 ## Current NPU Status
 
-!`npu-smi info`
+`npu-smi info`
 
 ## Task Specifics
 
