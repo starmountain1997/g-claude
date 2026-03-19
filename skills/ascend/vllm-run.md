@@ -15,7 +15,7 @@ Guide for running and debugging vLLM on Ascend NPUs. This guide is modular; jump
 
 <Step title="Resource Estimation">
     Calculate the total size of weight files (e.g., `du -sh <path>`).
-    - **Estimate NPUs**: 
+    - **Estimate NPUs**:
       - FP16: `Weights Size * 1.2 / NPU Memory`
       - INT8/INT4: `Weights Size * 1.5 / NPU Memory` (to account for KV cache and activation).
     - Compare against `npu-smi info` to ensure sufficient cards are available.
