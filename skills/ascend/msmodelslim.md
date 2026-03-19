@@ -75,34 +75,43 @@ Source: `msmodelslim/ir/qal/qbase.py`
 | `per_block` | Block-wise quantization | MXFp8/MXFp4 formats only |
 
 **Rules**:
+
 - Activations on Ascend NPU **must** use `symmetric: true`.
 - INT4 weights should use `per_group` with `group_size: 128` or `256`.
 - `per_group` requires `method: "ssz"` or `method: "autoround"` (not `gptq`).
 
----
+______________________________________________________________________
 
 ## 4. Calibration Method Selection
 
 Source: `msmodelslim/core/quantizer/impl/`
 
 ### MinMax (`method: "minmax"`)
+
 Computes scale from min/max of calibration data. Fastest, sensitive to outliers.
+
 - **Use**: INT8 baseline, fast iteration, any scope.
 
 ### SSZ (`method: "ssz"`)
+
 Iterative least-squares optimization (default 50 iterations), greedy MSE acceptance.
+
 - **Use**: INT4 `per_channel` weights. Slightly slower than MinMax but better accuracy.
 - **Limitation**: Requires `per_channel` scope; weight must be 2D tensor.
 - **Config**: `ext.step` overrides iteration count.
 
 ### GPTQ (`method: "gptq"`)
+
 Hessian-guided column-by-column weight quantization with error compensation.
+
 - **Use**: Highest accuracy for `per_channel` / `per_group` INT8. Requires real calibration data.
 - **Limitation**: Slow; not recommended for MoE expert layers.
 - **Config**: `ext.percdamp` (default `0.01`), `ext.block_size` (default `128`).
 
 ### AutoRound (`method: "autoround"`)
+
 Learns optimal rounding direction for quantized values.
+
 - **Use**: Low-bit quantization (`per_group` INT4); comparable accuracy to GPTQ, faster.
 
 ### Method Selection Guide
@@ -114,13 +123,14 @@ Learns optimal rounding direction for quantized values.
 | `gptq` | Slow | Highest | `per_channel`, `per_group` | Precision-critical INT8 |
 | `autoround` | Medium | High | `per_group` | INT4 per_group, MoE experts |
 
----
+______________________________________________________________________
 
 ## 5. Mixed Quantization (Mix Quant)
 
 Use the `group` processor to apply different qconfigs to different layer sets.
 
 ### Common MoE Strategy
+
 - **Attention**: W8A8 static — preserves coherence
 - **Shared MLP**: W8A8 dynamic — better activation accuracy
 - **Expert layers**: W4A8 per_group — maximizes memory savings
@@ -172,12 +182,13 @@ spec:
 ```
 
 ### Layer Filter Rules
+
 - `include` / `exclude` accept Glob wildcards (`*`, `?`, `[abc]`, `[!abc]`).
 - `exclude` overrides `include` — use it to protect sensitive layers.
 - Always exclude: `lm_head`, `gate`, first/last transformer layers to prevent accuracy collapse.
 - Filter by index: `"model.layers.{0,1,2,3,4}.*"`
 
----
+______________________________________________________________________
 
 ## 6. Quick Reference: Common qconfig Patterns
 
@@ -199,7 +210,7 @@ act:    {scope: "per_token",   dtype: "int8", symmetric: true, method: "minmax"}
 weight: {scope: "per_group",   dtype: "int4", symmetric: true, method: "autoround", ext: {group_size: 256}}
 ```
 
----
+______________________________________________________________________
 
 ## 7. Hardware & Resource Management
 
@@ -210,7 +221,7 @@ weight: {scope: "per_group",   dtype: "int4", symmetric: true, method: "autoroun
 - **Permissions**: Ensure write access to the `--save_path`.
 - **Lifecycle**: Once a quantization command is initialized, output the exact command for the user to run. Terminate background processes immediately after quantization begins.
 
----
+______________________________________________________________________
 
 ## 8. Troubleshooting & Common Pitfalls
 
