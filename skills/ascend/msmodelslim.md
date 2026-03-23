@@ -1,6 +1,53 @@
 # msmodelslim Quantization Protocol
 
-Strict sequential protocol for model quantization, structural consultation, or debugging on Ascend NPUs. This protocol ensures high-performance inference while maintaining model accuracy through systematic strategy selection.
+Strict sequential protocol for model quantization, structural consultation, or debugging on Ascend NPUs.
+
+## 0. End-to-End Iterative Workflow
+
+Always follow this loop. Never skip evaluation before declaring success.
+
+```
+User specifies target dtype (e.g. w4a8, w8a8, w4a4)
+         │
+         ▼
+[Step 1] Quantize with target dtype
+         Use Strategy A (one-click) if a lab_practice config exists.
+         Use Strategy C (custom YAML) otherwise.
+         │
+         ▼
+[Step 2] Serve with vllm-run.md
+         │
+         ▼
+[Step 3] Evaluate accuracy with ais_bench.md (GSM8K)
+         Threshold: ≤ 1 percentage point drop vs FP16 baseline.
+         │
+    ┌────┴────┐
+    │ PASS    │ FAIL
+    ▼         ▼
+  Done   [Step 4] Sensitive layer analysis → add disable_names
+                  Retry quantization with the SAME target dtype.
+                  Re-evaluate (Step 2–3).
+                  │
+             ┌────┴────┐
+             │ PASS    │ FAIL
+             ▼         ▼
+           Done   [Step 5] Fall back to next lower compression tier,
+                           then restart from Step 1 with new dtype.
+```
+
+### Compression Tier Order (highest → lowest)
+
+| Tier | dtype | Notes |
+| :--- | :--- | :--- |
+| 1 | `w4a4` | Custom YAML only; use only when memory is critically constrained |
+| 2 | `w4a8` | Standard aggressive; recommended starting point for MoE models |
+| 3 | `w8a8` / `w8a8s` | Standard for dense models |
+| 4 | `w8a16` | Conservative; good accuracy floor |
+| 5 | `w16a16s` / bf16 | Near-lossless; last resort |
+
+**Key rule**: When retrying after sensitivity analysis, always use the **user's original target dtype** — do not silently downgrade to a lower tier without confirming with the user.
+
+______________________________________________________________________
 
 ## 1. Pre-execution Validation
 
@@ -20,22 +67,15 @@ Ensure NPUs are available and not currently locked by other processes:
 
 ______________________________________________________________________
 
-## 2. Quantization Strategy Selection
+## 2. Quantization Execution
 
-Follow this hierarchy to select the most efficient quantization path:
+### Step 1A: One-Click Quantization (Start Here)
 
-### Strategy A: One-Click Quantization (Recommended)
+Check `msmodelslim/lab_practice` for a pre-configured YAML matching the model + target dtype. If one exists, use it.
 
-**Best for**: Established models with existing best-practice configurations.
-
-- **Best Practice Library**: Refer to `msmodelslim/lab_practice` for pre-configured YAML files.
-- **Workflow**:
-  1. Discovery: `msmodelslim quant -h`
-  1. Execution: `msmodelslim quant` with either `--quant_type` or `--config_path` (mutually exclusive).
-  1. Default Save Directory: `/home/model_weights`.
-- **`--quant_type`**: Tool auto-matches the best YAML from `lab_practice`. Values: `w4a8`, `w4a8c8`, `w8a8`, `w8a8s`, `w8a8c8`, `w8a16`, `w16a16s`.
-- **`--config_path`**: Directly use a specified YAML file — takes priority when a custom config is provided.
-- **Always pass** `--trust_remote_code True` for models with custom modeling code (e.g., Qwen3, DeepSeek).
+- **`--quant_type`**: auto-matches the best YAML from `lab_practice`. Values: `w4a8`, `w4a8c8`, `w8a8`, `w8a8s`, `w8a8c8`, `w8a16`, `w16a16s`.
+- **`--config_path`**: use a specific YAML directly — takes priority over `--quant_type`. These two flags are mutually exclusive.
+- **Always pass** `--trust_remote_code True` for models with custom architecture (Qwen3, DeepSeek, GLM, etc.).
 
 ```bash
 # Option A1: auto-match from lab_practice
@@ -44,10 +84,10 @@ msmodelslim quant \
   --save_path ${SAVE_PATH} \
   --device npu \
   --model_type <ModelName> \
-  --quant_type w4a8 \
+  --quant_type <TARGET_DTYPE> \
   --trust_remote_code True
 
-# Option A2: explicit config (recommended when a custom YAML exists)
+# Option A2: explicit config (preferred when a custom YAML exists)
 msmodelslim quant \
   --model_path ${MODEL_PATH} \
   --save_path ${SAVE_PATH} \
@@ -57,30 +97,33 @@ msmodelslim quant \
   --trust_remote_code True
 ```
 
-### Strategy B: Sensitive Layer Analysis (Accuracy Priority)
+### Step 1B: Custom YAML (When No lab_practice Config Exists)
 
-**Best for**: Models experiencing significant accuracy drops or requiring custom precision tuning.
+Build a YAML config following Sections 3–4 below. Use this for: MoE models with mixed precision, models with no existing best-practice config, or when the one-click result fails accuracy.
 
-- **Analysis Command**:
-  ```bash
-  msmodelslim analyze --model_type <TYPE> --model_path <PATH> --metrics kurtosis --topk 15 --device npu
-  ```
-- **Action**: Extract the top results from the analysis to populate the `disable_names` list in your quantization configuration to prevent quantizing sensitive layers.
-- **Defaults**:
-  - `Act Method`: Default to `3` (Auto-mixed).
-  - `Anti Method`: Default to `m2` (Enhanced SmoothQuant).
+### Step 1C: Traditional Low-Level API (Deep Debugging Only)
 
-### Strategy C: Custom YAML Configuration
+Refer to the `example/` directory in the `msmodelslim` source for Python API patterns. Use only for research or granular debugging.
 
-**Best for**: Fine-grained control over per-layer strategy, mixed precision, or MoE models.
+______________________________________________________________________
 
-- Build a YAML config following the sections below (Granularity, Calibration Method, Mix Quant).
+### Step 4: Sensitive Layer Analysis (Accuracy Recovery Fallback)
 
-### Strategy D: Traditional Low-Level Quantization
+Run this **only after** evaluation fails (Section 0, Step 4). Do **not** run preemptively.
 
-**Best for**: Deep debugging or research requiring granular control.
+```bash
+msmodelslim analyze \
+  --model_type <TYPE> \
+  --model_path <PATH> \
+  --metrics kurtosis \
+  --topk 15 \
+  --device npu
+```
 
-- **Implementation**: Refer to the `example` directory within the `msmodelslim` source code for Python API usage patterns.
+Extract the top-ranked layer names from the output and add them to `disable_names` in the quantization config. Then **retry with the user's original target dtype** — do not downgrade without explicit confirmation.
+
+- `Act Method`: default `3` (Auto-mixed)
+- `Anti Method`: default `m2` (Enhanced SmoothQuant)
 
 ______________________________________________________________________
 
