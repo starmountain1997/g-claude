@@ -1,6 +1,7 @@
-______________________________________________________________________
+## name: commit-as-prompt
 
-## name: commit-as-prompt description: Create structured Git commits (WHAT/WHY/HOW) optimized for AI context. Use for clean, meaningful history that can be turned into prompts. disable-model-invocation: true
+description: Stage, review, and create a structured Git commit with WHAT/WHY/HOW message format optimized as AI context. Use when committing code changes.
+disable-model-invocation: true
 
 # Commit-As-Prompt
 
@@ -33,7 +34,5 @@ This skill guides you through creating a high-quality Git commit structured for 
 
 - For detailed staging principles, see [reference.md](reference.md)
 - For message examples, see [examples.md](examples.md)
-
-______________________________________________________________________
 
 **Input summary:** $ARGUMENTS

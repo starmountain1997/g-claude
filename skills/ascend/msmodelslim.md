@@ -64,7 +64,7 @@ Verify mandatory dependencies:
 If the current `transformers` version does not support the target model:
 
 1. Upgrade `transformers` to the latest version and re-check support.
-2. If the latest version still does not support the model, stop and inform the user — quantization cannot proceed without upstream support.
+1. If the latest version still does not support the model, stop and inform the user — quantization cannot proceed without upstream support.
 
 ### Hardware Status
 
