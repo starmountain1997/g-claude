@@ -143,3 +143,116 @@ ais_bench gsm8k_perf.py --mode perf -w ./perf_output
 | `TPOT` / `ITL` | Decode speed (ms per output token) | Lower (faster) |
 | `Output Token Throughput` | tokens/s | Higher |
 | `E2EL` | Full request latency | Lower |
+
+______________________________________________________________________
+
+## Multimodal Model Evaluation (VLM)
+
+GSM8K is text-only and cannot test vision capability. Use a VLM-specific benchmark instead.
+
+### Recommended benchmarks
+
+| Benchmark | What it tests | Sample count | When to use |
+| :--- | :--- | :--- | :--- |
+| **MMBench** | General visual understanding, reasoning, OCR | ~3000 | Primary accuracy proxy — broad coverage |
+| **TextVQA** | Text recognition in natural images | ~5000 | If the model targets document/scene-text tasks |
+| **OCRBench** | OCR and document understanding | ~1000 | Document/receipt/formula models |
+| **MMMU** | College-level multi-discipline VQA | ~11500 | Comprehensive capability; slow but thorough |
+
+**Recommendation**: Start with MMBench. It runs in ~15 minutes at `batch_size=16` and is the de-facto standard for Chinese VLM evaluation.
+
+**Acceptance threshold**: ≤ 1 percentage point drop on the overall score vs. FP16 baseline (same rule as GSM8K).
+
+### Accuracy Evaluation (MMBench)
+
+The same `VLLMCustomAPIChatStream` model class is used — it sends requests through the OpenAI-compatible API, and vLLM's vision-capable endpoint handles the image inputs transparently.
+
+**Key differences from text-only eval**:
+
+- `max_out_len` — set to `256` (VLM answers are typically short)
+- `batch_size` — use `8` or `16`; vision encoding is memory-intensive and high concurrency causes OOM on the server side
+- Dataset import path — use the VLM dataset config, not `gsm8k`
+
+**Write `mmbench_eval.py`**:
+
+```python
+from mmengine.config import read_base
+from ais_bench.benchmark.models import VLLMCustomAPIChatStream
+from ais_bench.benchmark.utils.model_postprocessors import extract_non_reasoning_content
+
+with read_base():
+    from ais_bench.benchmark.configs.datasets.mmbench.mmbench_gen import mmbench_datasets
+
+models = [
+    dict(
+        attr="service",
+        type=VLLMCustomAPIChatStream,
+        abbr='vllm-api-stream-chat',
+        path="",
+        model="<MODEL_SERVED_NAME>",   # fill in
+        request_rate=0,
+        retry=2,
+        host_ip="localhost",
+        host_port=8080,                # fill in
+        max_out_len=256,               # shorter than text eval — VLM answers are brief
+        batch_size=8,                  # lower than text eval — vision encoding is memory-intensive
+        trust_remote_code=False,
+        generation_kwargs=dict(
+            temperature=0.0,
+            top_k=1,
+            top_p=1.0,
+            seed=42,
+            repetition_penalty=1.0,
+        ),
+        pred_postprocessor=dict(type=extract_non_reasoning_content)
+    )
+]
+
+datasets = mmbench_datasets
+```
+
+**Run**:
+
+```bash
+ais_bench mmbench_eval.py --mode all -w ./eval_output
+```
+
+Results appear in `eval_output/summary/summary_*.txt`. Check the `mmbench` overall accuracy row.
+
+> **Verify the import path before running.** The dataset config path (`ais_bench.benchmark.configs.datasets.mmbench.mmbench_gen`) depends on the installed AISBench version. Run `python -c "import ais_bench; print(ais_bench.__file__)"` to find the install root, then browse `configs/datasets/` to confirm the exact module name.
+
+### vLLM Prerequisites for Vision Inputs
+
+Serving a VLM requires additional vLLM flags. Confirm the model is running with vision support before evaluating:
+
+```bash
+curl http://localhost:8080/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "<MODEL_SERVED_NAME>",
+    "messages": [{"role": "user", "content": [
+      {"type": "text", "text": "describe this image in one word"},
+      {"type": "image_url", "image_url": {"url": "https://upload.wikimedia.org/wikipedia/commons/thumb/4/47/PNG_transparency_demonstration_1.png/240px-PNG_transparency_demonstration_1.png"}}
+    ]}],
+    "max_tokens": 20
+  }'
+```
+
+If the response contains a description (not an error), vision inputs are working. If it errors, check that `--max-num-seqs` and `--image-input-type` are set correctly in the vLLM launch command — see `vllm-run.md`.
+
+### Performance Testing (VLM)
+
+Use a multimodal prompt set for perf testing. Replace the GSM8K performance dataset with a VLM-specific one and keep `ignore_eos=True`:
+
+```python
+with read_base():
+    from ais_bench.benchmark.configs.datasets.mmbench.mmbench_gen_perf import mmbench_datasets  # verify path
+```
+
+**Run**:
+
+```bash
+ais_bench mmbench_perf.py --mode perf -w ./perf_output
+```
+
+The same latency metrics apply (`TTFT`, `TPOT`, `E2EL`). Vision models will show higher TTFT than equivalent text models due to image pre-processing — this is expected, not a regression.

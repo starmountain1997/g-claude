@@ -208,6 +208,100 @@ ______________________________________________________________________
 | `qwen3_cot_w4a4.json` | Reasoning models at W4A4 or aggressive W4A8 |
 | `autocodebench.jsonl` | Code models (Qwen3-Coder) |
 
+#### 3.5.1 Multimodal Models: Dataset Requirements
+
+**Built-in datasets are text-only.** `mix_calib.jsonl` and the Qwen3 CoT variants contain no image inputs, so they cannot activate vision encoders or cross-modal projection layers during calibration. Using a text-only dataset on a multimodal model silently under-calibrates the vision components, producing poor quantization quality for image-heavy tasks.
+
+**Rule: Always supply a custom multimodal calibration dataset when quantizing a VLM (Vision-Language Model).**
+
+**Dataset format.** Each line is a JSON object with a `messages` field following the standard chat schema. Images must be embedded as base64 data URIs (preferred for portability) or as accessible `http(s)://` URLs. The calibration set should cover the same modality mix as the model's intended workload.
+
+```jsonl
+{"messages": [{"role": "user", "content": [{"type": "text", "text": "描述图片中的内容"}, {"type": "image_url", "image_url": {"url": "data:image/jpeg;base64,<BASE64>"}}]}, {"role": "assistant", "content": "图片中..."}]}
+{"messages": [{"role": "user", "content": [{"type": "text", "text": "What does the chart show?"}, {"type": "image_url", "image_url": {"url": "data:image/png;base64,<BASE64>"}}]}, {"role": "assistant", "content": "The chart shows..."}]}
+```
+
+Practical guidelines for the calibration set:
+
+- **Size**: 64–256 samples is sufficient; more does not meaningfully improve calibration.
+- **Diversity**: Include a mix of natural images, diagrams, screenshots, and text-heavy images that reflect real workload distribution.
+- **Language**: Match the primary language(s) the model will serve in production.
+- **Image resolution**: Use the same resolution (or closest pre-processing pipeline) that the model uses at inference time. Down-scaling to a different size introduces distribution mismatch.
+
+**Specifying the custom dataset in YAML.** Set the `dataset` field to an absolute path:
+
+```yaml
+apiversion: modelslim_v1
+metadata:
+  config_id: qwen2_vl_7b_w4a8
+
+# ... qconfig anchors ...
+
+spec:
+  process:
+    # ...
+
+dataset: /path/to/multimodal_calib.jsonl   # absolute path required
+```
+
+**Vision component layer protection.** Vision encoders and vision-language projection layers are highly sensitive to quantization. The standard LLM-focused `flex_smooth_quant` preprocessors do **not** cover ViT-style subgraphs, so leave these components in BF16 unless you have evidence they tolerate quantization.
+
+Common naming patterns to exclude (adjust to the actual model architecture):
+
+| Component | Typical glob pattern | Action |
+| :--- | :--- | :--- |
+| Vision encoder (ViT body) | `*visual*`, `*vision_model*`, `*image_encoder*` | Exclude — keep BF16 |
+| Patch embedding | `*patch_embed*`, `*pos_embed*`, `*cls_token*` | Exclude — keep BF16 |
+| Vision-language projection | `*visual_projection*`, `*mm_projector*`, `*vl_proj*` | Exclude or W8A16 |
+| Cross-attention (to visual tokens) | `*cross_attn*` | Exclude or W8A8 |
+| Language model backbone | `*language_model*`, `*model.layers.*` | Quantize normally |
+
+Example YAML snippet for a VLM with a separate `visual_model` and `mm_projector`:
+
+```yaml
+spec:
+  process:
+    - type: "flex_smooth_quant"
+      enable_subgraph_type: ['norm-linear']
+      include:
+        - '*language_model*'   # suppress outliers only in the LM backbone
+
+    - type: "group"
+      configs:
+        # Vision components — keep at full precision
+        - type: "linear_quant"
+          qconfig: *default_w8a16
+          include: ["*mm_projector*", "*visual_projection*"]
+
+        # LM attention — W8A8 for accuracy
+        - type: "linear_quant"
+          qconfig: *default_w8a8_dynamic
+          include: ["*language_model*self_attn*"]
+
+        # LM MLP — W4A8 for memory savings
+        - type: "linear_quant"
+          qconfig: *default_w4a8_dynamic
+          include: ["*language_model*mlp*"]
+          exclude: ["*gate"]
+```
+
+> The vision encoder body itself (`*visual_model*`, `*image_encoder*`) should be fully excluded from all `linear_quant` entries — do not add it to any `include` pattern unless you have verified it tolerates quantization via sensitivity analysis.
+
+**Sensitivity analysis for VLMs.** When running `msmodelslim analyze` after a failed evaluation, pass the **same multimodal dataset** that was used during quantization:
+
+```bash
+msmodelslim analyze \
+  --model_type <VLM_ModelName> \
+  --model_path ${MODEL_PATH} \
+  --device npu \
+  --metrics kurtosis \
+  --topk 20 \
+  --calib_dataset /path/to/multimodal_calib.jsonl \
+  --trust_remote_code True
+```
+
+Using a text-only dataset here will produce artificially uniform sensitivity scores for vision-adjacent layers, making the output unreliable.
+
 ______________________________________________________________________
 
 ### 3.6 Layer Protection
