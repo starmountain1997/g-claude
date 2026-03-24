@@ -41,6 +41,8 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
   </Step>
 </Steps>
 
+**Artifact Storage**: Save all generated Python scripts and shell scripts to the current working directory. Do not save them elsewhere.
+
 ### Quick Start: Offline Inference
 
 ```python

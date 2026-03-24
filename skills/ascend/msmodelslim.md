@@ -59,6 +59,13 @@ Verify mandatory dependencies:
 
 - `pip show msmodelslim torch_npu transformers`
 
+### Model Support Check
+
+If the current `transformers` version does not support the target model:
+
+1. Upgrade `transformers` to the latest version and re-check support.
+2. If the latest version still does not support the model, stop and inform the user — quantization cannot proceed without upstream support.
+
 ### Hardware Status
 
 Ensure NPUs are available and not currently locked by other processes:
@@ -339,6 +346,7 @@ ______________________________________________________________________
 
 - Once a quantization command is initialized and confirmed, output the exact command for the user to run in their terminal.
 - **Safety**: Terminate any background processes immediately after the main quantization loop begins to prevent resource contention.
+- **Artifact Storage**: Save all generated YAML configs and shell scripts to the current working directory. Do not save them elsewhere.
 
 ______________________________________________________________________
 
