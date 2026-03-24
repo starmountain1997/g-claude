@@ -2,6 +2,8 @@
 
 Strict sequential protocol for model quantization, structural consultation, or debugging on Ascend NPUs.
 
+> **Hard rule — execute the user's dtype, never override it.** Whatever dtype the user specifies, run it exactly. Do not substitute a different dtype because you believe the model would perform better at another setting. Your opinions about suitability are irrelevant until evaluation data proves otherwise. The only path to a different dtype is: quantize → serve → evaluate → fail → sensitivity analysis → fail again → ask the user.
+
 ## 0. End-to-End Iterative Workflow
 
 Always follow this loop. Never skip evaluation before declaring success.
@@ -31,9 +33,14 @@ User specifies target dtype (e.g. w4a8, w8a8, w4a4)
              ┌────┴────┐
              │ PASS    │ FAIL
              ▼         ▼
-           Done   [Step 5] Fall back to next lower compression tier,
-                           then restart from Step 1 with new dtype.
+           Done   [Step 5] STOP. Inform the user that the target dtype
+                           failed even after sensitivity analysis.
+                           Ask explicitly: "Fall back to <next tier>?"
+                           Only proceed with user confirmation.
+                           Then restart from Step 1 with the confirmed dtype.
 ```
+
+> **Always follow the user's specified dtype.** Never silently downgrade or substitute a different dtype at any step. If a fallback is needed, stop and ask.
 
 ### Compression Tier Order (highest → lowest)
 
@@ -44,8 +51,6 @@ User specifies target dtype (e.g. w4a8, w8a8, w4a4)
 | 3 | `w8a8` / `w8a8s` | Standard for dense models |
 | 4 | `w8a16` | Conservative; good accuracy floor |
 | 5 | `w16a16s` / bf16 | Near-lossless; last resort |
-
-**Key rule**: When retrying after sensitivity analysis, always use the **user's original target dtype** — do not silently downgrade to a lower tier without confirming with the user.
 
 ______________________________________________________________________
 
