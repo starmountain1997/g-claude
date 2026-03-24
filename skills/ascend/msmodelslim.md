@@ -459,3 +459,140 @@ ______________________________________________________________________
 - **SSZ on per_group**: SSZ does not support `per_group` scope — switch to `autoround`.
 - **Symmetric mismatch**: Ascend NPU hardware acceleration requires `symmetric: true` for all activation configs.
 - **MoE + GPTQ**: GPTQ is not recommended for MoE expert layers — use `ssz` (per_channel) or `autoround` (per_group) instead.
+
+______________________________________________________________________
+
+## 8. Adding a New Model Adapter
+
+When a new model (e.g. a new Qwen variant, a different architecture, or a third-party model) needs to be quantized and no `lab_practice` config exists yet, register it under `third-party/msmodelslim/`.
+
+### 8.1 Directory Layout
+
+```
+third-party/msmodelslim/
+└── <model_name_or_family>/
+    ├── qwen3_cot_w4a8.yaml        # best-practice YAML (one per dtype)
+    ├── qwen3_cot_w8a8.yaml
+    └── <auxiliary_files>...        # shell scripts, datasets, notebooks
+```
+
+- One YAML per target dtype (e.g. `w4a8`, `w8a8`, `w4a4`).
+- File names follow the pattern `<purpose>_<dtype>.yaml` — same convention as `lab_practice`.
+- If the model is a variant of an existing family (e.g. Qwen3-14B inherits from Qwen3-32B), copy the closest existing YAML as a starting point rather than writing from scratch.
+
+### 8.2 Decision Flow: Start from Which Config?
+
+```
+Is there a lab_practice YAML for this exact model + dtype?
+│
+├─ YES  → use msmodelslim quant --config_path directly (Strategy A2)
+│
+└─ NO
+    │
+    ├─ Is there a sibling model in the same family (e.g. Qwen3-32B → Qwen3-14B)?
+    │   │
+    │   ├─ YES → copy the sibling YAML, update metadata.config_id and verified_model_types
+    │   │
+    │   └─ NO  → write a fresh YAML (see Section 8.3)
+    │
+    └─ Is the model a VLM (Vision-Language Model)?
+        │
+        ├─ YES → follow Section 3.5.1 for calibration dataset + layer exclusion patterns
+        │
+        └─ NO  → standard text-only YAML workflow
+```
+
+### 8.3 Writing a Fresh YAML (Minimum Required Fields)
+
+```yaml
+apiversion: modelslim_v1
+metadata:
+  config_id: <model_name>_<dtype>   # unique identifier, e.g. qwen3_14b_w4a8
+  score: 0                            # unverified — set to 0 or leave out
+  verified_model_types:
+    - <ModelName>                     # exact transformers model type string
+  label:
+    w_bit: <4|8>
+    a_bit: <4|8>
+    is_sparse: False
+    kv_cache: False
+
+# Inline qconfig anchors (no external references)
+w8a8: &w8a8
+  act:    {scope: "per_token",   dtype: "int8", symmetric: true,  method: "minmax"}
+  weight: {scope: "per_channel", dtype: "int8", symmetric: true,  method: "minmax"}
+
+w4a8: &w4a8
+  act:    {scope: "per_token",   dtype: "int8", symmetric: true,  method: "minmax"}
+  weight: {scope: "per_channel", dtype: "int4", symmetric: true,  method: "ssz"}
+
+spec:
+  process:
+    - type: "flex_smooth_quant"
+      enable_subgraph_type: ['norm-linear']
+      include:
+        - '*'
+
+    - type: "group"
+      configs:
+        - type: "linear_quant"
+          qconfig: *w8a8
+          include: ["*self_attn*"]
+
+        - type: "linear_quant"
+          qconfig: *w8a8
+          include: ["*mlp*"]
+          exclude: ["*gate"]
+
+        - type: "linear_quant"
+          qconfig: *w4a8
+          include: ["*mlp.experts*"]      # MoE only; omit for dense models
+
+  save:
+    - type: "ascendv1_saver"
+      part_file_size: 4
+```
+
+**Required fields:**
+
+| Field | Value |
+| :--- | :--- |
+| `metadata.config_id` | `<model_name>_<dtype>` — unique slug, no spaces |
+| `metadata.verified_model_types` | Exact `<ModelName>` string as passed to `--model_type` |
+| `metadata.label.w_bit / a_bit` | Match the dominant `dtype` in the qconfig group |
+| `dataset` | **VLM only**: absolute path to multimodal JSONL. Omit for text-only models (defaults to `mix_calib.jsonl`). |
+| `include / exclude` | Start simple (as above); add layer protection only after evaluation fails (see Section 3.6). |
+
+### 8.4 VLM Adapter Checklist
+
+If the new model is a Vision-Language Model, additionally:
+
+- [ ] Prepare a multimodal calibration dataset (64–256 samples, base64 image URIs in `messages` format) — see Section 3.5.1.
+- [ ] Add `dataset: /absolute/path/to/multimodal_calib.jsonl` under `spec:` (not under `process:`).
+- [ ] Exclude vision components: add `include: ["*mm_projector*", "*visual_projection*"]` with a BF16 or W8A16 qconfig. Exclude `*visual_model*`, `*image_encoder*` entirely.
+- [ ] Run the curl probe from `ais_bench.md` to verify the served model accepts image inputs before evaluating.
+- [ ] Pass `--calib_dataset /path/to/multimodal_calib.jsonl` to `msmodelslim analyze` if accuracy recovery is needed.
+
+### 8.5 Registering a Third-Party / Custom Model
+
+For models that are not upstream in `lab_practice` (e.g. a fine-tuned derivative, a community model):
+
+1. Create `third-party/msmodelslim/<my_model_family>/`.
+1. Place the best-practice YAML there.
+1. If there is a HuggingFace repo, note the `model_id` in a `README.md` alongside the YAML.
+1. The YAML's `metadata.verified_model_types` list is the integration point — `msmodelslim quant --model_type <ModelName>` will match against it.
+1. If the model type string is unknown, run:
+
+```bash
+python -c "from transformers import AutoConfig; c = AutoConfig.from_pretrained('<HF_REPO_OR_LOCAL_PATH>', trust_remote_code=True); print(c.model_type)"
+```
+
+to get the exact string.
+
+### 8.6 Validation After Adding
+
+After placing the YAML:
+
+1. Confirm the file parses: `python -c "import yaml; yaml.safe_load(open('path/to.yaml'))"`.
+1. Run a dry-run quantization with `--help` or a short-calibration subset to catch config errors early.
+1. Proceed with the full E2E workflow (quantize → serve → evaluate) per Section 0.
