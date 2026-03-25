@@ -42,18 +42,6 @@ User specifies target dtype (e.g. w4a8, w8a8, w4a4)
 
 > **Always follow the user's specified dtype.** Never silently downgrade or substitute a different dtype at any step. If a fallback is needed, stop and ask.
 
-### Compression Tier Order (highest → lowest)
-
-| Tier | dtype | Notes |
-| :--- | :--- | :--- |
-| 1 | `w4a4` | Custom YAML only; use only when memory is critically constrained |
-| 2 | `w4a8` | Standard aggressive; recommended starting point for MoE models |
-| 3 | `w8a8` / `w8a8s` | Standard for dense models |
-| 4 | `w8a16` | Conservative; good accuracy floor |
-| 5 | `w16a16s` / bf16 | Near-lossless; last resort |
-
-______________________________________________________________________
-
 ## 1. Pre-execution Validation
 
 Before starting any quantization task, verify that the environment and hardware are ready.
@@ -129,7 +117,7 @@ msmodelslim analyze \
   --model_path <PATH> \
   --metrics kurtosis \
   --topk 15 \
-  --device npu
+  --device npu 2>&1 | tee analyze_<model>.log
 ```
 
 Extract the top-ranked layer names from the output and add them to `disable_names` in the quantization config. Then **retry with the user's original target dtype** — do not downgrade without explicit confirmation.
@@ -146,7 +134,7 @@ ______________________________________________________________________
 `symmetric` is **not a free choice** — it is determined by `scope`. This is a hardware constraint on Ascend NPU.
 
 | `scope` | `symmetric` | Type | When to use |
-| :--- | :--- | :--- | :--- |
+| :----------- | :---------- | :------ | :------------------------------------------------------------------------------------------------------------------------------------- |
 | `per_token` | **`true`** | Dynamic | Default for all LLM quantization — one scale per token at runtime. Use for everything unless you have a specific reason not to. |
 | `per_tensor` | **`false`** | Static | Scale fixed at calibration time. Use only for attention layers when maximizing throughput over accuracy (e.g., Qwen3-Coder-480B attn). |
 | `pd_mix` | **`false`** | Hybrid | `per_token` during prefill, `per_tensor` during decode. Use **only** when KV cache is also quantized (`w8a8c8`). |
@@ -158,7 +146,7 @@ ______________________________________________________________________
 ### 3.2 Weight Scope (`weight.scope`)
 
 | `scope` | When to use | Seen in |
-| :--- | :--- | :--- |
+| :---------------------------------- | :---------------------------------------------------------- | :------------------------------------------------------------------------------------ |
 | `per_channel` | Everything — standard for W8A8 and all W4A8 in lab_practice | All official W4A8 configs (Qwen3-235B, Qwen3-Next, Qwen3-Coder-480B, DeepSeek, GLM-5) |
 | `per_group` + `ext.group_size: 256` | Only W4A4 — when absolute minimum memory is required | Qwen3-32B W4A4 only |
 | `per_tensor` | Never in production — not seen in any lab_practice config | — |
@@ -170,7 +158,7 @@ ______________________________________________________________________
 Method is **fully determined** by dtype + scope combination:
 
 | dtype | scope | method | Notes |
-| :--- | :--- | :--- | :--- |
+| :----- | :------------ | :---------- | :------------------------------------------------------------------------------------------------------------------------ |
 | `int8` | `per_channel` | `minmax` | Standard for all W8A8. Fast and sufficient. |
 | `int8` | `per_channel` | `autoround` | Higher accuracy W8A8 (used for attention in W4A4 configs). |
 | `int4` | `per_channel` | `ssz` | **Standard for all W4A8 in lab_practice.** Iterative MSE optimization. `ext.step` overrides iteration count (default 50). |
@@ -185,7 +173,7 @@ ______________________________________________________________________
 Must run **before** `linear_quant`. Choose based on quantization aggressiveness and model type:
 
 | Preprocessor | Use when | Typical subgraph types |
-| :--- | :--- | :--- |
+| :---------------------------------------------- | :------------------------------------------------------- | :------------------------------------------------------------------------- |
 | `iter_smooth` | Dense models, W8A8 | `norm-linear`, `linear-linear`, `ov`, `up-down` |
 | `flex_smooth_quant` | MoE models, standard W4A8 | Start with `norm-linear`; add `ov` if model has cross-attn/value subgraphs |
 | `quarot` → `flex_smooth_quant` | W4A4, or architecturally complex W4A8 (Qwen3-Coder-480B) | `quarot` has no subgraph config |
@@ -202,7 +190,7 @@ ______________________________________________________________________
 ### 3.5 Calibration Dataset (`dataset`)
 
 | Dataset | Use for |
-| :--- | :--- |
+| :-------------------- | :--------------------------------------------------------------------- |
 | `mix_calib.jsonl` | Default — general-purpose. Used when no `dataset:` field is specified. |
 | `qwen3_cot.json` | Reasoning/CoT models at W8A8 (Qwen3, QwQ) |
 | `qwen3_cot_w4a4.json` | Reasoning models at W4A4 or aggressive W4A8 |
@@ -241,7 +229,7 @@ spec:
   process:
     # ...
 
-dataset: /path/to/multimodal_calib.jsonl   # absolute path required
+dataset: /path/to/multimodal_calib.jsonl # absolute path required
 ```
 
 **Vision component layer protection.** Vision encoders and vision-language projection layers are highly sensitive to quantization. The standard LLM-focused `flex_smooth_quant` preprocessors do **not** cover ViT-style subgraphs, so leave these components in BF16 unless you have evidence they tolerate quantization.
@@ -249,7 +237,7 @@ dataset: /path/to/multimodal_calib.jsonl   # absolute path required
 Common naming patterns to exclude (adjust to the actual model architecture):
 
 | Component | Typical glob pattern | Action |
-| :--- | :--- | :--- |
+| :--------------------------------- | :--------------------------------------------------- | :------------------ |
 | Vision encoder (ViT body) | `*visual*`, `*vision_model*`, `*image_encoder*` | Exclude — keep BF16 |
 | Patch embedding | `*patch_embed*`, `*pos_embed*`, `*cls_token*` | Exclude — keep BF16 |
 | Vision-language projection | `*visual_projection*`, `*mm_projector*`, `*vl_proj*` | Exclude or W8A16 |
@@ -297,7 +285,7 @@ msmodelslim analyze \
   --metrics kurtosis \
   --topk 20 \
   --calib_dataset /path/to/multimodal_calib.jsonl \
-  --trust_remote_code True
+  --trust_remote_code True 2>&1 | tee analyze_<model>.log
 ```
 
 Using a text-only dataset here will produce artificially uniform sensitivity scores for vision-adjacent layers, making the output unreliable.
@@ -359,20 +347,22 @@ metadata:
 
 # Reusable qconfig anchors
 default_w8a8_dynamic: &default_w8a8_dynamic
-  act:    {scope: "per_token",   dtype: "int8", symmetric: true, method: "minmax"}
-  weight: {scope: "per_channel", dtype: "int8", symmetric: true, method: "minmax"}
+  act: { scope: "per_token", dtype: "int8", symmetric: true, method: "minmax" }
+  weight:
+    { scope: "per_channel", dtype: "int8", symmetric: true, method: "minmax" }
 
 default_w4a8_dynamic: &default_w4a8_dynamic
-  act:    {scope: "per_token",   dtype: "int8", symmetric: true, method: "minmax"}
-  weight: {scope: "per_channel", dtype: "int4", symmetric: true, method: "ssz"}
+  act: { scope: "per_token", dtype: "int8", symmetric: true, method: "minmax" }
+  weight:
+    { scope: "per_channel", dtype: "int4", symmetric: true, method: "ssz" }
 
 spec:
   process:
     # Step 1: Outlier suppression — see Section 3.4 for preprocessor and subgraph type selection
     - type: "flex_smooth_quant"
-      enable_subgraph_type: ['norm-linear']
+      enable_subgraph_type: ["norm-linear"]
       include:
-        - '*'
+        - "*"
 
     # Step 2: Mixed quantization group
     - type: "group"
@@ -443,8 +433,24 @@ ______________________________________________________________________
 
 ### Lifecycle Management
 
-- Once a quantization command is initialized and confirmed, output the exact command for the user to run in their terminal.
+- Once a quantization command is initialized and confirmed, **always save it to a shell script** in the current working directory before presenting it to the user. Never output a bare command without a corresponding `.sh` file.
+
+- **Log capture**: Append `2>&1 | tee <script_name>.log` to every command written into the shell script so that stdout and stderr are both captured locally. The log file name must match the script name (e.g. `quant_qwen3_w4a8.sh` → `quant_qwen3_w4a8.log`).
+
+- Shell script template:
+
+  ```bash
+  #!/usr/bin/env bash
+  set -euo pipefail
+
+  msmodelslim quant \
+    --model_path ${MODEL_PATH} \
+    --save_path  ${SAVE_PATH} \
+    ... 2>&1 | tee quant_<model>_<dtype>.log
+  ```
+
 - **Safety**: Terminate any background processes immediately after the main quantization loop begins to prevent resource contention.
+
 - **Artifact Storage**: Save all generated YAML configs and shell scripts to the current working directory. Do not save them elsewhere.
 
 ______________________________________________________________________
@@ -507,10 +513,10 @@ Is there a lab_practice YAML for this exact model + dtype?
 ```yaml
 apiversion: modelslim_v1
 metadata:
-  config_id: <model_name>_<dtype>   # unique identifier, e.g. qwen3_14b_w4a8
-  score: 0                            # unverified — set to 0 or leave out
+  config_id: <model_name>_<dtype> # unique identifier, e.g. qwen3_14b_w4a8
+  score: 0 # unverified — set to 0 or leave out
   verified_model_types:
-    - <ModelName>                     # exact transformers model type string
+    - <ModelName> # exact transformers model type string
   label:
     w_bit: <4|8>
     a_bit: <4|8>
@@ -519,19 +525,21 @@ metadata:
 
 # Inline qconfig anchors (no external references)
 w8a8: &w8a8
-  act:    {scope: "per_token",   dtype: "int8", symmetric: true,  method: "minmax"}
-  weight: {scope: "per_channel", dtype: "int8", symmetric: true,  method: "minmax"}
+  act: { scope: "per_token", dtype: "int8", symmetric: true, method: "minmax" }
+  weight:
+    { scope: "per_channel", dtype: "int8", symmetric: true, method: "minmax" }
 
 w4a8: &w4a8
-  act:    {scope: "per_token",   dtype: "int8", symmetric: true,  method: "minmax"}
-  weight: {scope: "per_channel", dtype: "int4", symmetric: true,  method: "ssz"}
+  act: { scope: "per_token", dtype: "int8", symmetric: true, method: "minmax" }
+  weight:
+    { scope: "per_channel", dtype: "int4", symmetric: true, method: "ssz" }
 
 spec:
   process:
     - type: "flex_smooth_quant"
-      enable_subgraph_type: ['norm-linear']
+      enable_subgraph_type: ["norm-linear"]
       include:
-        - '*'
+        - "*"
 
     - type: "group"
       configs:
@@ -546,7 +554,7 @@ spec:
 
         - type: "linear_quant"
           qconfig: *w4a8
-          include: ["*mlp.experts*"]      # MoE only; omit for dense models
+          include: ["*mlp.experts*"] # MoE only; omit for dense models
 
   save:
     - type: "ascendv1_saver"
@@ -556,7 +564,7 @@ spec:
 **Required fields:**
 
 | Field | Value |
-| :--- | :--- |
+| :------------------------------ | :---------------------------------------------------------------------------------------------------------- |
 | `metadata.config_id` | `<model_name>_<dtype>` — unique slug, no spaces |
 | `metadata.verified_model_types` | Exact `<ModelName>` string as passed to `--model_type` |
 | `metadata.label.w_bit / a_bit` | Match the dominant `dtype` in the qconfig group |

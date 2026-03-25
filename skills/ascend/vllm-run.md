@@ -43,6 +43,17 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 **Artifact Storage**: Save all generated Python scripts and shell scripts to the current working directory. Do not save them elsewhere.
 
+**Script & log rule**: Every generated command must be saved to a `.sh` file before presenting it to the user. Append `2>&1 | tee <script_name>.log` to the command inside the script so stdout and stderr are captured locally. Log file name must match the script name (e.g. `serve_qwen3_w4a8.sh` → `serve_qwen3_w4a8.log`). Shell script template:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+
+python -m vllm.entrypoints.openai.api_server \
+  --model /path/to/model \
+  ... 2>&1 | tee serve_<model>.log
+```
+
 ### Quick Start: Offline Inference
 
 ```python
@@ -197,7 +208,7 @@ python -m vllm.entrypoints.openai.api_server \
   --trust-remote-code \
   --quantization ascend \
   --host 0.0.0.0 \
-  --port 8000
+  --port 8000 2>&1 | tee serve_<model>.log
 ```
 ````
 
@@ -279,7 +290,7 @@ kill -2 "$VLLM_PID"
 python -m vllm.entrypoints.openai.api_server \
   --model Qwen/Qwen3-8B-Instruct \
   --trust-remote-code \
-  --tensor-parallel-size 2
+  --tensor-parallel-size 2 2>&1 | tee serve_qwen3_dense.log
 ```
 
 ### Qwen3 Quantized (W4A8)
@@ -289,7 +300,7 @@ python -m vllm.entrypoints.openai.api_server \
   --model Qwen/Qwen3-8B-W4A8 \
   --trust-remote-code \
   --quantization ascend \
-  --tensor-parallel-size 2
+  --tensor-parallel-size 2 2>&1 | tee serve_qwen3_w4a8.log
 ```
 
 ### DeepSeek V3 (MoE, W8A8)
@@ -299,7 +310,7 @@ python -m vllm.entrypoints.openai.api_server \
   --model deepseek-ai/DeepSeek-V3 \
   --trust-remote-code \
   --quantization ascend \
-  --tensor-parallel-size 8
+  --tensor-parallel-size 8 2>&1 | tee serve_deepseek_v3_w8a8.log
 ```
 
 ### DeepSeek V3 with Multi-Token Prediction (MTP)
@@ -312,7 +323,8 @@ python -m vllm.entrypoints.openai.api_server \
   --trust-remote-code \
   --quantization ascend \
   --tensor-parallel-size 8 \
-  --speculative-config '{"method": "deepseek_mtp", "num_speculative_tokens": 1}'
+  --speculative-config '{"method": "deepseek_mtp", "num_speculative_tokens": 1}' \
+  2>&1 | tee serve_deepseek_v3_mtp.log
 ```
 
 > MTP is incompatible with XLite graph mode.
