@@ -111,19 +111,21 @@ ______________________________________________________________________
 
 Run this **only after** evaluation fails (Section 0, Step 4). Do **not** run preemptively.
 
+For the full analysis workflow (command syntax, metric selection, output interpretation, YAML strategies), see [sensitivity-analysis.md](sensitivity-analysis.md).
+
+Quick reference:
+
 ```bash
 msmodelslim analyze \
   --model_type <TYPE> \
   --model_path <PATH> \
   --metrics kurtosis \
   --topk 15 \
-  --device npu 2>&1 | tee analyze_<model>.log
+  --device npu \
+  --calib_dataset ${CALIB_DATASET} 2>&1 | tee analyze_<model>.log
 ```
 
-Extract the top-ranked layer names from the output and add them to `disable_names` in the quantization config. Then **retry with the user's original target dtype** — do not downgrade without explicit confirmation.
-
-- `Act Method`: default `3` (Auto-mixed)
-- `Anti Method`: default `m2` (Enhanced SmoothQuant)
+Extract the top-ranked layer names from the YAML block in the output. Add them to the `exclude` list or promote to W8A8 via a `group` processor in your quantization YAML. Then **retry with the user's original target dtype** — do not downgrade without explicit confirmation.
 
 ______________________________________________________________________
 

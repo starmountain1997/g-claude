@@ -1,38 +1,54 @@
-# vLLM-Ascend Installation Playbook
+# vLLM-Ascend Installation
 
-This playbook provides a foolproof method for installing vLLM from source on Ascend NPUs, ensuring version compatibility between the core `vllm` and the `vllm-ascend` plugin.
+Install vLLM from source on Ascend NPUs. The core requirement is version-pinning: `vllm-ascend` only works with a specific `vllm` commit.
 
-## 1. Environment Cleanup
+______________________________________________________________________
 
-Before starting, ensure no conflicting installations exist.
+## 1. Cleanup
+
+Remove any conflicting installations before starting:
 
 ```bash
 pip uninstall -y vllm vllm-ascend
 ```
 
-## 2. Installation Workflow
+______________________________________________________________________
 
-### Step A: Clone Repositories
+## 2. Clone Repositories
 
-Retrieve both the core vLLM engine and the Ascend-specific plugin:
+```bash
+git clone https://github.com/vllm-project/vllm.git
+git clone https://github.com/vllm-project/vllm-ascend.git
+```
 
-- `git clone https://github.com/vllm-project/vllm.git`
-- `git clone https://github.com/vllm-project/vllm-ascend.git`
+______________________________________________________________________
 
-### Step B: Sync Versions (Crucial)
+## 3. Pin vllm to the Commit Expected by vllm-ascend
 
-To avoid ABI/API mismatches, you must sync the `vllm` core to the commit expected by the plugin:
+`vllm-ascend` is built against a specific `vllm` commit. Using any other commit causes ABI/API mismatches that are hard to diagnose.
 
-1. Open `vllm-ascend/.github/workflows/pr_test_full.yaml`.
-1. Locate the `VLLM_COMMIT` or equivalent identifier.
-1. Switch the `vllm` repository to that specific commit:
-   ```bash
-   cd vllm && git checkout <COMMIT_HASH> && cd ..
-   ```
+Find the expected commit by opening the vllm-ascend CI workflow:
 
-### Step C: Build & Install Core
+```bash
+# Look for VLLM_COMMIT (or similar) in the CI workflow file
+grep -r "VLLM_COMMIT\|vllm.*checkout\|vllm.*sha" vllm-ascend/.github/workflows/
+```
 
-Install vLLM in editable mode with the `empty` target to bypass CUDA/ROCm build requirements:
+Once you have the hash, switch the `vllm` repo to it:
+
+```bash
+cd vllm
+git checkout <COMMIT_HASH>
+cd ..
+```
+
+> If the hash is not obvious from the grep output, open `vllm-ascend/.github/workflows/vllm_ascend_test.yaml` (or the equivalent CI file) and search for `VLLM_COMMIT` or a `actions/checkout` step for `vllm-project/vllm` with a `ref:` field.
+
+______________________________________________________________________
+
+## 4. Install vllm Core
+
+Install in editable mode with `VLLM_TARGET_DEVICE=empty` to skip the CUDA/ROCm build step — Ascend uses its own device backend:
 
 ```bash
 cd vllm
@@ -40,9 +56,9 @@ VLLM_TARGET_DEVICE=empty pip install -v -e .
 cd ..
 ```
 
-### Step D: Build & Install Plugin
+______________________________________________________________________
 
-Install the Ascend plugin in editable mode to allow for source-level debugging:
+## 5. Install vllm-ascend Plugin
 
 ```bash
 cd vllm-ascend
@@ -50,12 +66,20 @@ pip install -v -e .
 cd ..
 ```
 
-## 3. Verification
+The `-e` (editable) flag lets you modify the plugin source for debugging without reinstalling.
 
-Verify the installation by checking the installed packages and their versions:
+______________________________________________________________________
+
+## 6. Verify
 
 ```bash
 pip list | grep vllm
 ```
 
-Ensure both `vllm` and `vllm-ascend` are listed and pointing to your local source directories.
+Both `vllm` and `vllm-ascend` should appear, pointing to their local source directories (editable installs show the path).
+
+Run a quick import check:
+
+```bash
+python -c "import vllm; import vllm_ascend; print('OK')"
+```

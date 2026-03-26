@@ -1,45 +1,32 @@
 # vLLM-Ascend Running & Troubleshooting
 
-Guide for running and debugging vLLM on Ascend NPUs. This guide is modular; jump to the phase that matches your current progress.
+Guide for running and debugging vLLM on Ascend NPUs. Jump to the phase that matches your current progress.
 
 **Pre-run check**: Always verify available devices with `npu-smi info`.
+
+______________________________________________________________________
 
 ## Phase 1: Setup & Basic Validation
 
 *Use this if you are starting with a new model or new environment.*
 
-<Steps>
-  <Step title="Locate Weights">
-    Always ask the user for the local path to the model weights before proceeding.
-  </Step>
+1. **Locate Weights** — Ask the user for the local path to the model weights before proceeding.
 
-<Step title="Environment Setup">
-    Set required environment variables before running vLLM:
+1. **Set environment variables**:
 
-````
-```bash
-export VLLM_USE_MODELSCOPE=true
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
-```
+   ```bash
+   export VLLM_USE_MODELSCOPE=true
+   export VLLM_WORKER_MULTIPROC_METHOD=spawn
+   ```
 
-- `VLLM_USE_MODELSCOPE`: Use ModelScope for model downloads (recommended in China)
-- `VLLM_WORKER_MULTIPROC_METHOD=spawn`: Required for NPU multi-process support
-````
+   - `VLLM_USE_MODELSCOPE`: Use ModelScope for model downloads (recommended in China)
+   - `VLLM_WORKER_MULTIPROC_METHOD=spawn`: Required for NPU multi-process support
 
-</Step>
+1. **Offline Validation** — Create a standalone Python script for offline inference first to ensure the basic setup is functional (see Quick Start below).
 
-<Step title="Offline Validation">
-    Create a standalone Python script for offline inference first to ensure the basic setup is functional.
-  </Step>
+1. **Quantized Model Check** — If the model is quantized (W4A8, W8A8, W4A16, W8A16, etc.), add `--quantization ascend` to enable Ascend-specific quantization kernels. Do **not** add this flag for bf16/fp16 models — it will produce wrong output or NaN.
 
-<Step title="Quantized Model Check">
-    If the model is quantized (W4A8, W8A8, W4A16, W8A16, etc.), add `--quantization ascend` to enable Ascend-specific quantization kernels. Do **not** add this flag for bf16/fp16 models — it will produce wrong output or NaN.
-  </Step>
-
-<Step title="Trust Remote Code">
-    For models with custom architecture (Qwen3, DeepSeek, GLM, etc.), add `--trust-remote-code`.
-  </Step>
-</Steps>
+1. **Trust Remote Code** — For models with custom architecture (Qwen3, DeepSeek, GLM, etc.), add `--trust-remote-code`.
 
 **Artifact Storage**: Save all generated Python scripts and shell scripts to the current working directory. Do not save them elsewhere.
 
@@ -70,35 +57,17 @@ outputs = llm.generate(["Your prompt here"], sampling_params)
 print(outputs[0].outputs[0].text)
 ```
 
+______________________________________________________________________
+
 ## Phase 2: Compatibility & Debugging (Eager Mode)
 
 *Use this if the model fails to run or produces errors in graph mode.*
 
-<Steps>
-  <Step title="Enable Eager Mode">
-    Add `--enforce-eager` to disable ACL Graph and verify operator compatibility:
+1. **Enable Eager Mode** — Add `--enforce-eager` to disable ACL Graph and verify operator compatibility. This isolates kernel issues from graph capture problems. If the model runs correctly in eager mode but fails in graph mode, the issue is in graph capture or a graph-incompatible op.
 
-````
-```bash
---enforce-eager
-```
+1. **Check NPU Availability** — Ensure NPUs are not locked by other processes: `npu-smi info`
 
-This isolates kernel issues from graph capture problems. If the model runs correctly in eager mode but fails in graph mode, the issue is in graph capture or a graph-incompatible op.
-````
-
-</Step>
-
-<Step title="Check NPU Availability">
-    Ensure NPUs are not locked by other processes:
-    ```bash
-    npu-smi info
-    ```
-  </Step>
-
-<Step title="Source-level Fix">
-    If errors occur (e.g., missing kernels, assertion failures), create a fix branch in the `vllm-ascend` directory and modify source code directly. Re-run validation after each modification.
-  </Step>
-</Steps>
+1. **Source-level Fix** — If errors occur (e.g., missing kernels, assertion failures), create a fix branch in the `vllm-ascend` directory and modify source code directly. Re-run validation after each modification.
 
 ### Common CLI Arguments
 
@@ -117,54 +86,46 @@ This isolates kernel issues from graph capture problems. If the model runs corre
 | `--disable-log-stats` | | Disable performance logging |
 | `--disable-log-request` | | Disable per-request logging |
 
+______________________________________________________________________
+
 ## Phase 3: Performance Optimization
 
-*Use this if you already have a working script (eager mode) and want to improve throughput.*
+*Use this if you already have a working script and want to improve throughput.*
 
-<Steps>
-  <Step title="Disable Eager Mode">
-    Once eager mode passes, remove `--enforce-eager` to enable ACL Graph mode for better performance.
-  </Step>
+1. **Disable Eager Mode** — Once eager mode passes, remove `--enforce-eager` to enable ACL Graph mode for better performance.
 
-<Step title="Graph Mode Selection">
-    vLLM-Ascend supports two ACL graph capture modes configured internally:
+1. **Graph Mode Selection** — vLLM-Ascend supports two ACL graph capture modes:
 
-````
-- **PIECEWISE** (default): captures individual ops; safe for most models
-- **FULL**: captures the full model graph; higher throughput, requires all ops to be graph-compatible
+   - **PIECEWISE** (default): captures individual ops; safe for most models
+   - **FULL**: captures the full model graph; higher throughput, requires all ops to be graph-compatible
 
-For experimental **XLite** graph mode, pass via `--additional-config`:
-```bash
---additional-config '{"xlite_graph_config": {"enabled": true}}'
-```
-XLite is incompatible with: speculative decoding, pipeline parallelism, and block sizes other than 128.
-````
+   For experimental **XLite** graph mode:
 
-</Step>
+   ```bash
+   --additional-config '{"xlite_graph_config": {"enabled": true}}'
+   ```
 
-<Step title="Multi-NPU Scaling">
-    For larger models, use tensor parallelism:
-    ```bash
-    --tensor-parallel-size 2   # 2 NPUs
-    --tensor-parallel-size 4   # 4 NPUs
-    ```
-  </Step>
+   XLite is incompatible with: speculative decoding, pipeline parallelism, and block sizes other than 128.
 
-<Step title="Memory Tuning">
-    Adjust memory allocation:
-    ```bash
-    --gpu-memory-utilization 0.95    # Use more NPU memory
-    --swap-space 16                   # CPU swap for KV cache (GB)
-    ```
-  </Step>
+1. **Multi-NPU Scaling**:
 
-<Step title="Fusion Config (Advanced)">
-    Enable operator fusion passes via `--additional-config`:
-    ```bash
-    --additional-config '{"ascend_compilation_config": {"enable_norm_quant_fusion": true, "enable_allreduce_rms_fusion": true}}'
-    ```
-  </Step>
-</Steps>
+   ```bash
+   --tensor-parallel-size 2   # 2 NPUs
+   --tensor-parallel-size 4   # 4 NPUs
+   ```
+
+1. **Memory Tuning**:
+
+   ```bash
+   --gpu-memory-utilization 0.95    # Use more NPU memory
+   --swap-space 16                   # CPU swap for KV cache (GB)
+   ```
+
+1. **Fusion Config (Advanced)** — Enable operator fusion passes:
+
+   ```bash
+   --additional-config '{"ascend_compilation_config": {"enable_norm_quant_fusion": true, "enable_allreduce_rms_fusion": true}}'
+   ```
 
 ### Performance Environment Variables
 
@@ -181,53 +142,44 @@ XLite is incompatible with: speculative decoding, pipeline parallelism, and bloc
 
 > **Deprecated**: `VLLM_ASCEND_ENABLE_PREFETCH_MLP` is superseded by `weight_prefetch_config` in `--additional-config`.
 
+______________________________________________________________________
+
 ## Phase 4: Online Serving
 
 *Use this once offline inference is stable and optimized.*
 
-<Steps>
-  <Step title="API Server Conversion">
-    Convert validated offline parameters into an API server command:
+1. **Convert to API server** — Take the validated offline parameters and launch the API server:
 
-````
-```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model /path/to/model \
-  --tensor-parallel-size 2 \
-  --trust-remote-code \
-  --quantization ascend \
-  --host 0.0.0.0 \
-  --port 8000 2>&1 | tee serve_<model>.log
-```
-````
+   ```bash
+   python -m vllm.entrypoints.openai.api_server \
+     --model /path/to/model \
+     --tensor-parallel-size 2 \
+     --trust-remote-code \
+     --quantization ascend \
+     --host 0.0.0.0 \
+     --port 8000 2>&1 | tee serve_<model>.log
+   ```
 
-</Step>
+1. **Health Check** — Verify server is ready:
 
-<Step title="Health Check">
-    Verify server is ready:
-    ```bash
-    curl http://localhost:8000/v1/models
-    ```
-  </Step>
+   ```bash
+   curl http://localhost:8000/v1/models
+   ```
 
-<Step title="Test Request">
-    Send a test completion:
-    ```bash
-    curl http://localhost:8000/v1/completions \
-      -H "Content-Type: application/json" \
-      -d '{
-        "model": "your-model-name",
-        "prompt": "Hello, how are you?",
-        "max_completion_tokens": 100,
-        "temperature": 0
-      }'
-    ```
-  </Step>
+1. **Test Request**:
 
-<Step title="Final Deployment">
-    Ask the user for their preferred `model-served-name` and `port` before providing the final command.
-  </Step>
-</Steps>
+   ```bash
+   curl http://localhost:8000/v1/completions \
+     -H "Content-Type: application/json" \
+     -d '{
+       "model": "your-model-name",
+       "prompt": "Hello, how are you?",
+       "max_completion_tokens": 100,
+       "temperature": 0
+     }'
+   ```
+
+1. **Final Deployment** — Ask the user for their preferred `model-served-name` and `port` before providing the final command.
 
 ### Graceful Shutdown
 
@@ -238,6 +190,8 @@ VLLM_PID=$(pgrep -f "vllm serve")
 # Graceful shutdown (SIGINT)
 kill -2 "$VLLM_PID"
 ```
+
+______________________________________________________________________
 
 ## Troubleshooting
 
@@ -270,6 +224,8 @@ kill -2 "$VLLM_PID"
 | Architecture not recognized | Missing model registry entry | Add mapping to `vllm/model_executor/models/registry.py` |
 | Remote code import fails | transformers version mismatch | Don't upgrade transformers; prefer native vLLM model implementation |
 | `SOC_VERSION` not found | npu-smi not on PATH or NPU not detected | Set `SOC_VERSION` manually (e.g., `Ascend910B3`) |
+
+______________________________________________________________________
 
 ## Reference: Common Model Configurations
 
@@ -304,7 +260,7 @@ python -m vllm.entrypoints.openai.api_server \
 
 ### DeepSeek V3 with Multi-Token Prediction (MTP)
 
-MTP (speculative decoding via draft tokens) is supported for DeepSeek-V2/V3. Pass via `--additional-config` or use `--speculative-config`:
+MTP (speculative decoding via draft tokens) is supported for DeepSeek-V2/V3. Pass via `--speculative-config`:
 
 ```bash
 python -m vllm.entrypoints.openai.api_server \
