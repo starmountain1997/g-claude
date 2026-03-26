@@ -43,17 +43,6 @@ export VLLM_WORKER_MULTIPROC_METHOD=spawn
 
 **Artifact Storage**: Save all generated Python scripts and shell scripts to the current working directory. Do not save them elsewhere.
 
-**Script & log rule**: Every generated command must be saved to a `.sh` file before presenting it to the user. Append `2>&1 | tee <script_name>.log` to the command inside the script so stdout and stderr are captured locally. Log file name must match the script name (e.g. `serve_qwen3_w4a8.sh` → `serve_qwen3_w4a8.log`). Shell script template:
-
-```bash
-#!/usr/bin/env bash
-set -euo pipefail
-
-python -m vllm.entrypoints.openai.api_server \
-  --model /path/to/model \
-  ... 2>&1 | tee serve_<model>.log
-```
-
 ### Quick Start: Offline Inference
 
 ```python

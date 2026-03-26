@@ -37,6 +37,39 @@ export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
 
 `ASCEND_RT_VISIBLE_DEVICES` controls which NPUs are visible to **both** vLLM and msmodelslim. Set this before any command that touches NPUs.
 
+## Common Requirement: Run via Shell Script with Log Output
+
+All actual run/quantization/inference commands must be saved to a shell script and executed through it. The script must redirect both stdout and stderr to a log file so that output is preserved for debugging.
+
+**Template:**
+
+```bash
+cat > run.sh << 'EOF'
+#!/bin/bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+LOG_FILE="${SCRIPT_DIR}/run_$(date +%Y%m%d_%H%M%S).log"
+
+# Environment setup
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+export VLLM_USE_MODELSCOPE=true
+export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
+
+# Run and log
+"$@" 2>&1 | tee "$LOG_FILE"
+EOF
+chmod +x run.sh
+./run.sh <your-command>
+```
+
+**Key points:**
+
+- Both stdout and stderr are captured in the log file via `2>&1 | tee "$LOG_FILE"`
+- Log file is named with a timestamp so each run gets a unique file
+- The script must be `chmod +x` before execution
+- Do **not** run commands directly in the terminal; always go through the script so output is saved
+
 ## Task Specifics
 
 For detailed instructions on specific tools, refer to:

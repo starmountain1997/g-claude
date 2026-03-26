@@ -433,22 +433,6 @@ ______________________________________________________________________
 
 ### Lifecycle Management
 
-- Once a quantization command is initialized and confirmed, **always save it to a shell script** in the current working directory before presenting it to the user. Never output a bare command without a corresponding `.sh` file.
-
-- **Log capture**: Append `2>&1 | tee <script_name>.log` to every command written into the shell script so that stdout and stderr are both captured locally. The log file name must match the script name (e.g. `quant_qwen3_w4a8.sh` → `quant_qwen3_w4a8.log`).
-
-- Shell script template:
-
-  ```bash
-  #!/usr/bin/env bash
-  set -euo pipefail
-
-  msmodelslim quant \
-    --model_path ${MODEL_PATH} \
-    --save_path  ${SAVE_PATH} \
-    ... 2>&1 | tee quant_<model>_<dtype>.log
-  ```
-
 - **Safety**: Terminate any background processes immediately after the main quantization loop begins to prevent resource contention.
 
 - **Artifact Storage**: Save all generated YAML configs and shell scripts to the current working directory. Do not save them elsewhere.
