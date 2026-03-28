@@ -69,7 +69,7 @@ For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
 - **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols (includes end-to-end iterative workflow). See [sensitivity-analysis.md](sensitivity-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
-- **AISBench Evaluation**: See [ais_bench.md](ais_bench.md) for accuracy and performance benchmarking against a running vLLM service.
+- **AISBench Evaluation**: See [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.
 
 ## Core Tips
 
