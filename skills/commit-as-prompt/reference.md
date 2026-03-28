@@ -57,7 +57,6 @@
 name: commit-summary
 description: 生成提交摘要
 ---
-
 当前分支提交历史：
 !`git log --oneline -10`
 

@@ -156,11 +156,10 @@ Skill files can contain any instructions, but thinking about how you want to inv
 name: api-conventions
 description: API design patterns for this codebase
 ---
-
 When writing API endpoints:
-- Use RESTful naming conventions
-- Return consistent error formats
-- Include request validation
+  - Use RESTful naming conventions
+  - Return consistent error formats
+  - Include request validation
 ```
 
 **Task content** gives Claude step-by-step instructions for a specific action, like deployments, commits, or code generation. These are often actions you want to invoke directly with `/skill-name` rather than letting Claude decide when to run them. Add `disable-model-invocation: true` to prevent Claude from triggering it automatically.
@@ -192,7 +191,6 @@ description: What this skill does
 disable-model-invocation: true
 allowed-tools: Read, Grep
 ---
-
 Your skill instructions here...
 ```
 
@@ -321,7 +319,6 @@ name: fix-issue
 description: Fix a GitHub issue
 disable-model-invocation: true
 ---
-
 Fix GitHub issue $ARGUMENTS following our coding standards.
 
 1. Read the issue description
@@ -342,7 +339,6 @@ To access individual arguments by position, use `$ARGUMENTS[N]` or the shorter `
 name: migrate-component
 description: Migrate a component from one framework to another
 ---
-
 Migrate the $ARGUMENTS[0] component from $ARGUMENTS[1] to $ARGUMENTS[2].
 Preserve all existing behavior and tests.
 ```
@@ -354,7 +350,6 @@ Running `/migrate-component SearchBar React Vue` replaces `$ARGUMENTS[0]` with `
 name: migrate-component
 description: Migrate a component from one framework to another
 ---
-
 Migrate the $0 component from $1 to $2.
 Preserve all existing behavior and tests.
 ```

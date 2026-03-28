@@ -227,8 +227,8 @@ Serving a VLM requires additional vLLM flags. Confirm the model is running with 
 
 ```bash
 curl http://localhost:8080/v1/chat/completions \
-  -H "Content-Type: application/json" \
-  -d '{
+	-H "Content-Type: application/json" \
+	-d '{
     "model": "<MODEL_SERVED_NAME>",
     "messages": [{"role": "user", "content": [
       {"type": "text", "text": "describe this image in one word"},

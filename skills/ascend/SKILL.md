@@ -22,7 +22,8 @@ Verify:
 - No NPU is occupied by another process (check "Process ID" column)
 - If an NPU is occupied, ask the user whether to free it by killing vllm/python processes:
   ```bash
-  kill -9 $(pgrep -f vllm) 2>/dev/null; kill -9 $(pgrep -f python) 2>/dev/null
+  kill -9 $(pgrep -f vllm) 2>/dev/null
+  kill -9 $(pgrep -f python) 2>/dev/null
   ```
 
 ## Common Environment Setup
