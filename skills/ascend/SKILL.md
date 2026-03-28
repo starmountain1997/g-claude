@@ -45,8 +45,6 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 LOG_FILE="${SCRIPT_DIR}/run_$(date +%Y%m%d_%H%M%S).log"
 
 # Environment setup
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
-export VLLM_USE_MODELSCOPE=true
 export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
 
 # Run and log
@@ -62,6 +60,7 @@ chmod +x run.sh
 - Log file is named with a timestamp so each run gets a unique file
 - The script must be `chmod +x` before execution
 - Do **not** run commands directly in the terminal; always go through the script so output is saved
+- Do **not** run the script in the background (no `&`, no `nohup`, no `run_in_background`); run it in the foreground so output streams to the terminal in real time
 
 ## Task Specifics
 
