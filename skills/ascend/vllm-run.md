@@ -115,6 +115,16 @@ Based on the answers, reason through the following parameters:
 | `--max-num-batched-tokens` | Max total tokens across the batch. Effective cap on batch size. Should be ≥ `max-num-seqs × avg-input-len`. |
 | `--gpu-memory-utilization` | Fraction of HBM reserved for KV cache (default 0.9). Raise toward 0.95 when memory is the bottleneck; lower if OOM during init. |
 | `--swap-space` | CPU memory (GiB) for swapping evicted KV blocks. Increase if high concurrency causes frequent preemption. |
+| `--speculative-config` | JSON config for speculative decoding. Example: `{"num_speculative_tokens": 3, "method": "deepseek_mtp"}`. Search the model tutorial doc (Step 3) for supported methods and recommended values. |
+| `--compilation-config` | JSON config for ACL graph capture. Example: `{"cudagraph_capture_sizes": [8,16,24,32,40,48], "cudagraph_mode": "FULL_DECODE_ONLY"}`. Search the model tutorial doc (Step 3) for recommended sizes. |
+
+> **Tip — `cudagraph_capture_sizes` when SP (FlashComm1) + MTP are both enabled:**
+> Let `mtp = num_speculative_tokens`. Sizes must satisfy:
+> - `(mtp + 1)` divisible by `tp`
+> - every size a multiple of `(mtp + 1)`
+> - max size = `max_num_seqs × (mtp + 1)`
+>
+> Example: `num_speculative_tokens=3`, `tp=4` → `mtp+1=4` ✓; `max_num_seqs=12` → sizes `[4,8,…,48]`.
 
 ### Step 3 — Check model-specific tuning docs
 
@@ -124,10 +134,10 @@ Find and read the tutorial for this model family before setting environment vari
 find $(python -c "import vllm_ascend, os; print(os.path.dirname(vllm_ascend.__file__))") \
 	-path "*/docs/source*" -name "*.md" | head -5
 # or locate the installed docs directly:
-ls <vllm-ascend-repo >/docs/source/tutorials/models/
+ls <vllm-ascend-repo>/docs/source/tutorials/models/
 ```
 
-Read the relevant `.md` file — it lists recommended `VLLM_ASCEND_*` environment variables, `--additional-config` options, and known limitations for that model family. Use those values; do not guess environment variables from memory.
+Read the relevant `.md` file — it lists recommended `VLLM_ASCEND_*` environment variables, `--additional-config`, `--speculative-config`, `--compilation-config` options, and known limitations for that model family. Use those values; do not guess from memory.
 
 ______________________________________________________________________
 
