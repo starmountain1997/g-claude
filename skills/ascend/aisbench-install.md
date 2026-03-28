@@ -57,4 +57,4 @@ After installing, note the source root for future use:
 pip show ais_bench_benchmark
 ```
 
-The `Location` field is the root used for all config paths (e.g. `configs/datasets/`, `configs/models/`).
+The `Editable project location` field is the root used for all config paths (e.g. `configs/datasets/`, `configs/models/`).

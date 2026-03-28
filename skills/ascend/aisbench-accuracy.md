@@ -14,7 +14,7 @@ pip show ais_bench_benchmark
 
 If the package is not found, follow [aisbench-install.md](aisbench-install.md) to install it first, then return here.
 
-Use the `Location` field from `pip show` as the root for all config paths below.
+Use the `Editable project location` field from `pip show` as the root for all config paths below.
 
 ______________________________________________________________________
 
@@ -35,7 +35,7 @@ Ask the user: **which dataset do you want to use?**
 
 Once they answer, investigate the AISBench installation to check support and requirements:
 
-Use `$LOCATION` to mean the `Location` path from `pip show ais_bench_benchmark`.
+Use `$LOCATION` to mean the `Editable project location` path from `pip show ais_bench_benchmark`.
 
 1. **Check if the dataset is supported** — look for a matching folder:
    ```bash
@@ -72,7 +72,7 @@ Ask the user:
 
 ### Create the config file
 
-Copy the example template from the AISBench source (`$LOCATION` = `Location` from `pip show ais_bench_benchmark`) to the current working directory:
+Copy the example template from the AISBench source (`$LOCATION` = `Editable project location` from `pip show ais_bench_benchmark`) to the current working directory:
 
 ```bash
 cp $LOCATION/ais_bench/configs/api_examples/infer_vllm_api_stream_chat.py ./eval.py
