@@ -1,6 +1,8 @@
-______________________________________________________________________
-
-## name: ascend description: Entry point for Ascend NPU inference toolchain. Use when running vLLM on Ascend/NPU, quantizing models with msmodelslim, or debugging NPU errors. argument-hint: "vllm issue / quantization / npu usage"
+---
+name: ascend
+description: Entry point for Ascend NPU inference toolchain. Use when running vLLM on Ascend/NPU, quantizing models with msmodelslim, or debugging NPU errors.
+argument-hint: vllm issue / quantization / npu usage
+---
 
 # Ascend Inference Toolchain
 
@@ -18,22 +20,12 @@ Verify:
 
 - All expected NPUs appear and show **Health: OK**
 - No NPU is occupied by another process (check "Process ID" column)
-- If an NPU is stuck, identify the PID and confirm with the user before killing it
+- If an NPU is occupied, ask the user whether to free it by killing vllm/python processes:
+  ```bash
+  kill -9 $(pgrep -f vllm) 2>/dev/null; kill -9 $(pgrep -f python) 2>/dev/null
+  ```
 
 ## Common Environment Setup
-
-Set these before running either vLLM or msmodelslim:
-
-```bash
-# Required for vLLM multi-process NPU support
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
-
-# Use ModelScope for downloads (recommended in China)
-export VLLM_USE_MODELSCOPE=true
-
-# Isolate specific NPUs (adjust indices to match available devices)
-export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
-```
 
 `ASCEND_RT_VISIBLE_DEVICES` controls which NPUs are visible to **both** vLLM and msmodelslim. Set this before any command that touches NPUs.
 
@@ -75,10 +67,14 @@ chmod +x run.sh
 For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
-- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols (includes end-to-end iterative workflow).
-- **Sensitivity Analysis**: See [sensitivity-analysis.md](sensitivity-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
-- **AISBench Evaluation**: See [ais_bench.md](ais_bench.md) for GSM8K accuracy and performance benchmarking against a running vLLM service.
+- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols (includes end-to-end iterative workflow). See [sensitivity-analysis.md](sensitivity-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
+- **AISBench Evaluation**: See [ais_bench.md](ais_bench.md) for accuracy and performance benchmarking against a running vLLM service.
 
 ## Core Tips
 
+- **Editable Installs**: All toolkits — `vllm`, `vllm-ascend`, `msmodelslim`, and `ais_bench` — are installed in editable mode. Before referencing or modifying any of them, run `pip show <package>` to locate the source directory. Never assume a fixed path.
 - **Source Debugging**: Use `pip show <package>` to find the editable source location for deep debugging.
+- **Debugging Branch**: Before any debugging session, create a new git branch to isolate changes:
+  ```bash
+  git checkout -b debug/<topic>
+  ```

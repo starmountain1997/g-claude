@@ -1,7 +1,8 @@
-## name: commit-as-prompt
-
+---
+name: commit-as-prompt
 description: Stage, review, and create a structured Git commit with WHAT/WHY/HOW message format optimized as AI context. Use when committing code changes.
 disable-model-invocation: true
+---
 
 # Commit-As-Prompt
 
