@@ -93,21 +93,32 @@ datasets = [
 **2. Model fields**:
 
 ```python
+from ais_bench.benchmark.models import VLLMCustomAPIChat
+from ais_bench.benchmark.utils.postprocess.model_postprocessors import extract_non_reasoning_content
+
 models = [
     dict(
-        ...
-        model="",             # ← model-served-name; empty string = auto-detect
-        host_ip="localhost",  # ← vLLM host IP
-        host_port=8080,       # ← vLLM port
-        max_out_len=512,      # ← 1024 for text models; 256 for VLM (answers are short)
-        batch_size=1,         # ← 32 for text models; 8–16 for VLM (vision encoding is memory-intensive)
+        attr="service",
+        type=VLLMCustomAPIChat,
+        abbr="vllm-api-stream-chat",
+        path="/path/to/model",     # ← local path of the model
+        model="",                  # ← vLLM served model name (from /v1/models); empty = auto-detect
+        stream=True,
+        request_rate=0,
+        use_timestamp=False,
+        retry=2,
+        api_key="",
+        host_ip="localhost",       # ← vLLM host IP
+        host_port=8080,            # ← vLLM port
+        url="",
+        max_out_len=512,           # ← set according to vLLM --max-model-len config
+        batch_size=1,              # ← set according to vLLM --max-num-seqs / available memory
+        trust_remote_code=False,
         generation_kwargs=dict(
-            temperature=0.0,  # ← use 0.0 for deterministic accuracy eval
-            top_k=1,
-            top_p=1.0,
-            seed=42,
-            repetition_penalty=1.0,
-        )
+            temperature=0.01,      # ← use low temperature for deterministic accuracy eval
+            ignore_eos=False,
+        ),
+        pred_postprocessor=dict(type=extract_non_reasoning_content),
     )
 ]
 ```
