@@ -6,180 +6,150 @@ Guide for running and debugging vLLM on Ascend NPUs. Jump to the phase that matc
 
 ______________________________________________________________________
 
-## Phase 1: Setup & Basic Validation
+## Phase 1: Offline Validation (Eager Mode)
 
-*Use this if you are starting with a new model or new environment.*
+*Start here. Write an offline inference script with eager mode enabled — this is the safest baseline to confirm the model loads and runs correctly before enabling graph capture.*
 
-1. **Locate Weights** — Ask the user for the local path to the model weights before proceeding.
+1. **Check NPU Availability** — Confirm devices are free and record per-card memory: `npu-smi info`
 
-1. **Set environment variables**:
+1. **Analyze Model & Plan Parallelism** — Use `safetensors` to inspect model structure and total parameter count, then combine with hardware info to decide TP / DP / EP. Write and run a script like:
 
-   ```bash
-   export VLLM_USE_MODELSCOPE=true
-   export VLLM_WORKER_MULTIPROC_METHOD=spawn
+   ```python
+   import json, os
+      from pathlib import Path
+      from safetensors import safe_open
+
+      model_dir = Path("/path/to/model")
+
+      # ── parameter count from safetensors ──────────────────────────────
+      total_params = 0
+      layer_shapes: dict[str, tuple] = {}
+      for shard in sorted(model_dir.glob("*.safetensors")):
+          with safe_open(shard, framework="pt", device="cpu") as f:
+              for key in f.keys():
+                  t = f.get_slice(key)
+                  shape = tuple(t.get_shape())
+                  layer_shapes[key] = shape
+                  total_params += 1
+                  for d in shape:
+                      total_params += d - 1   # replace with math.prod below
+
+      # cleaner version
+      import math
+      total_params = sum(math.prod(s) for s in layer_shapes.values())
+      print(f"Total params : {total_params/1e9:.2f} B")
+
+      # ── model config ──────────────────────────────────────────────────
+      cfg = json.loads((model_dir / "config.json").read_text())
+      num_experts   = cfg.get("num_experts") or cfg.get("num_local_experts", 0)
+      hidden_size   = cfg.get("hidden_size", 0)
+      num_layers    = cfg.get("num_hidden_layers", 0)
+      print(f"Hidden size  : {hidden_size},  Layers: {num_layers},  Experts: {num_experts}")
+
+      # ── parallelism planning ──────────────────────────────────────────
+      # Fill in: total NPUs available, HBM per card in GiB
+      num_npus   = 8          # e.g. from `npu-smi info`
+      hbm_per_npu_gib = 64   # e.g. 64 GiB per 910B card
+
+      bytes_per_param = 2     # bf16; use 1 for W8, 0.5 for W4
+      model_gib = total_params * bytes_per_param / 1024**3
+      kv_overhead = 0.2       # rough 20 % for KV cache + activations
+      needed_gib  = model_gib * (1 + kv_overhead)
+
+      tp = 1
+      while tp * hbm_per_npu_gib < needed_gib and tp < num_npus:
+          tp *= 2
+
+      dp = num_npus // tp
+      ep = min(num_experts, tp * dp) if num_experts else 1  # EP ≤ total NPUs
+
+      print(f"Model size   : {model_gib:.1f} GiB  (needed ≈{needed_gib:.1f} GiB)")
+      print(f"Recommended  : TP={tp}  DP={dp}  EP={ep}")
    ```
 
-   - `VLLM_USE_MODELSCOPE`: Use ModelScope for model downloads (recommended in China)
-   - `VLLM_WORKER_MULTIPROC_METHOD=spawn`: Required for NPU multi-process support
+   Key rules:
 
-1. **Offline Validation** — Create a standalone Python script for offline inference first to ensure the basic setup is functional (see Quick Start below).
+   - **TP** (`tensor_parallel_size`): must fit the full model in HBM. TP must divide `num_attention_heads` and `num_key_value_heads` evenly.
+   - **EP** (`expert_parallel_size`): for MoE models only. EP must divide `num_experts` evenly and EP ≤ TP × DP.
+   - **DP** (`pipeline_parallel_size` is separate): `dp = total_npus / tp`. If dp > 1 you are running data-parallel replicas — usually only for serving.
 
-1. **Quantized Model Check** — If the model is quantized (W4A8, W8A8, W4A16, W8A16, etc.), add `--quantization ascend` to enable Ascend-specific quantization kernels. Do **not** add this flag for bf16/fp16 models — it will produce wrong output or NaN.
+1. **Write an Offline Script** — Create a standalone Python script for offline inference with `enforce_eager=True`. Use the TP/EP values from the step above. Save it to the current working directory.
 
-1. **Trust Remote Code** — For models with custom architecture (Qwen3, DeepSeek, GLM, etc.), add `--trust-remote-code`.
+1. **Quantized Model Check** — If the model is quantized (W4A8, W8A8, W4A16, W8A16, etc.), set `quantization="ascend"` to enable Ascend-specific quantization kernels. Do **not** set this for bf16/fp16 models — it will produce wrong output or NaN.
 
-**Artifact Storage**: Save all generated Python scripts and shell scripts to the current working directory. Do not save them elsewhere.
-
-### Quick Start: Offline Inference
-
-```python
-import os
-os.environ["VLLM_USE_MODELSCOPE"] = "true"
-os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
-
-from vllm import LLM, SamplingParams
-
-llm = LLM(
-    model="/path/to/your/model",
-    tensor_parallel_size=1,          # Number of NPUs for TP
-    trust_remote_code=True,           # Required for custom architectures
-    # quantization="ascend",           # Uncomment if model is quantized (W4A8/W8A8)
-    # max_model_len=4096,              # Override max sequence length
-    # enforce_eager=True,              # Debug: disable graph mode
-)
-
-sampling_params = SamplingParams(
-    max_tokens=512,
-    temperature=0.7,
-)
-
-outputs = llm.generate(["Your prompt here"], sampling_params)
-print(outputs[0].outputs[0].text)
-```
-
-______________________________________________________________________
-
-## Phase 2: Compatibility & Debugging (Eager Mode)
-
-*Use this if the model fails to run or produces errors in graph mode.*
-
-1. **Enable Eager Mode** — Add `--enforce-eager` to disable ACL Graph and verify operator compatibility. This isolates kernel issues from graph capture problems. If the model runs correctly in eager mode but fails in graph mode, the issue is in graph capture or a graph-incompatible op.
-
-1. **Check NPU Availability** — Ensure NPUs are not locked by other processes: `npu-smi info`
+1. **Trust Remote Code** — For models with custom architecture (Qwen3, DeepSeek, GLM, etc.), set `trust_remote_code=True`.
 
 1. **Source-level Fix** — If errors occur (e.g., missing kernels, assertion failures), create a fix branch in the `vllm-ascend` directory and modify source code directly. Re-run validation after each modification.
 
-### Common CLI Arguments
-
-| Argument | Short | Description |
-| :--- | :--- | :--- |
-| `--model` | `-m` | Model path or HuggingFace/ModelScope ID |
-| `--tensor-parallel-size` | `--tp` | Number of NPUs for tensor parallelism |
-| `--gpu-memory-utilization` | | Memory fraction (default 0.9) |
-| `--max-model-len` | | Maximum sequence length |
-| `--max-num-seqs` | | Maximum concurrent sequences |
-| `--enforce-eager` | | Disable graph mode, use eager execution |
-| `--quantization` | `-q` | Quantization method (`ascend` for W4A8/W8A8/W4A16/W8A16 models) |
-| `--trust-remote-code` | | Allow custom model code (required for Qwen3, DeepSeek, GLM) |
-| `--swap-space` | | CPU swap space in GB for KV cache offload |
-| `--additional-config` | | JSON string for Ascend-specific config (see AscendConfig below) |
-| `--disable-log-stats` | | Disable performance logging |
-| `--disable-log-request` | | Disable per-request logging |
+**Artifact Storage**: Save all generated Python scripts and shell scripts to the current working directory. Do not save them elsewhere.
 
 ______________________________________________________________________
 
-## Phase 3: Performance Optimization
+## Phase 2: Performance Optimization
 
-*Use this if you already have a working script and want to improve throughput.*
+*Use this once the offline eager-mode script passes. Enable graph mode and tune parameters for the target serving scenario.*
 
-1. **Disable Eager Mode** — Once eager mode passes, remove `--enforce-eager` to enable ACL Graph mode for better performance.
+### Step 1 — Disable eager mode and select graph mode
+
+1. **Disable Eager Mode** — Remove `enforce_eager=True` to enable ACL Graph mode.
 
 1. **Graph Mode Selection** — vLLM-Ascend supports two ACL graph capture modes:
 
    - **PIECEWISE** (default): captures individual ops; safe for most models
    - **FULL**: captures the full model graph; higher throughput, requires all ops to be graph-compatible
 
-   For experimental **XLite** graph mode:
+### Step 2 — Ask the user about their serving scenario
 
-   ```bash
-   --additional-config '{"xlite_graph_config": {"enabled": true}}'
-   ```
+Before tuning, ask:
 
-   XLite is incompatible with: speculative decoding, pipeline parallelism, and block sizes other than 128.
+> 1. **Sequence length** — What is the typical input + output length?
+> 1. **Concurrency** — How many concurrent requests are expected?
+> 1. **Latency vs throughput** — Optimizing for TTFT/ITL, or maximizing tokens/s?
 
-1. **Multi-NPU Scaling**:
+Based on the answers, reason through the following parameters:
 
-   ```bash
-   --tensor-parallel-size 2   # 2 NPUs
-   --tensor-parallel-size 4   # 4 NPUs
-   ```
+| Parameter | Meaning & tuning rule |
+| :--- | :--- |
+| `--max-model-len` | Max tokens (prompt + output) per request. Set to the actual max needed — larger values consume more KV cache memory, leaving less for batching. |
+| `--max-num-seqs` | Max concurrent sequences in a batch. Raising this increases throughput but raises memory pressure and latency per request. |
+| `--max-num-batched-tokens` | Max total tokens across the batch. Effective cap on batch size. Should be ≥ `max-num-seqs × avg-input-len`. |
+| `--gpu-memory-utilization` | Fraction of HBM reserved for KV cache (default 0.9). Raise toward 0.95 when memory is the bottleneck; lower if OOM during init. |
+| `--swap-space` | CPU memory (GiB) for swapping evicted KV blocks. Increase if high concurrency causes frequent preemption. |
 
-1. **Memory Tuning**:
+### Step 3 — Check model-specific tuning docs
 
-   ```bash
-   --gpu-memory-utilization 0.95    # Use more NPU memory
-   --swap-space 16                   # CPU swap for KV cache (GB)
-   ```
+Find and read the tutorial for this model family before setting environment variables:
 
-1. **Fusion Config (Advanced)** — Enable operator fusion passes:
+```bash
+find $(python -c "import vllm_ascend, os; print(os.path.dirname(vllm_ascend.__file__))") \
+	-path "*/docs/source*" -name "*.md" | head -5
+# or locate the installed docs directly:
+ls <vllm-ascend-repo >/docs/source/tutorials/models/
+```
 
-   ```bash
-   --additional-config '{"ascend_compilation_config": {"enable_norm_quant_fusion": true, "enable_allreduce_rms_fusion": true}}'
-   ```
-
-### Performance Environment Variables
-
-| Variable | Default | Description |
-| :--- | :--- | :--- |
-| `VLLM_ASCEND_ENABLE_FLASHCOMM1` | 0 | FlashComm1 for TP allreduce; beneficial at high concurrency (>1000 tokens) |
-| `VLLM_ASCEND_FLASHCOMM2_PARALLEL_SIZE` | 0 | FlashComm2 O-matrix TP group size (0=disabled) |
-| `VLLM_ASCEND_ENABLE_MATMUL_ALLREDUCE` | 0 | MatmulAllReduce fusion for TP — A2 only, eager mode only |
-| `VLLM_ASCEND_ENABLE_MLAPO` | 1 | MLAPO optimization for DeepSeek W8A8 (better perf, more memory) |
-| `VLLM_ASCEND_ENABLE_NZ` | 1 | FRACTAL_NZ weight format: 0=disabled, 1=quantized models only, 2=always |
-| `VLLM_ASCEND_ENABLE_CONTEXT_PARALLEL` | 0 | Context parallelism for long-sequence prefill |
-| `VLLM_ASCEND_ENABLE_FUSED_MC2` | 0 | Fused MC2 for MoE W8A8: 1=prefill fused dispatch (EP≤32), 2=decode fused dispatch (D-node only) |
-| `VLLM_ASCEND_ENABLE_NPUGRAPH_EX` | 0 | NPU graph backend optimization |
-
-> **Deprecated**: `VLLM_ASCEND_ENABLE_PREFETCH_MLP` is superseded by `weight_prefetch_config` in `--additional-config`.
+Read the relevant `.md` file — it lists recommended `VLLM_ASCEND_*` environment variables, `--additional-config` options, and known limitations for that model family. Use those values; do not guess environment variables from memory.
 
 ______________________________________________________________________
 
-## Phase 4: Online Serving
+## Phase 3: Online Serving
 
 *Use this once offline inference is stable and optimized.*
 
-1. **Convert to API server** — Take the validated offline parameters and launch the API server:
+1. **Ask the user** for their preferred `model-served-name` and `port` before writing any command.
+
+1. **Convert to API server** — Translate the validated offline parameters into an `api_server` launch. Wrap in a shell script following the log-capture template in `SKILL.md` — stdout and stderr must be captured to a timestamped log file via `2>&1 | tee`.
+
+1. **Health Check** — Ask the user for the server's reachable address before running (do not assume `localhost` — proxy settings or network topology may require the LAN IP instead):
 
    ```bash
-   python -m vllm.entrypoints.openai.api_server \
-     --model /path/to/model \
-     --tensor-parallel-size 2 \
-     --trust-remote-code \
-     --quantization ascend \
-     --host 0.0.0.0 \
-     --port 8000 2>&1 | tee serve_<model>.log
+   curl http:// <host >: <port >/v1/models
    ```
 
-1. **Health Check** — Verify server is ready:
+1. **Test Request** — Choose the appropriate smoke test based on model type:
 
-   ```bash
-   curl http://localhost:8000/v1/models
-   ```
-
-1. **Test Request**:
-
-   ```bash
-   curl http://localhost:8000/v1/completions \
-     -H "Content-Type: application/json" \
-     -d '{
-       "model": "your-model-name",
-       "prompt": "Hello, how are you?",
-       "max_completion_tokens": 100,
-       "temperature": 0
-     }'
-   ```
-
-1. **Final Deployment** — Ask the user for their preferred `model-served-name` and `port` before providing the final command.
+   - **Text / chat model**: send a plain-text completion or chat request via curl.
+   - **Multimodal (vision) model**: send both a text-only request and an image request. Use `${CLAUDE_SKILL_DIR}/cat.jpg` as the test image.
+   - **TTS / ASR / audio model**: curl syntax varies per endpoint — provide the endpoint path and flag the correct `Content-Type`, then ask the user to run it themselves since audio I/O cannot be verified here.
 
 ### Graceful Shutdown
 
@@ -195,81 +165,10 @@ ______________________________________________________________________
 
 ## Troubleshooting
 
-### Startup Issues
-
-| Symptom | Likely Cause | Solution |
-| :--- | :--- | :--- |
-| Port bind failed | Port already in use | Kill stale processes: `pkill -f vllm` |
-| HCCL bind error | NPU conflict | Run `npu-smi info` to check availability |
-| "Stuck" at startup | ACL graph capture in progress | Wait for "Graph capturing finished" in logs; can take several minutes for large models |
-| False-ready (crashes on first request) | Runtime error masked during init | Always run a smoke test request immediately after server reports ready |
-| "XLite not compatible with..." | XLite used with unsupported feature | Disable XLite, or disable speculative decoding / pipeline parallelism |
-
-### Runtime Issues
-
-| Symptom | Likely Cause | Solution |
-| :--- | :--- | :--- |
-| Missing kernel errors | Unsupported operator in graph mode | Add `--enforce-eager` to isolate; fix kernel or avoid unsupported op |
-| Wrong output / nan | `--quantization ascend` on a bf16 model | Remove `--quantization ascend` for non-quantized models |
-| OOM during model load | Model too large for NPU memory | Reduce `--gpu-memory-utilization`, increase `--swap-space`, or use more NPUs |
-| OOM during inference | KV cache exhausted | Reduce `--max-model-len` or `--max-num-seqs` |
-| Slow first token | Graph compilation on first shape | Normal on first request; subsequent requests will be fast |
-| Fine-grained TP error | oproj/lmhead TP used outside graph mode | `oproj_tensor_parallel_size` requires graph mode and D-node in PD setup |
-
-### Environment Issues
-
-| Symptom | Likely Cause | Solution |
-| :--- | :--- | :--- |
-| Code changes not picked up | Wrong import path | Check `python -c "import vllm; print(vllm.__file__)"` |
-| Architecture not recognized | Missing model registry entry | Add mapping to `vllm/model_executor/models/registry.py` |
-| Remote code import fails | transformers version mismatch | Don't upgrade transformers; prefer native vLLM model implementation |
-| `SOC_VERSION` not found | npu-smi not on PATH or NPU not detected | Set `SOC_VERSION` manually (e.g., `Ascend910B3`) |
-
-______________________________________________________________________
-
-## Reference: Common Model Configurations
-
-### Qwen3 Dense
+First, look up the error in the vllm-ascend docs before attempting a fix:
 
 ```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model Qwen/Qwen3-8B-Instruct \
-  --trust-remote-code \
-  --tensor-parallel-size 2 2>&1 | tee serve_qwen3_dense.log
+ls <vllm-ascend-repo >/docs/source/
 ```
 
-### Qwen3 Quantized (W4A8)
-
-```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model Qwen/Qwen3-8B-W4A8 \
-  --trust-remote-code \
-  --quantization ascend \
-  --tensor-parallel-size 2 2>&1 | tee serve_qwen3_w4a8.log
-```
-
-### DeepSeek V3 (MoE, W8A8)
-
-```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model deepseek-ai/DeepSeek-V3 \
-  --trust-remote-code \
-  --quantization ascend \
-  --tensor-parallel-size 8 2>&1 | tee serve_deepseek_v3_w8a8.log
-```
-
-### DeepSeek V3 with Multi-Token Prediction (MTP)
-
-MTP (speculative decoding via draft tokens) is supported for DeepSeek-V2/V3. Pass via `--speculative-config`:
-
-```bash
-python -m vllm.entrypoints.openai.api_server \
-  --model deepseek-ai/DeepSeek-V3 \
-  --trust-remote-code \
-  --quantization ascend \
-  --tensor-parallel-size 8 \
-  --speculative-config '{"method": "deepseek_mtp", "num_speculative_tokens": 1}' \
-  2>&1 | tee serve_deepseek_v3_mtp.log
-```
-
-> MTP is incompatible with XLite graph mode.
+Read relevant files there (FAQ, known issues, model-specific pages). Then reason from the error message and context — do not guess at solutions not supported by the docs or the source code.
