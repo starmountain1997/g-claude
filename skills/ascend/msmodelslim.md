@@ -80,21 +80,21 @@ Check `msmodelslim/lab_practice` for a pre-configured YAML matching the model + 
 ```bash
 # Option A1: auto-match from lab_practice
 msmodelslim quant \
-  --model_path ${MODEL_PATH} \
-  --save_path ${SAVE_PATH} \
-  --device npu \
-  --model_type <ModelName> \
-  --quant_type <TARGET_DTYPE> \
-  --trust_remote_code True
+	--model_path ${MODEL_PATH} \
+	--save_path ${SAVE_PATH} \
+	--device npu \
+	--model_type <ModelName> \
+	--quant_type <TARGET_DTYPE> \
+	--trust_remote_code True
 
 # Option A2: explicit config (preferred when a custom YAML exists)
 msmodelslim quant \
-  --model_path ${MODEL_PATH} \
-  --save_path ${SAVE_PATH} \
-  --device npu \
-  --model_type <ModelName> \
-  --config_path /path/to/config.yaml \
-  --trust_remote_code True
+	--model_path ${MODEL_PATH} \
+	--save_path ${SAVE_PATH} \
+	--device npu \
+	--model_type <ModelName> \
+	--config_path /path/to/config.yaml \
+	--trust_remote_code True
 ```
 
 ### Step 1B: Custom YAML (When No lab_practice Config Exists)
@@ -117,12 +117,12 @@ Quick reference:
 
 ```bash
 msmodelslim analyze \
-  --model_type <TYPE> \
-  --model_path <PATH> \
-  --metrics kurtosis \
-  --topk 15 \
-  --device npu \
-  --calib_dataset ${CALIB_DATASET} 2>&1 | tee analyze_<model>.log
+	--model_type <TYPE> \
+	--model_path <PATH> \
+	--metrics kurtosis \
+	--topk 15 \
+	--device npu \
+	--calib_dataset ${CALIB_DATASET} 2>&1 | tee analyze_<model>.log
 ```
 
 Extract the top-ranked layer names from the YAML block in the output. Add them to the `exclude` list or promote to W8A8 via a `group` processor in your quantization YAML. Then **retry with the user's original target dtype** — do not downgrade without explicit confirmation.
@@ -281,13 +281,13 @@ spec:
 
 ```bash
 msmodelslim analyze \
-  --model_type <VLM_ModelName> \
-  --model_path ${MODEL_PATH} \
-  --device npu \
-  --metrics kurtosis \
-  --topk 20 \
-  --calib_dataset /path/to/multimodal_calib.jsonl \
-  --trust_remote_code True 2>&1 | tee analyze_<model>.log
+	--model_type <VLM_ModelName> \
+	--model_path ${MODEL_PATH} \
+	--device npu \
+	--metrics kurtosis \
+	--topk 20 \
+	--calib_dataset /path/to/multimodal_calib.jsonl \
+	--trust_remote_code True 2>&1 | tee analyze_<model>.log
 ```
 
 Using a text-only dataset here will produce artificially uniform sensitivity scores for vision-adjacent layers, making the output unreliable.

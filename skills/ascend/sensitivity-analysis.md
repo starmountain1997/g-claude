@@ -16,13 +16,13 @@ ______________________________________________________________________
 
 ```bash
 msmodelslim analyze \
-  --model_type <ModelName> \
-  --model_path ${MODEL_PATH} \
-  --device npu \
-  --metrics kurtosis \
-  --calib_dataset ${CALIB_DATASET} \
-  --topk 15 \
-  --trust_remote_code False
+	--model_type <ModelName> \
+	--model_path ${MODEL_PATH} \
+	--device npu \
+	--metrics kurtosis \
+	--calib_dataset ${CALIB_DATASET} \
+	--topk 15 \
+	--trust_remote_code False
 ```
 
 ### Parameters
@@ -55,11 +55,11 @@ To limit analysis to specific module types, pass space-separated patterns:
 
 ```bash
 msmodelslim analyze \
-  --model_type Qwen3-32B \
-  --model_path ${MODEL_PATH} \
-  --pattern "*.down_proj*" "*.o_proj*" \
-  --metrics kurtosis \
-  --calib_dataset ${CALIB_DATASET}
+	--model_type Qwen3-32B \
+	--model_path ${MODEL_PATH} \
+	--pattern "*.down_proj*" "*.o_proj*" \
+	--metrics kurtosis \
+	--calib_dataset ${CALIB_DATASET}
 ```
 
 > **`model_type` support**: `std`, `quantile`, and `kurtosis` support the same model types as ModelslimV1 quantization (see `config.ini → [ModelAdapter]`). `attention_mse` only supports DeepSeek-V3/R1 variants. Unsupported types trigger a warning and fall back to the default adapter.
@@ -201,18 +201,20 @@ metadata:
     a_bit: 8
 
 default_w8a8_dynamic: &default_w8a8_dynamic
-  act:    {scope: "per_token",   dtype: "int8", symmetric: true, method: "minmax"}
-  weight: {scope: "per_channel", dtype: "int8", symmetric: true, method: "minmax"}
+  act: { scope: "per_token", dtype: "int8", symmetric: true, method: "minmax" }
+  weight:
+    { scope: "per_channel", dtype: "int8", symmetric: true, method: "minmax" }
 
 default_w4a8_dynamic: &default_w4a8_dynamic
-  act:    {scope: "per_token",   dtype: "int8", symmetric: true, method: "minmax"}
-  weight: {scope: "per_channel", dtype: "int4", symmetric: true, method: "ssz"}
+  act: { scope: "per_token", dtype: "int8", symmetric: true, method: "minmax" }
+  weight:
+    { scope: "per_channel", dtype: "int4", symmetric: true, method: "ssz" }
 
 spec:
   process:
     - type: "flex_smooth_quant"
-      enable_subgraph_type: ['norm-linear']
-      include: ['*']
+      enable_subgraph_type: ["norm-linear"]
+      include: ["*"]
 
     - type: "group"
       configs:
