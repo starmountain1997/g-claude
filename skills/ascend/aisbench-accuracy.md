@@ -47,8 +47,7 @@ Use `$LOCATION` to mean the `Editable project location` path from `pip show ais_
    - Whether it requires a VLM (multimodal) or works with text-only LLMs
    - How to obtain the data files and where to place them
    ```bash
-   cat $LOCATION/ais_bench/benchmark/configs/datasets/<dataset>/README_en.md
-   # or README.md if the English version doesn't exist
+   cat $LOCATION/ais_bench/benchmark/configs/datasets/<dataset>/README.md
    ```
 
 3. **List available config variants** for that dataset:
