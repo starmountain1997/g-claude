@@ -67,8 +67,8 @@ chmod +x run.sh
 For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
-- **msmodelslim**: See [msmodelslim.md](msmodelslim.md) for quantization protocols (includes end-to-end iterative workflow). See [sensitivity-analysis.md](sensitivity-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
-- **AISBench Evaluation**: See [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.
+- **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols (includes end-to-end iterative workflow). See [msmodelslim-analysis.md](msmodelslim-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
+- **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and see [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.
 
 ## Core Tips
 

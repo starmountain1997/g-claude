@@ -99,7 +99,7 @@ msmodelslim quant \
 
 ### Step 1B: Custom YAML (When No lab_practice Config Exists)
 
-Build a YAML config following Sections 3–4 below. Use this for: MoE models with mixed precision, models with no existing best-practice config, or when the one-click result fails accuracy.
+Use this for: MoE models with mixed precision, models with no existing best-practice config, or when the one-click result fails accuracy. Build a YAML config using the parameter guidance below.
 
 ### Step 1C: Traditional Low-Level API (Deep Debugging Only)
 
@@ -111,27 +111,13 @@ ______________________________________________________________________
 
 Run this **only after** evaluation fails (Section 0, Step 4). Do **not** run preemptively.
 
-For the full analysis workflow (command syntax, metric selection, output interpretation, YAML strategies), see [sensitivity-analysis.md](sensitivity-analysis.md).
-
-Quick reference:
-
-```bash
-msmodelslim analyze \
-	--model_type <TYPE> \
-	--model_path <PATH> \
-	--metrics kurtosis \
-	--topk 15 \
-	--device npu \
-	--calib_dataset ${CALIB_DATASET} 2>&1 | tee analyze_<model>.log
-```
-
-Extract the top-ranked layer names from the YAML block in the output. Add them to the `exclude` list or promote to W8A8 via a `group` processor in your quantization YAML. Then **retry with the user's original target dtype** — do not downgrade without explicit confirmation.
+See [msmodelslim-analysis.md](msmodelslim-analysis.md) for the full analysis workflow: command syntax, metric selection, output interpretation, and YAML strategies for adding `disable_names` or promoting layers to W8A8.
 
 ______________________________________________________________________
 
-## 3. Parameter Selection
+### Parameter Selection
 
-### 3.1 Activation Scope (`act.scope`) and `symmetric`
+#### 3.1 Activation Scope (`act.scope`) and `symmetric`
 
 `symmetric` is **not a free choice** — it is determined by `scope`. This is a hardware constraint on Ascend NPU.
 
@@ -145,7 +131,7 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-### 3.2 Weight Scope (`weight.scope`)
+#### 3.2 Weight Scope (`weight.scope`)
 
 | `scope` | When to use | Seen in |
 | :---------------------------------- | :---------------------------------------------------------- | :------------------------------------------------------------------------------------ |
@@ -155,7 +141,7 @@ ______________________________________________________________________
 
 ______________________________________________________________________
 
-### 3.3 Weight Method (`weight.method`)
+#### 3.3 Weight Method (`weight.method`)
 
 Method is **fully determined** by dtype + scope combination:
 
@@ -170,7 +156,7 @@ Method is **fully determined** by dtype + scope combination:
 
 ______________________________________________________________________
 
-### 3.4 Outlier Suppression Preprocessor
+#### 3.4 Outlier Suppression Preprocessor
 
 Must run **before** `linear_quant`. Choose based on quantization aggressiveness and model type:
 
@@ -189,7 +175,7 @@ Must run **before** `linear_quant`. Choose based on quantization aggressiveness 
 
 ______________________________________________________________________
 
-### 3.5 Calibration Dataset (`dataset`)
+#### 3.5 Calibration Dataset (`dataset`)
 
 | Dataset | Use for |
 | :-------------------- | :--------------------------------------------------------------------- |
@@ -198,7 +184,7 @@ ______________________________________________________________________
 | `qwen3_cot_w4a4.json` | Reasoning models at W4A4 or aggressive W4A8 |
 | `autocodebench.jsonl` | Code models (Qwen3-Coder) |
 
-#### 3.5.1 Multimodal Models: Dataset Requirements
+##### 3.5.1 Multimodal Models: Dataset Requirements
 
 **Built-in datasets are text-only.** `mix_calib.jsonl` and the Qwen3 CoT variants contain no image inputs, so they cannot activate vision encoders or cross-modal projection layers during calibration. Using a text-only dataset on a multimodal model silently under-calibrates the vision components, producing poor quantization quality for image-heavy tasks.
 
@@ -294,7 +280,7 @@ Using a text-only dataset here will produce artificially uniform sensitivity sco
 
 ______________________________________________________________________
 
-### 3.6 Layer Protection
+#### 3.6 Layer Protection
 
 Protecting first/last layers from aggressive quantization prevents accuracy collapse. Patterns observed in lab_practice:
 
