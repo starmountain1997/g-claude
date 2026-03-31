@@ -137,20 +137,66 @@ ______________________________________________________________________
 
 ## Troubleshooting: Accuracy Too Low
 
-First, inspect the raw model outputs to understand what went wrong:
+### Step 1 — Inspect raw model outputs
 
-```bash
-cat outputs/default/<timestamp>/predictions/<model-abbr>/<dataset>.json
+Predictions are saved as JSONL (one JSON object per line) under:
+
+```
+outputs/default/<timestamp>/predictions/<model-abbr>/<dataset>.jsonl
 ```
 
-### Output truncated (answers cut off mid-sentence)
+Each line has this structure:
+
+```json
+{
+  "data_abbr": "gsm8k",
+  "id": 0,
+  "success": true,
+  "uuid": "...",
+  "origin_prompt": "...",
+  "prediction": "<model output>",
+  "gold": "<expected answer>"
+}
+```
+
+Print a few samples to see what the model is actually producing:
+
+```bash
+head -n 5 outputs/default/<timestamp>/predictions/<model-abbr>/<dataset>.jsonl | python3 -c "
+import sys, json
+for line in sys.stdin:
+    d = json.loads(line)
+    print('--- id', d['id'])
+    print('GOLD     :', d.get('gold'))
+    print('PREDICT  :', d.get('prediction'))
+    print()
+"
+```
+
+If some requests failed, check the failed file:
+
+```bash
+cat outputs/default/<timestamp>/predictions/<model-abbr>/<dataset>_failed.jsonl
+```
+
+### Step 2 — Diagnose from what you see
+
+#### Output truncated (answers cut off mid-sentence)
 
 The model is hitting a length limit before finishing. Check two things:
 
 1. **vLLM `--max-model-len`** — if set too low on the server side, responses are cut. Check the vLLM launch command (see `vllm-run.md`).
 2. **`max_out_len` in `eval.py`** — raise it (e.g. `1024` → `2048`) and rerun.
 
-### Output is garbled 
+#### Output is garbled
 
 The model is generating incoherent tokens. This is a model-level issue — likely a quantization accuracy regression. Tell the user: the quantization config needs further tuning (e.g. adjust quantization sensitivity or exclude affected layers — see `msmodelslim.md`).
+
+#### Prediction format wrong (correct answer present but not extracted)
+
+The model produces the right answer but the evaluator misses it — e.g. the number appears inside a sentence rather than at the end. Check whether `pred_postprocessor` is set correctly in `eval.py`. For reasoning models (DeepSeek-R1, QwQ), ensure `extract_non_reasoning_content` is applied so the `<think>...</think>` block is stripped before evaluation.
+
+#### Failures (`success: false` in the JSONL)
+
+Network or server errors during inference. Check `error_info` in `<dataset>_failed.jsonl`. Common causes: vLLM OOM (reduce `batch_size`), request timeout (check vLLM logs), or model not loaded yet.
 
