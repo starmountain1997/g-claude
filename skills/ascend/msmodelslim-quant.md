@@ -149,10 +149,27 @@ Method is **fully determined** by dtype + scope combination:
 | :----- | :------------ | :---------- | :------------------------------------------------------------------------------------------------------------------------ |
 | `int8` | `per_channel` | `minmax` | Standard for all W8A8. Fast and sufficient. |
 | `int8` | `per_channel` | `autoround` | Higher accuracy W8A8 (used for attention in W4A4 configs). |
-| `int4` | `per_channel` | `ssz` | **Standard for all W4A8 in lab_practice.** Iterative MSE optimization. `ext.step` overrides iteration count (default 50). |
+| `int4` | `per_channel` | `ssz` | **Standard for all W4A8 in lab_practice.** Iterative MSE optimization. |
 | `int4` | `per_group` | `autoround` | W4A4 only. SSZ does not support `per_group`. |
 
 **Do not mix**: `ssz` with `per_group`, `gptq` with MoE experts, `autoround` with `per_channel` for INT4.
+
+**Extra parameters (`ext`).** Certain method + scope combinations require or accept additional fields under `ext:`:
+
+| method / scope | `ext` field | Default | When required |
+| :------------- | :---------- | :------ | :------------ |
+| `ssz` (any) | `step` | `50` | Optional — lower (e.g. `10`) to trade accuracy for speed. |
+| `per_group` (any method) | `group_size` | `256` | **Required** whenever `scope: "per_group"` is used. |
+| `gptq` (any) | `percdamp` | `0.01` | Optional — damping coefficient for Hessian smoothing. |
+| `gptq` (any) | `block_size` | `128` | Optional — iteration block size. |
+
+```yaml
+# SSZ with reduced iterations
+weight: {scope: "per_channel", dtype: "int4", symmetric: true, method: "ssz", ext: {step: 10}}
+
+# per_group — group_size is mandatory
+weight: {scope: "per_group", dtype: "int4", symmetric: true, method: "autoround", ext: {group_size: 256}}
+```
 
 ______________________________________________________________________
 
