@@ -19,7 +19,7 @@ ______________________________________________________________________
 Ask the user where they want to clone the repositories before proceeding. Then clone into that directory:
 
 ```bash
-cd <user-specified-directory>
+cd YOUR_DIR
 git clone https://github.com/vllm-project/vllm.git
 git clone https://github.com/vllm-project/vllm-ascend.git
 ```
@@ -36,7 +36,7 @@ git -C vllm-ascend tag --sort=-version:refname | head -20
 
 - If the user specifies a version, check it out:
   ```bash
-  git -C vllm-ascend checkout <TAG>
+  git -C vllm-ascend checkout $TAG
   ```
 - If the user doesn't know, stay on `main` (already the default after cloning).
 
@@ -57,7 +57,7 @@ Once you have the hash, switch the `vllm` repo to it:
 
 ```bash
 cd vllm
-git checkout <COMMIT_HASH>
+git checkout $COMMIT_HASH
 cd ..
 ```
 

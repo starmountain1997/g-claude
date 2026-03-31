@@ -37,7 +37,7 @@ All actual run/quantization/inference commands must be saved to a shell script a
 **Template:**
 
 ```bash
-cat > run.sh << 'EOF'
+cat >run.sh <<'EOF'
 #!/bin/bash
 set -euo pipefail
 
@@ -51,7 +51,7 @@ export ASCEND_RT_VISIBLE_DEVICES=0,1,2,3
 "$@" 2>&1 | tee "$LOG_FILE"
 EOF
 chmod +x run.sh
-./run.sh <your-command>
+./run.sh YOUR_COMMAND
 ```
 
 **Key points:**
@@ -76,5 +76,5 @@ For detailed instructions on specific tools, refer to:
 - **Source Debugging**: Use `pip show <package>` to find the editable source location for deep debugging.
 - **Debugging Branch**: Before any debugging session, create a new git branch to isolate changes:
   ```bash
-  git checkout -b debug/<topic>
+  git checkout -b debug/TOPIC
   ```

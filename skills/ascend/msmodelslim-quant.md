@@ -83,18 +83,18 @@ msmodelslim quant \
 	--model_path ${MODEL_PATH} \
 	--save_path ${SAVE_PATH} \
 	--device npu \
-	--model_type <ModelName> \
-	--quant_type <TARGET_DTYPE> \
-	--trust_remote_code True
+	--model_type \
+	\
+	True <ModelName >--quant_type <TARGET_DTYPE >--trust_remote_code
 
 # Option A2: explicit config (preferred when a custom YAML exists)
 msmodelslim quant \
 	--model_path ${MODEL_PATH} \
 	--save_path ${SAVE_PATH} \
 	--device npu \
-	--model_type <ModelName> \
-	--config_path /path/to/config.yaml \
-	--trust_remote_code True
+	--model_type \
+	/path/to/config.yaml \
+	--trust_remote_code True <ModelName >--config_path
 ```
 
 ### Step 1B: Custom YAML (When No lab_practice Config Exists)
@@ -284,13 +284,13 @@ spec:
 
 ```bash
 msmodelslim analyze \
-	--model_type <VLM_ModelName> \
-	--model_path ${MODEL_PATH} \
+	--model_type \
+	${MODEL_PATH} \
 	--device npu \
 	--metrics kurtosis \
 	--topk 20 \
 	--calib_dataset /path/to/multimodal_calib.jsonl \
-	--trust_remote_code True 2>&1 | tee analyze_<model>.log
+	--trust_remote_code True <VLM_ModelName >--model_path 2>&1 | tee analyze_ <model >.log
 ```
 
 Using a text-only dataset here will produce artificially uniform sensitivity scores for vision-adjacent layers, making the output unreliable.

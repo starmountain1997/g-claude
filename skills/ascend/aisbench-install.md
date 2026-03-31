@@ -17,8 +17,8 @@ ______________________________________________________________________
 Ask the user: **where do you want to clone the AISBench repo?** (e.g. `~/tools/benchmark` or `/home/user/third_party/benchmark`)
 
 ```bash
-git clone https://github.com/AISBench/benchmark.git <target_dir>
-cd <target_dir>
+git clone https://github.com/AISBench/benchmark.git $TARGET_DIR
+cd $TARGET_DIR
 pip3 install -e ./ --use-pep517
 ```
 

@@ -47,12 +47,12 @@ Use `$LOCATION` to mean the `Editable project location` path from `pip show ais_
    - Whether it requires a VLM (multimodal) or works with text-only LLMs
    - How to obtain the data files and where to place them
    ```bash
-   cat $LOCATION/ais_bench/benchmark/configs/datasets/<dataset>/README.md
+   cat $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/README.md
    ```
 
 3. **List available config variants** for that dataset:
    ```bash
-   ls $LOCATION/ais_bench/benchmark/configs/datasets/<dataset>/
+   ls $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/
    ```
    For accuracy eval, prefer `chat_prompt` variants (e.g. `gsm8k_gen_0_shot_cot_chat_prompt`).
 
@@ -83,7 +83,7 @@ Edit `eval.py`. There are two things to set:
 
 ```python
 with read_base():
-    from ais_bench.benchmark.configs.datasets.<dataset>.<variant> import <dataset>_datasets as datasets_to_eval
+    from ais_bench.benchmark.configs.datasets.$DATASET.<variant> import $DATASET_datasets as datasets_to_eval
 
 datasets = [
     *datasets_to_eval,
@@ -94,28 +94,30 @@ datasets = [
 
 ```python
 from ais_bench.benchmark.models import VLLMCustomAPIChat
-from ais_bench.benchmark.utils.postprocess.model_postprocessors import extract_non_reasoning_content
+from ais_bench.benchmark.utils.postprocess.model_postprocessors import (
+    extract_non_reasoning_content,
+)
 
 models = [
     dict(
         attr="service",
         type=VLLMCustomAPIChat,
         abbr="vllm-api-stream-chat",
-        path="/path/to/model",     # ← local path of the model
-        model="",                  # ← vLLM served model name (from /v1/models); empty = auto-detect
+        path="/path/to/model",  # ← local path of the model
+        model="",  # ← vLLM served model name (from /v1/models); empty = auto-detect
         stream=True,
         request_rate=0,
         use_timestamp=False,
         retry=2,
         api_key="",
-        host_ip="localhost",       # ← vLLM host IP
-        host_port=8080,            # ← vLLM port
+        host_ip="localhost",  # ← vLLM host IP
+        host_port=8080,  # ← vLLM port
         url="",
-        max_out_len=512,           # ← set according to vLLM --max-model-len config
-        batch_size=1,              # ← set according to vLLM --max-num-seqs / available memory
+        max_out_len=512,  # ← set according to vLLM --max-model-len config
+        batch_size=1,  # ← set according to vLLM --max-num-seqs / available memory
         trust_remote_code=False,
         generation_kwargs=dict(
-            temperature=0.01,      # ← use low temperature for deterministic accuracy eval
+            temperature=0.01,  # ← use low temperature for deterministic accuracy eval
             ignore_eos=False,
         ),
         pred_postprocessor=dict(type=extract_non_reasoning_content),
@@ -131,7 +133,7 @@ ______________________________________________________________________
 ais_bench eval.py
 ```
 
-Results in `outputs/default/<timestamp>/summary/summary_*.txt`.
+Results in `outputs/default/$TIMESTAMP/summary/summary_*.txt`.
 
 ______________________________________________________________________
 
@@ -142,7 +144,7 @@ ______________________________________________________________________
 Predictions are saved as JSONL (one JSON object per line) under:
 
 ```
-outputs/default/<timestamp>/predictions/<model-abbr>/<dataset>.jsonl
+outputs/default/$TIMESTAMP/predictions/$MODEL_ABBR/$DATASET.jsonl
 ```
 
 Each line has this structure:
@@ -162,7 +164,7 @@ Each line has this structure:
 Print a few samples to see what the model is actually producing:
 
 ```bash
-head -n 5 outputs/default/<timestamp>/predictions/<model-abbr>/<dataset>.jsonl | python3 -c "
+head -n 5 outputs/default/$TIMESTAMP/predictions/$MODEL_ABBR/$DATASET.jsonl | python3 -c "
 import sys, json
 for line in sys.stdin:
     d = json.loads(line)
@@ -176,7 +178,7 @@ for line in sys.stdin:
 If some requests failed, check the failed file:
 
 ```bash
-cat outputs/default/<timestamp>/predictions/<model-abbr>/<dataset>_failed.jsonl
+cat outputs/default/$TIMESTAMP/predictions/$MODEL_ABBR/$DATASET_failed.jsonl
 ```
 
 ### Step 2 — Diagnose from what you see
@@ -198,5 +200,5 @@ The model produces the right answer but the evaluator misses it — e.g. the num
 
 #### Failures (`success: false` in the JSONL)
 
-Network or server errors during inference. Check `error_info` in `<dataset>_failed.jsonl`. Common causes: vLLM OOM (reduce `batch_size`), request timeout (check vLLM logs), or model not loaded yet.
+Network or server errors during inference. Check `error_info` in `$DATASET_failed.jsonl`. Common causes: vLLM OOM (reduce `batch_size`), request timeout (check vLLM logs), or model not loaded yet.
 
