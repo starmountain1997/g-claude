@@ -715,3 +715,4 @@ To override the limit, set the `SLASH_COMMAND_TOOL_CHAR_BUDGET` environment vari
 - **[Memory](/en/memory)**: manage CLAUDE.md files for persistent context
 - **[Interactive mode](/en/interactive-mode#built-in-commands)**: built-in commands and shortcuts
 - **[Permissions](/en/permissions)**: control tool and skill access
+````
