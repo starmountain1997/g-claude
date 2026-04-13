@@ -18,19 +18,9 @@ Signed-off-by: Your Name <your.email@example.com>
 
 To automate this, the `ascend` skill will retrieve your `user.name` and `user.email` from `git config` and include them in any commit message drafts it generates.
 
-## Contribution Workflow
-
-1. **Isolate Changes**: Always create a new branch for each contribution.
-   ```bash
-   git checkout -b feature/YOUR_FEATURE_NAME
-   ```
-1. **Verify Compatibility**: Ensure your changes are compatible with the pinned `vllm` version as described in [vllm-install.md](vllm-install.md).
-1. **Run Tests**: If applicable, run existing tests or add new ones to verify your changes.
-1. **DCO Signature**: Ensure every commit has the `Signed-off-by` line.
-
 ## PR Description Template
 
-When preparing a Pull Request for `vllm-ascend`, use the following template. The AI agent should generate this by analyzing the modifications:
+When preparing a Pull Request for `vllm-ascend`, use the following template. The AI agent must generate this by analyzing the modifications and **getting the vllm version (not vllm-ascend) following the instruction from @ascend/vllm-install.md**:
 
 ```markdown
 ### What this PR does / why we need it?
@@ -41,8 +31,8 @@ When preparing a Pull Request for `vllm-ascend`, use the following template. The
 
 ### How was this patch tested?
 [Describe testing steps or state "Documentation-only change, no testing required"]
-- vLLM version: {Get the version from vllm-install.md or current environment}
-- vLLM main: {Get the pinned commit URL from vllm-install.md Section 4}
+- vLLM version: {Get the vllm version (not vllm-ascend) following the instruction from @ascend/vllm-install.md}
+- vLLM main: {Get the pinned commit URL from @ascend/vllm-install.md}
 ```
 
-The agent must update this description whenever the code is updated to reflect the latest state.
+The agent must update this description whenever the code is updated to reflect the latest state. Once confirmed by the user, the PR description can be updated using the `gh pr edit` command from the GitHub CLI.
