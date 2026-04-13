@@ -67,6 +67,25 @@ chmod +x run.sh
 For detailed instructions on specific tools, refer to:
 
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
+- **vLLM-Ascend Contribution**: See [vllm-ascend-contribute.md](vllm-ascend-contribute.md) for contribution guidelines and DCO signature requirements.
+
+### Mandatory DCO Signature for Commits
+
+When the user asks you to write a commit message for `vllm-ascend`, you **MUST** always append a Developer Certificate of Origin (DCO) signature at the very end of the message.
+
+**Format:**
+
+```text
+Signed-off-by: {user.name} <{user.email}>
+```
+
+**Procedure:**
+
+1. Check `git config user.name` and `git config user.email`.
+1. If both are set, use them to generate the signature line.
+1. If either is missing, ask the user for their name/email, configure git using `git config --global`, and then generate the signature.
+   Do not omit this line.
+
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols (includes end-to-end iterative workflow). See [msmodelslim-analysis.md](msmodelslim-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
 - **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and see [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.
 
