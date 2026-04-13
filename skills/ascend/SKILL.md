@@ -74,9 +74,10 @@ For detailed instructions on specific tools, refer to:
 ### Mandatory DCO Signature and PR Description
 
 When the user asks you to write a commit message for `vllm-ascend`, you **MUST**:
-1.  **Append the DCO signature** at the end of the message:
-    `Signed-off-by: {user.name} <{user.email}>`
-2.  **Generate a PR description** using the following template:
+
+1. **Append the DCO signature** at the end of the message:
+   `Signed-off-by: {user.name} <{user.email}>`
+1. **Generate a PR description** using the following template:
 
 ```markdown
 ### What this PR does / why we need it?

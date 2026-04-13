@@ -20,8 +20,8 @@ def main():
     shutil.rmtree(claude_skills, ignore_errors=True)
     shutil.rmtree(gemini_skills, ignore_errors=True)
 
-    shutil.copytree(skills_dir, claude_skills)
-    shutil.copytree(skills_dir, gemini_skills)
+    shutil.copytree(skills_dir, claude_skills, dirs_exist_ok=True)
+    shutil.copytree(skills_dir, gemini_skills, dirs_exist_ok=True)
 
     print("所有 skills 注册完成")
 
