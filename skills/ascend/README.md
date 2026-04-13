@@ -34,7 +34,7 @@ ______________________________________________________________________
 | **msmodelslim** | 模型量化（W4A8 / W8A8 / W4A4 等） | `msmodelslim-quant.md` |
 | **msmodelslim analyze** | 敏感层分析 + 精度恢复 | `msmodelslim-analysis.md` |
 | **vLLM-Ascend** | 量化模型部署与推理 | `vllm-install.md` / `vllm-run.md` |
-| **vLLM-Ascend Contribution** | 贡献指南与 DCO 签名要求 | `vllm-ascend-contribute.md` |
+| **vLLM-Ascend Contribution** | 贡献指南与 DCO 签名要求 | `vllm-contribute.md` |
 | **AISBench** | 精度评估（GSM8K 等基准） | `aisbench-install.md` / `aisbench-accuracy.md` |
 
 ______________________________________________________________________
@@ -48,7 +48,7 @@ ascend/
 ├── msmodelslim-analysis.md       # 敏感层分析：精度恢复回退路径
 ├── vllm-install.md               # vLLM-Ascend 安装
 ├── vllm-run.md                   # vLLM 部署与调优（Eager → Graph → Serving）
-├── vllm-ascend-contribute.md     # 贡献指南：DCO 签名与工作流
+├── vllm-contribute.md            # 贡献指南：DCO 签名与工作流
 ├── aisbench-install.md           # AISBench 安装
 └── aisbench-accuracy.md          # 精度评测：配置、运行、结果排查
 ```
