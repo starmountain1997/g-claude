@@ -2,6 +2,10 @@
 
 Install vLLM from source on Ascend NPUs. The core requirement is version-pinning: `vllm-ascend` only works with a specific `vllm` commit.
 
+> **Current Version Tracking**:
+> - **vLLM version**: (Check the version of the pinned vLLM, e.g., v0.6.0)
+> - **vLLM main**: https://github.com/vllm-project/vllm/commit/$COMMIT_HASH (See Section 4 for how to find $COMMIT_HASH)
+
 ______________________________________________________________________
 
 ## 1. Cleanup

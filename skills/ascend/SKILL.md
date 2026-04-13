@@ -87,8 +87,8 @@ When the user asks you to write a commit message for `vllm-ascend`, you **MUST**
 
 ### How was this patch tested?
 [Test details]
-- vLLM version: v0.16.0
-- vLLM main: https://github.com/vllm-project/vllm/commit/4034c3d32e30d01639459edd3ab486f56993876d
+- vLLM version: {Retrieve the vLLM version based on the pinned commit in vllm-install.md}
+- vLLM main: {Retrieve the pinned vLLM commit hash/URL based on vllm-install.md Section 4}
 ```
 
 Update this description whenever the code is modified. If unconfigured, ask for the user's name/email as before.

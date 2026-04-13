@@ -41,8 +41,8 @@ When preparing a Pull Request for `vllm-ascend`, use the following template. The
 
 ### How was this patch tested?
 [Describe testing steps or state "Documentation-only change, no testing required"]
-- vLLM version: v0.16.0
-- vLLM main: https://github.com/vllm-project/vllm/commit/4034c3d32e30d01639459edd3ab486f56993876d
+- vLLM version: {Get the version from vllm-install.md or current environment}
+- vLLM main: {Get the pinned commit URL from vllm-install.md Section 4}
 ```
 
 The agent must update this description whenever the code is updated to reflect the latest state.
