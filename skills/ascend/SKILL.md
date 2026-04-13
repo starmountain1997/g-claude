@@ -71,20 +71,27 @@ For detailed instructions on specific tools, refer to:
 
 ### Mandatory DCO Signature for Commits
 
-When the user asks you to write a commit message for `vllm-ascend`, you **MUST** always append a Developer Certificate of Origin (DCO) signature at the very end of the message.
+### Mandatory DCO Signature and PR Description
 
-**Format:**
+When the user asks you to write a commit message for `vllm-ascend`, you **MUST**:
+1.  **Append the DCO signature** at the end of the message:
+    `Signed-off-by: {user.name} <{user.email}>`
+2.  **Generate a PR description** using the following template:
 
-```text
-Signed-off-by: {user.name} <{user.email}>
+```markdown
+### What this PR does / why we need it?
+[Analyze changes and explain purpose]
+
+### Does this PR introduce any user-facing change?
+[Yes/No]
+
+### How was this patch tested?
+[Test details]
+- vLLM version: v0.16.0
+- vLLM main: https://github.com/vllm-project/vllm/commit/4034c3d32e30d01639459edd3ab486f56993876d
 ```
 
-**Procedure:**
-
-1. Check `git config user.name` and `git config user.email`.
-1. If both are set, use them to generate the signature line.
-1. If either is missing, ask the user for their name/email, configure git using `git config --global`, and then generate the signature.
-   Do not omit this line.
+Update this description whenever the code is modified. If unconfigured, ask for the user's name/email as before.
 
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols (includes end-to-end iterative workflow). See [msmodelslim-analysis.md](msmodelslim-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
 - **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and see [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.

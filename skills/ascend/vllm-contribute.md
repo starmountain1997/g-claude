@@ -20,10 +20,30 @@ To automate this, the `ascend` skill will retrieve your `user.name` and `user.em
 
 ## Contribution Workflow
 
-1. **Isolate Changes**: Always create a new branch for each contribution.
-   ```bash
-   git checkout -b feature/YOUR_FEATURE_NAME
-   ```
-1. **Verify Compatibility**: Ensure your changes are compatible with the pinned `vllm` version as described in [vllm-install.md](vllm-install.md).
-1. **Run Tests**: If applicable, run existing tests or add new ones to verify your changes.
-1. **DCO Signature**: Ensure every commit has the `Signed-off-by` line.
+1.  **Isolate Changes**: Always create a new branch for each contribution.
+    ```bash
+    git checkout -b feature/YOUR_FEATURE_NAME
+    ```
+2.  **Verify Compatibility**: Ensure your changes are compatible with the pinned `vllm` version as described in [vllm-install.md](vllm-install.md).
+3.  **Run Tests**: If applicable, run existing tests or add new ones to verify your changes.
+4.  **DCO Signature**: Ensure every commit has the `Signed-off-by` line.
+
+## PR Description Template
+
+When preparing a Pull Request for `vllm-ascend`, use the following template. The AI agent should generate this by analyzing the modifications:
+
+```markdown
+### What this PR does / why we need it?
+[Analyze the changes and explain the purpose and necessity here]
+
+### Does this PR introduce any user-facing change?
+[Yes/No, and describe if applicable]
+
+### How was this patch tested?
+[Describe testing steps or state "Documentation-only change, no testing required"]
+- vLLM version: v0.16.0
+- vLLM main: https://github.com/vllm-project/vllm/commit/4034c3d32e30d01639459edd3ab486f56993876d
+```
+
+The agent must update this description whenever the code is updated to reflect the latest state.
+
