@@ -69,8 +69,6 @@ For detailed instructions on specific tools, refer to:
 - **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
 - **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for contribution guidelines and DCO signature requirements.
 
-### Mandatory DCO Signature for Commits
-
 ### Mandatory DCO Signature and PR Description
 
 When the user asks you to write a commit message for `vllm-ascend`, you **MUST**:

@@ -1,38 +1,52 @@
 # vLLM-Ascend Contribution Guide
 
-This guide covers the contribution process and standards for the `vllm-ascend` plugin.
+Contribution process and standards for the `vllm-ascend` plugin.
 
 ## Developer Certificate of Origin (DCO)
 
-All commits to `vllm-ascend` must include a Developer Certificate of Origin (DCO) signature. This is a mandatory requirement for contributing to the project.
+All commits to `vllm-ascend` must include a DCO signature — this is a hard requirement enforced by the project's CI.
 
-### Commit Message Format
-
-When writing a commit message for `vllm-ascend`, you **must** append a `Signed-off-by` line at the end of the message. The format is:
+Append a `Signed-off-by` line at the end of every commit message:
 
 ```text
 Signed-off-by: Your Name <your.email@example.com>
 ```
 
-### Automation
+Retrieve the name and email from `git config`:
 
-To automate this, the `ascend` skill will retrieve your `user.name` and `user.email` from `git config` and include them in any commit message drafts it generates.
+```bash
+git config user.name
+git config user.email
+```
 
-## PR Description Template
+If neither is set, ask the user before writing the commit message.
 
-When preparing a Pull Request for `vllm-ascend`, use the following template. The AI agent must generate this by analyzing the modifications and **getting the vllm version (not vllm-ascend) following the instruction from @ascend/vllm-install.md**:
+## PR Description
+
+When preparing a Pull Request for `vllm-ascend`, fill in the template below.
+
+**How to get the vLLM version and commit:**
+
+1. Read [vllm-install.md](vllm-install.md) — the "Current Version Tracking" block at the top lists the pinned vLLM version and commit URL.
+1. If that block is unpopulated, follow Section 4 of [vllm-install.md](vllm-install.md) to locate the `VLLM_COMMIT` in the CI workflow and derive the version from it.
+
+**Template:**
 
 ```markdown
 ### What this PR does / why we need it?
-[Analyze the changes and explain the purpose and necessity here]
+[Analyze the changes and explain the purpose and necessity]
 
 ### Does this PR introduce any user-facing change?
-[Yes/No, and describe if applicable]
+[Yes/No — describe if yes]
 
 ### How was this patch tested?
-[Describe testing steps or state "Documentation-only change, no testing required"]
-- vLLM version: {Get the vllm version (not vllm-ascend) following the instruction from @ascend/vllm-install.md}
-- vLLM main: {Get the pinned commit URL from @ascend/vllm-install.md}
+[Describe testing steps, or state "Documentation-only change, no testing required"]
+- vLLM version: [vLLM version from vllm-install.md — not the vllm-ascend version]
+- vLLM main: [pinned vLLM commit URL from vllm-install.md]
 ```
 
-The agent must update this description whenever the code is updated to reflect the latest state. Once confirmed by the user, the PR description can be updated using the `gh pr edit` command from the GitHub CLI.
+Regenerate this description whenever the code changes. Once the user confirms it, apply it with:
+
+```bash
+gh pr edit --body "..."
+```
