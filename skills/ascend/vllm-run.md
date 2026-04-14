@@ -99,46 +99,18 @@ ______________________________________________________________________
 
 *Use this once the offline eager-mode script passes. Enable graph mode and tune parameters for the target serving scenario.*
 
-### Step 1 — Disable eager mode and select graph mode
+### Step 1 — Scenario Inquiry (Mandatory)
+
+Before adjusting any parameters, **must** complete the [scenario-inquiry.md](scenario-inquiry.md) process. This ensures that the tuning goals (latency vs. throughput) are aligned with the actual use case.
+
+1. **Ask the user** all dimensions listed in [scenario-inquiry.md](scenario-inquiry.md).
+1. **Summarize** the target scenario (e.g., "High-concurrency ChatBot").
+1. **Proceed** to the optimization steps below with those constraints in mind.
+
+### Step 2 — Enable Graph Mode and Select Mode
 
 1. **Disable Eager Mode** — Remove `enforce_eager=True` to enable ACL Graph mode.
-
-1. **Graph Mode Selection** — vLLM-Ascend supports two ACL graph capture modes:
-
-   - **PIECEWISE** (default): captures individual ops; safe for most models
-   - **FULL**: captures the full model graph; higher throughput, requires all ops to be graph-compatible
-
-### Step 2 — Ask the user about their serving scenario
-
-Before tuning, ask:
-
-> 1. **Sequence length** — What is the typical input + output length?
-> 1. **Concurrency** — How many concurrent requests are expected?
-> 1. **Latency vs throughput** — Optimizing for TTFT/ITL, or maximizing tokens/s?
-
-Based on the answers, reason through the following parameters:
-
-| Parameter | Meaning & tuning rule |
-| :--- | :--- |
-| `--max-model-len` | Max tokens (prompt + output) per request. Set to the actual max needed — larger values consume more KV cache memory, leaving less for batching. |
-| `--max-num-seqs` | Max concurrent sequences in a batch. Raising this increases throughput but raises memory pressure and latency per request. |
-| `--max-num-batched-tokens` | Max total tokens across the batch. Effective cap on batch size. Should be ≥ `max-num-seqs × avg-input-len`. |
-| `--gpu-memory-utilization` | Fraction of HBM reserved for KV cache (default 0.9). Raise toward 0.95 when memory is the bottleneck; lower if OOM during init. |
-| `--swap-space` | CPU memory (GiB) for swapping evicted KV blocks. Increase if high concurrency causes frequent preemption. |
-| `--speculative-config` | JSON config for speculative decoding. Example: `{"num_speculative_tokens": 3, "method": "deepseek_mtp"}`. Search the model tutorial doc (Step 3) for supported methods and recommended values. |
-| `--compilation-config` | JSON config for ACL graph capture. Example: `{"cudagraph_capture_sizes": [8,16,24,32,40,48], "cudagraph_mode": "FULL_DECODE_ONLY"}`. Search the model tutorial doc (Step 3) for recommended sizes. |
-
-> **Tip — `cudagraph_capture_sizes` when SP (FlashComm1) + MTP are both enabled:**
-> Let `mtp = num_speculative_tokens`. Sizes must satisfy:
-> - `(mtp + 1)` divisible by `tp`
-> - every size a multiple of `(mtp + 1)`
-> - max size = `max_num_seqs × (mtp + 1)`
->
-> Example: `num_speculative_tokens=3`, `tp=4` → `mtp+1=4` ✓; `max_num_seqs=12` → sizes `[4,8,…,48]`.
-
-### Step 3 — Check model-specific tuning docs
-
-Find and read the tutorial for this model family before setting environment variables:
+...
 
 ```bash
 find $(python -c "import vllm_ascend, os; print(os.path.dirname(vllm_ascend.__file__))") \
