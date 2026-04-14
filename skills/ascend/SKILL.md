@@ -69,35 +69,10 @@ For detailed instructions on specific tools, refer to:
 - **vLLM-Ascend**:
     - **Installation**: See [vllm-install.md](vllm-install.md).
     - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you through the optimal path: either [msmodeling.md](msmodeling.md) (Simulation) or [vllm-run.md](vllm-run.md) (Manual Tuning & Deployment).
-- **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for contribution guidelines and DCO signature requirements.
-
-### Mandatory DCO Signature and PR Description
-
-When the user asks you to write a commit message for `vllm-ascend`, you **MUST**:
-
-1. **Append the DCO signature** at the end of the message:
-   `Signed-off-by: {user.name} <{user.email}>`
-1. **Generate a PR description** using the following template:
-
-```markdown
-### What this PR does / why we need it?
-[Analyze changes and explain purpose]
-
-### Does this PR introduce any user-facing change?
-[Yes/No]
-
-### How was this patch tested?
-[Test details]
-- vLLM version: {Retrieve the vLLM version based on the pinned commit in vllm-install.md}
-- vLLM main: {Retrieve the pinned vLLM commit hash/URL based on vllm-install.md Section 4}
-```
-
-Update this description whenever the code is modified. If unconfigured, ask for the user's name/email as before.
-
-- **msmodeling**: See [msmodeling.md](msmodeling.md) for performance simulation and vLLM parameter optimization (TP/DP/batch size) using MindStudio Modeling.
+- **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for DCO signature requirements and PR description template.
+- **msmodeling**: See [msmodeling.md](msmodeling.md) for performance simulation and vLLM parameter optimization (TP/DP/batch size).
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols.
-- **Scenario Inquiry**: See [scenario-inquiry.md](scenario-inquiry.md) for the mandatory multi-dimensional interview before performance tuning.
-- **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and see [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.
+- **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking.
 
 ## Core Tips
 

@@ -51,5 +51,5 @@ Use **MindStudio Modeling (msmodeling)** to predict the optimal configuration wi
 
 ### Path B: Manual Tuning (Fallback)
 If `msmodeling` is unavailable, the model is unsupported by the simulator, or simulation fails, fallback to manual empirical tuning.
-1.  **Go directly to [vllm-run.md](vllm-run.md) Phase 2**.
-2.  **Empirical Mapping**: Use the "Scenario-Based Tuning Rules" in Step 3 of that document to translate your inquiry results into vLLM CLI arguments (e.g., lower `max-num-seqs` for TTFT-sensitive tasks).
+1.  **Go to [vllm-run.md](vllm-run.md) Phase 2**. The scenario summary from this inquiry becomes the input to Phase 2 Step 1.
+2.  **Empirical Mapping**: Use the "Scenario-Based Parameter Tuning" table in Phase 2 Step 3 of that document to translate inquiry results into vLLM CLI arguments.

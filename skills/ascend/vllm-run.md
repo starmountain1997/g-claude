@@ -99,27 +99,55 @@ ______________________________________________________________________
 
 *Use this once the offline eager-mode script passes. Enable graph mode and tune parameters for the target serving scenario.*
 
-### Step 1 — Scenario Inquiry (Mandatory)
+### Step 1 — Confirm Scenario
 
-Before adjusting any parameters, **must** complete the [scenario-inquiry.md](scenario-inquiry.md) process. This ensures that the tuning goals (latency vs. throughput) are aligned with the actual use case.
+If scenario inquiry has not been done yet, load [scenario-inquiry.md](scenario-inquiry.md) and complete the interview first. It will route you back here (Path B) once done.
 
-1. **Ask the user** all dimensions listed in [scenario-inquiry.md](scenario-inquiry.md).
-1. **Summarize** the target scenario (e.g., "High-concurrency ChatBot").
-1. **Proceed** to the optimization steps below with those constraints in mind.
+If the user arrived here from scenario-inquiry.md Path B, **state the scenario summary** before proceeding (e.g., "High-concurrency ChatBot: 200 QPS steady, TPOT-sensitive, W8A8, TP=8"). This anchors all parameter choices in Steps 2–3.
 
-### Step 2 — Enable Graph Mode and Select Mode
+______________________________________________________________________
 
-1. **Disable Eager Mode** — Remove `enforce_eager=True` to enable ACL Graph mode.
-...
+### Step 2 — Enable Graph Mode
 
-```bash
-find $(python -c "import vllm_ascend, os; print(os.path.dirname(vllm_ascend.__file__))") \
-	-path "*/docs/source*" -name "*.md" | head -5
-# or locate the installed docs directly:
-ls <vllm-ascend-repo >/docs/source/tutorials/models/
-```
+1. **Disable Eager Mode** — Remove `enforce_eager=True` from the offline script. This activates ACL Graph capture.
 
-Read the relevant `.md` file — it lists recommended `VLLM_ASCEND_*` environment variables, `--additional-config`, `--speculative-config`, `--compilation-config` options, and known limitations for that model family. Use those values; do not guess from memory.
+1. **Read Model-Specific Docs** — Before setting any flags, look up the model family's tuning guide in the vllm-ascend source:
+
+   ```bash
+   find $(python -c "import vllm_ascend, os; print(os.path.dirname(vllm_ascend.__file__))") \
+   	-path "*/docs/source*" -name "*.md" | head -5
+   # or:
+   ls <vllm-ascend-repo>/docs/source/tutorials/models/
+   ```
+
+   Read the relevant `.md` — it lists recommended `VLLM_ASCEND_*` env vars, `--additional-config`, `--speculative-config`, `--compilation-config` options, and known limitations. Use those values; do not guess from memory.
+
+1. **Set Graph Capture Sizes** — Configure `cudagraph_capture_sizes` to cover the expected batch sizes. Include the `batch_size` from msmodeling output (if available) and a range around it:
+
+   ```python
+   # Example: msmodeling returned batch_size=175, add surrounding sizes
+   cudagraph_capture_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 160, 175, 192, 256]
+   ```
+
+   If msmodeling was not run, use powers-of-two from 1 up to `max-num-seqs`.
+
+______________________________________________________________________
+
+### Step 3 — Scenario-Based Parameter Tuning
+
+Apply parameters based on the scenario confirmed in Step 1. Use the mapping below:
+
+| Scenario | Key Parameters | Notes |
+| :--- | :--- | :--- |
+| **High Concurrency + Steady traffic** | `--max-num-seqs` ↑ (use msmodeling `batch_size`), FULL graph mode | Prioritize throughput; graph capture covers high batch sizes |
+| **Long Context / RAG** | `--gpu-memory-utilization 0.95`, enable quantization | Higher HBM allocation for KV cache; quantization reduces model footprint |
+| **TTFT-Sensitive + Bursty traffic** | `--max-num-seqs` ↓, `--max-num-batched-tokens` with headroom | Smaller batches reduce prefill queue depth; leave token budget for burst |
+| **TPOT-Sensitive (code / agent)** | `--speculative-config` with draft model, tune `cudagraph_capture_sizes` | Speculative decoding cuts per-token latency; capture small batch sizes too |
+| **Memory-Constrained** | `--gpu-memory-utilization 0.9`→`0.95`, lower `--max-num-seqs` | Balance KV cache vs. model weight footprint |
+
+**Always verify** the final `--max-num-seqs` against the msmodeling `batch_size` output — the simulator's recommendation takes precedence over the table defaults above.
+
+If speculative decoding is selected, ask the user for their preferred draft model before writing any command.
 
 ______________________________________________________________________
 
@@ -134,7 +162,7 @@ ______________________________________________________________________
 1. **Health Check** — Ask the user for the server's reachable address before running (do not assume `localhost` — proxy settings or network topology may require the LAN IP instead):
 
    ```bash
-   curl http:// <host >: <port >/v1/models
+   curl http://<host>:<port>/v1/models
    ```
 
 1. **Test Request** — Choose the appropriate smoke test based on model type:
@@ -160,7 +188,7 @@ ______________________________________________________________________
 First, look up the error in the vllm-ascend docs before attempting a fix:
 
 ```bash
-ls <vllm-ascend-repo >/docs/source/
+ls <vllm-ascend-repo>/docs/source/
 ```
 
 Read relevant files there (FAQ, known issues, model-specific pages). Then reason from the error message and context — do not guess at solutions not supported by the docs or the source code.
