@@ -66,7 +66,9 @@ chmod +x run.sh
 
 For detailed instructions on specific tools, refer to:
 
-- **vLLM-Ascend**: See [vllm-install.md](vllm-install.md) for installation and [vllm-run.md](vllm-run.md) for running and troubleshooting.
+- **vLLM-Ascend**:
+    - **Installation**: See [vllm-install.md](vllm-install.md).
+    - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you through the optimal path: either [msmodeling.md](msmodeling.md) (Simulation) or [vllm-run.md](vllm-run.md) (Manual Tuning & Deployment).
 - **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for contribution guidelines and DCO signature requirements.
 
 ### Mandatory DCO Signature and PR Description
@@ -93,7 +95,8 @@ When the user asks you to write a commit message for `vllm-ascend`, you **MUST**
 Update this description whenever the code is modified. If unconfigured, ask for the user's name/email as before.
 
 - **msmodeling**: See [msmodeling.md](msmodeling.md) for performance simulation and vLLM parameter optimization (TP/DP/batch size) using MindStudio Modeling.
-- **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols (includes end-to-end iterative workflow). See [msmodelslim-analysis.md](msmodelslim-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
+- **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols.
+- **Scenario Inquiry**: See [scenario-inquiry.md](scenario-inquiry.md) for the mandatory multi-dimensional interview before performance tuning.
 - **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and see [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.
 
 ## Core Tips
