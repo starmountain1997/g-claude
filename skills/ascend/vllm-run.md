@@ -80,6 +80,7 @@ ______________________________________________________________________
    ```
 
    Key rules:
+
    - **TP**: must fit the full model in HBM. TP must divide `num_attention_heads` and `num_key_value_heads` evenly.
    - **EP**: for MoE models only. EP must divide `num_experts` evenly and EP ≤ TP × DP.
 

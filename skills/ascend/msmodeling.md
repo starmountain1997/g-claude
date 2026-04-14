@@ -31,8 +31,6 @@ python -m cli.inference.throughput_optimizer <model_id> \
 - `--tpot-limits`: Maximum allowed Time-per-Output-Token in milliseconds (SLO constraint).
 - `--ttft-limits`: Maximum allowed Time-to-First-Token in milliseconds (SLO constraint).
 
-
-
 ## Disaggregated Serving Optimization
 
 For complex deployments separating prefill and decode phases:
