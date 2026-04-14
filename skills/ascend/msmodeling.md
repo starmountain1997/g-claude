@@ -10,12 +10,11 @@ The `throughput_optimizer` is the primary tool for finding the best vLLM paramet
 
 ### Installation & Setup
 
-Ensure `msmodeling` is available. It is typically located in `ascend/msmodeling` (as a soft link to the source).
+Ensure `msmodeling` (MindStudio Modeling) is installed and available in your `PYTHONPATH`.
 
 ```bash
-cd ascend/msmodeling
-pip install -r requirements.txt
-export PYTHONPATH=$(pwd):$PYTHONPATH
+# Example setup if using a local clone
+export PYTHONPATH=/path/to/msmodeling:$PYTHONPATH
 ```
 
 ### Core Usage: Aggregation Mode
