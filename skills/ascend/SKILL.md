@@ -62,6 +62,18 @@ chmod +x run.sh
 - Do **not** run commands directly in the terminal; always go through the script so output is saved
 - Do **not** run the script in the background (no `&`, no `nohup`, no `run_in_background`); run it in the foreground so output streams to the terminal in real time
 
+## Tool Disambiguation
+
+> **`msmodeling` vs `msmodelslim` — these are two completely different tools:**
+>
+> | Tool | Full name | Purpose | CLI entry point |
+> | :--- | :--- | :--- | :--- |
+> | **msmodeling** | MindStudio Modeling | **Simulation** — predicts optimal TP/DP/batch size *without touching hardware* | `python -m cli.inference.throughput_optimizer` |
+> | **msmodelslim** | MindStudio ModelSlim | **Quantization** — converts model weights to W4A8/W8A8/W4A4 etc. | `msmodelslim quant` |
+>
+> If the task involves *deployment parameter tuning*, use **msmodeling**.
+> If the task involves *compressing model weights*, use **msmodelslim**.
+
 ## Task Specifics
 
 For detailed instructions on specific tools, refer to:

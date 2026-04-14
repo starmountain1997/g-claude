@@ -1,5 +1,8 @@
 # msmodelslim Quantization Protocol
 
+> **Purpose: weight quantization — converts model weights to W4A8/W8A8/W4A4 etc. and writes a quantized checkpoint.**
+> Do not confuse with `msmodeling`, which only simulates performance and does not modify any weights.
+
 Strict sequential protocol for model quantization, structural consultation, or debugging on Ascend NPUs.
 
 > **Hard rule — execute the user's dtype, never override it.** Whatever dtype the user specifies, run it exactly. Do not substitute a different dtype because you believe the model would perform better at another setting. Your opinions about suitability are irrelevant until evaluation data proves otherwise. The only path to a different dtype is: quantize → serve → evaluate → fail → sensitivity analysis → fail again → ask the user.

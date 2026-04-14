@@ -1,6 +1,9 @@
 # MindStudio Modeling (msmodeling)
 
-Ensure `msmodeling` (MindStudio Modeling) is installed and available in your `PYTHONPATH`.
+> **Purpose: simulation only — predicts TP/DP/batch_size without touching hardware or modifying weights.**
+> Do not confuse with `msmodelslim`, which performs actual weight quantization.
+
+Ensure `msmodeling` is installed and available in your `PYTHONPATH`.
 
 ```bash
 # Example setup if using a local clone
