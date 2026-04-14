@@ -92,6 +92,7 @@ When the user asks you to write a commit message for `vllm-ascend`, you **MUST**
 
 Update this description whenever the code is modified. If unconfigured, ask for the user's name/email as before.
 
+- **msmodeling**: See [msmodeling.md](msmodeling.md) for performance simulation and vLLM parameter optimization (TP/DP/batch size).
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols (includes end-to-end iterative workflow). See [msmodelslim-analysis.md](msmodelslim-analysis.md) for diagnosing and fixing quantization accuracy drops via layer sensitivity analysis.
 - **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and see [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking against a running vLLM service.
 

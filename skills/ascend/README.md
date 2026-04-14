@@ -33,6 +33,7 @@ ______________________________________________________________________
 |:---|:---|:---|
 | **msmodelslim** | 模型量化（W4A8 / W8A8 / W4A4 等） | `msmodelslim-quant.md` |
 | **msmodelslim analyze** | 敏感层分析 + 精度恢复 | `msmodelslim-analysis.md` |
+| **msmodeling** | 性能仿真 + vLLM 参数调优（TP/DP/Batch） | `msmodeling.md` |
 | **vLLM-Ascend** | 量化模型部署与推理 | `vllm-install.md` / `vllm-run.md` |
 | **vLLM-Ascend Contribution** | 贡献指南与 DCO 签名要求 | `vllm-contribute.md` |
 | **AISBench** | 精度评估（GSM8K 等基准） | `aisbench-install.md` / `aisbench-accuracy.md` |
