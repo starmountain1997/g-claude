@@ -7,6 +7,8 @@ Ensure `msmodeling` (MindStudio Modeling) is installed and available in your `PY
 export PYTHONPATH=/path/to/msmodeling:$PYTHONPATH
 ```
 
+> **Model path**: `model_id` must be a local directory path (e.g. `/data/models/Qwen3-32B`). If the model is not yet downloaded, follow [model-download.md](model-download.md) first.
+
 ## Aggregation Mode
 
 Use this to find the best configuration for a standard vLLM deployment where prefill and decode run on the same instances.

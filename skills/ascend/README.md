@@ -8,6 +8,7 @@ ______________________________________________________________________
 
 | 场景 | 入口文档 |
 |:---|:---|
+| 模型下载（ModelScope / HuggingFace） | `model-download.md` |
 | vLLM-Ascend 安装与版本锁定 | `vllm-install.md` |
 | 性能目标调研（延迟 / 吞吐 / 并发） | `scenario-inquiry.md` |
 | 仿真寻优（TP/DP/Batch 参数） | `msmodeling.md` |
@@ -59,6 +60,7 @@ ______________________________________________________________________
 ```
 ascend/
 ├── SKILL.md                      # 入口：硬件检查 + 公共约定 + 任务路由
+├── model-download.md             # 模型下载：ModelScope 优先，HuggingFace 回退
 ├── scenario-inquiry.md           # 场景调研：延迟/吞吐/并发多维访谈
 ├── msmodeling.md                 # 性能仿真：throughput_optimizer 用法与输出解读
 ├── vllm-install.md               # 安装：源码编译 + 版本锁定

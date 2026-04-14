@@ -66,6 +66,7 @@ chmod +x run.sh
 
 For detailed instructions on specific tools, refer to:
 
+- **Model Download**: Before inference or quantization, get the model locally. See [model-download.md](model-download.md) — ModelScope first, HuggingFace as fallback. Always ask the user where to store before downloading. Never use online model IDs in vLLM or msmodelslim commands.
 - **vLLM-Ascend**:
   - **Installation**: See [vllm-install.md](vllm-install.md).
   - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you through the optimal path: either [msmodeling.md](msmodeling.md) (Simulation) or [vllm-run.md](vllm-run.md) (Manual Tuning & Deployment).

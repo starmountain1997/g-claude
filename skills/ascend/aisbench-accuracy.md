@@ -109,7 +109,7 @@ models = [
         attr="service",
         type=VLLMCustomAPIChat,
         abbr="vllm-api-stream-chat",
-        path="/path/to/model",  # ← local path of the model
+        path="/path/to/model",  # ← $MODEL_PATH from model-download.md
         model="",  # ← vLLM served model name (from /v1/models); empty = auto-detect
         stream=True,
         request_rate=0,
