@@ -24,8 +24,8 @@ This skill initializes a new Python project or manages an existing one using `uv
 
    ```toml
    [[tool.uv.index]]
-                  url = "https://mirrors.aliyun.com/pypi/simple"
-                  default = true
+               url = "https://mirrors.aliyun.com/pypi/simple"
+               default = true
    ```
 
 1. **Add Development Dependencies**:

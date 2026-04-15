@@ -39,6 +39,7 @@ modelscope download \
 ```
 
 **Finding the ModelScope model ID**: It follows the pattern `<organization>/<model-name>`, e.g.:
+
 - `Qwen/Qwen3-32B`
 - `deepseek-ai/DeepSeek-R1`
 - `ZhipuAI/glm-4-9b-chat`
