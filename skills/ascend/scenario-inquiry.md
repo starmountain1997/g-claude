@@ -39,24 +39,9 @@ Once the user provides the answers, use the following mapping logic to prepare f
 
 ______________________________________________________________________
 
-## Next Step: Workflow Branching
+## Next Step: Manual Tuning
 
-Based on the inquiry results, choose **one** of the following paths to proceed:
-
-### Path A: Simulation (Recommended)
-
-Use **MindStudio Modeling (msmodeling)** to predict the optimal configuration without physical hardware trial-and-error.
-
-1. **Go to [msmodeling.md](msmodeling.md)** and run the `throughput_optimizer`.
-1. **Map Inquiry to Simulator**:
-   - `Input/Output Length` → `--input-length` / `--output-length`
-   - `Latency Sensitivity` → `--ttft-limits` / `--tpot-limits`
-   - `Quantization` → `--quantize-linear-action`
-1. **Apply Results**: Once validated by simulation, go to **Phase 2** of [vllm-run.md](vllm-run.md) to deploy.
-
-### Path B: Manual Tuning (Fallback)
-
-If `msmodeling` is unavailable, the model is unsupported by the simulator, or simulation fails, fallback to manual empirical tuning.
+Based on the inquiry results, proceed to manual empirical tuning.
 
 1. **Go to [vllm-run.md](vllm-run.md) Phase 2**. The scenario summary from this inquiry becomes the input to Phase 2 Step 1.
-1. **Empirical Mapping**: Use the "Scenario-Based Parameter Tuning" table in Phase 2 Step 3 of that document to translate inquiry results into vLLM CLI arguments.
+2. **Empirical Mapping**: Use the "Scenario-Based Parameter Tuning" table in Phase 2 Step 3 of that document to translate inquiry results into vLLM CLI arguments.

@@ -14,24 +14,7 @@ ______________________________________________________________________
 
 1. **Check NPU Availability** — Confirm devices are free and record per-card memory: `npu-smi info`
 
-1. **Analyze Model & Optimize Parallelism (msmodeling)** — Use `msmodeling` to find the optimal TP, DP, and batch size for your model and hardware profile. This is preferred over manual estimation.
-
-   Refer to [msmodeling.md](msmodeling.md) for full usage.
-
-   ```bash
-   # Example: Optimize Qwen3-32B on 8xNPUs with SLO constraints
-   python -m cli.inference.throughput_optimizer <model_id> \
-       --device ATLAS_800_A2_376T_64G \
-       --num-devices 8 \
-       --input-length 2048 \
-       --output-length 1024 \
-       --quantize-linear-action W8A8_DYNAMIC \
-       --tpot-limits 50
-   ```
-
-   Record the `parallel` (TP/DP) and `batch_size` from the top result.
-
-1. **Manual Parallelism Plan (Fallback)** — If `msmodeling` is unavailable, use this script to estimate TP/EP based on model size and NPU HBM:
+1. **Estimate Parallelism** — Use this script to estimate TP/EP based on model size and NPU HBM:
 
    ```python
    import json, os
@@ -104,9 +87,9 @@ ______________________________________________________________________
 
 ### Step 1 — Confirm Scenario
 
-If scenario inquiry has not been done yet, load [scenario-inquiry.md](scenario-inquiry.md) and complete the interview first. It will route you back here (Path B) once done.
+If scenario inquiry has not been done yet, load [scenario-inquiry.md](scenario-inquiry.md) and complete the interview first. It will route you back here once done.
 
-If the user arrived here from scenario-inquiry.md Path B, **state the scenario summary** before proceeding (e.g., "High-concurrency ChatBot: 200 QPS steady, TPOT-sensitive, W8A8, TP=8"). This anchors all parameter choices in Steps 2–3.
+If the user arrived here from scenario-inquiry.md, **state the scenario summary** before proceeding (e.g., "High-concurrency ChatBot: 200 QPS steady, TPOT-sensitive, W8A8, TP=8"). This anchors all parameter choices in Steps 2–3.
 
 ______________________________________________________________________
 
@@ -125,14 +108,12 @@ ______________________________________________________________________
 
    Read the relevant `.md` — it lists recommended `VLLM_ASCEND_*` env vars, `--additional-config`, `--speculative-config`, `--compilation-config` options, and known limitations. Use those values; do not guess from memory.
 
-1. **Set Graph Capture Sizes** — Configure `cudagraph_capture_sizes` to cover the expected batch sizes. Include the `batch_size` from msmodeling output (if available) and a range around it:
+1. **Set Graph Capture Sizes** — Configure `cudagraph_capture_sizes` to cover the expected batch sizes. Include the powers-of-two from 1 up to `max-num-seqs`:
 
    ```python
-   # Example: msmodeling returned batch_size=175, add surrounding sizes
-                              cudagraph_capture_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 160, 175, 192, 256]
+   # Example: max-num-seqs=256, add common sizes
+            cudagraph_capture_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256]
    ```
-
-   If msmodeling was not run, use powers-of-two from 1 up to `max-num-seqs`.
 
 ______________________________________________________________________
 
@@ -142,13 +123,11 @@ Apply parameters based on the scenario confirmed in Step 1. Use the mapping belo
 
 | Scenario | Key Parameters | Notes |
 | :--- | :--- | :--- |
-| **High Concurrency + Steady traffic** | `--max-num-seqs` ↑ (use msmodeling `batch_size`), FULL graph mode | Prioritize throughput; graph capture covers high batch sizes |
+| **High Concurrency + Steady traffic** | `--max-num-seqs` ↑, FULL graph mode | Prioritize throughput; graph capture covers high batch sizes |
 | **Long Context / RAG** | `--gpu-memory-utilization 0.95`, enable quantization | Higher HBM allocation for KV cache; quantization reduces model footprint |
 | **TTFT-Sensitive + Bursty traffic** | `--max-num-seqs` ↓, `--max-num-batched-tokens` with headroom | Smaller batches reduce prefill queue depth; leave token budget for burst |
 | **TPOT-Sensitive (code / agent)** | `--speculative-config` with draft model, tune `cudagraph_capture_sizes` | Speculative decoding cuts per-token latency; capture small batch sizes too |
 | **Memory-Constrained** | `--gpu-memory-utilization 0.9`→`0.95`, lower `--max-num-seqs` | Balance KV cache vs. model weight footprint |
-
-**Always verify** the final `--max-num-seqs` against the msmodeling `batch_size` output — the simulator's recommendation takes precedence over the table defaults above.
 
 If speculative decoding is selected, ask the user for their preferred draft model before writing any command.
 

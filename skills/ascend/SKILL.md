@@ -62,18 +62,6 @@ chmod +x run.sh
 - Do **not** run commands directly in the terminal; always go through the script so output is saved
 - Do **not** run the script in the background (no `&`, no `nohup`, no `run_in_background`); run it in the foreground so output streams to the terminal in real time
 
-## Tool Disambiguation
-
-> **`msmodeling` vs `msmodelslim` — these are two completely different tools:**
->
-> | Tool | Full name | Purpose | CLI entry point |
-> | :--- | :--- | :--- | :--- |
-> | **msmodeling** | MindStudio Modeling | **Simulation** — predicts optimal TP/DP/batch size *without touching hardware* | `python -m cli.inference.throughput_optimizer` |
-> | **msmodelslim** | MindStudio ModelSlim | **Quantization** — converts model weights to W4A8/W8A8/W4A4 etc. | `msmodelslim quant` |
->
-> If the task involves *deployment parameter tuning*, use **msmodeling**.
-> If the task involves *compressing model weights*, use **msmodelslim**.
-
 ## Task Specifics
 
 For detailed instructions on specific tools, refer to:
@@ -81,9 +69,8 @@ For detailed instructions on specific tools, refer to:
 - **Model Download**: Before inference or quantization, get the model locally. See [model-download.md](model-download.md) — ModelScope first, HuggingFace as fallback. Always ask the user where to store before downloading. Never use online model IDs in vLLM or msmodelslim commands.
 - **vLLM-Ascend**:
   - **Installation**: See [vllm-install.md](vllm-install.md).
-  - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you through the optimal path: either [msmodeling.md](msmodeling.md) (Simulation) or [vllm-run.md](vllm-run.md) (Manual Tuning & Deployment).
+  - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you to [vllm-run.md](vllm-run.md) for Manual Tuning & Deployment.
 - **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for DCO signature requirements and PR description template.
-- **msmodeling**: See [msmodeling.md](msmodeling.md) for performance simulation and vLLM parameter optimization (TP/DP/batch size).
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols.
 - **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking.
 

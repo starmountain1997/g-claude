@@ -11,7 +11,6 @@ ______________________________________________________________________
 | 模型下载（ModelScope / HuggingFace） | `model-download.md` |
 | vLLM-Ascend 安装与版本锁定 | `vllm-install.md` |
 | 性能目标调研（延迟 / 吞吐 / 并发） | `scenario-inquiry.md` |
-| 仿真寻优（TP/DP/Batch 参数） | `msmodeling.md` |
 | 部署调优（Eager → Graph → Online Serving） | `vllm-run.md` |
 | 模型量化（W4A8 / W8A8 / W4A4 等） | `msmodelslim-quant.md` |
 | 敏感层分析与精度恢复 | `msmodelslim-analysis.md` |
@@ -27,10 +26,8 @@ ______________________________________________________________________
 ```
 scenario-inquiry.md          ← 明确延迟/吞吐/并发目标
         │
-        ├─ Path A: msmodeling.md   ← 仿真寻优（推荐）
-        │          └─ vllm-run.md Phase 2  ← 应用仿真结果
-        │
-        └─ Path B: vllm-run.md Phase 2  ← 经验调参（回退）
+        ▼
+vllm-run.md Phase 2          ← 经验调参并验证
 ```
 
 ### 量化路径
@@ -62,7 +59,6 @@ ascend/
 ├── SKILL.md                      # 入口：硬件检查 + 公共约定 + 任务路由
 ├── model-download.md             # 模型下载：ModelScope 优先，HuggingFace 回退
 ├── scenario-inquiry.md           # 场景调研：延迟/吞吐/并发多维访谈
-├── msmodeling.md                 # 性能仿真：throughput_optimizer 用法与输出解读
 ├── vllm-install.md               # 安装：源码编译 + 版本锁定
 ├── vllm-run.md                   # 部署调优：Eager 验证 → Graph 优化 → Online Serving
 ├── vllm-contribute.md            # 社区贡献：DCO 签名与 PR 模板
@@ -98,7 +94,7 @@ ______________________________________________________________________
 
 - 昇腾 NPU / Ascend / 910B
 - vLLM-Ascend / vllm_ascend
-- msmodelslim / msmodeling / 模型量化
+- msmodelslim / 模型量化
 - W4A8 / W8A8 / W4A4 等量化类型
 - AISBench / 精度评测
 

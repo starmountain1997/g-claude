@@ -1,7 +1,6 @@
 # msmodelslim Quantization Protocol
 
 > **Purpose: weight quantization — converts model weights to W4A8/W8A8/W4A4 etc. and writes a quantized checkpoint.**
-> Do not confuse with `msmodeling`, which only simulates performance and does not modify any weights.
 
 Strict sequential protocol for model quantization, structural consultation, or debugging on Ascend NPUs.
 
