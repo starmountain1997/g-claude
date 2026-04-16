@@ -31,6 +31,20 @@ def main():
 
     context7_api_key = sys.argv[1]
 
+    # Install plugins
+    # Ref: https://github.com/forrestchang/andrej-karpathy-skills
+    # Installs karpathy-skills marketplace + andrej-karpathy-skills plugin
+    print("添加 karpathy-skills marketplace...")
+    subprocess.run(
+        ["claude", "plugin", "marketplace", "add", "forrestchang/andrej-karpathy-skills"],
+        capture_output=True,
+    )
+    print("安装 karpathy-skills 插件...")
+    subprocess.run(
+        ["claude", "plugin", "install", "andrej-karpathy-skills@karpathy-skills"],
+        capture_output=True,
+    )
+
     # Install Context7 MCP for Claude Code
     print("安装 Context7 MCP for Claude Code...")
     try:
