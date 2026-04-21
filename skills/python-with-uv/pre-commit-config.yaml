@@ -1,13 +1,19 @@
 repos:
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.8.0
-    hooks:
-      - id: ruff
-        args: [--fix]
-      - id: ruff-format
-
   - repo: local
     hooks:
+      - id: ruff
+        name: ruff
+        entry: ruff check
+        args: [--fix]
+        language: system
+        types: [python]
+
+      - id: ruff-format
+        name: ruff-format
+        entry: ruff format
+        language: system
+        types: [python]
+
       - id: pyright
         name: basedpyright
         entry: basedpyright --pythonversion $PYTHON_VERSION
@@ -41,16 +47,3 @@ repos:
         args: [--profile, black]
         language: system
         types: [python]
-
-      - id: mdformat
-        name: mdformat
-        entry: mdformat
-        language: system
-        types: [markdown]
-
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
