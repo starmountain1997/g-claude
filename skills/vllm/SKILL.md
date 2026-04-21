@@ -26,6 +26,10 @@ Before any vLLM task:
 
 Once the API server is up, use `/aisbench` to run accuracy or performance benchmarks against it.
 
+## Run Commands via Shell Script
+
+All vLLM commands (offline inference, online serving) must be saved to a shell script and executed through it so output is captured in a timestamped log file. See the template in `/ascend` → "Common Requirement: Run via Shell Script with Log Output".
+
 ## Core Tips
 
 - All toolkits (`vllm`, `vllm-ascend`) are installed in editable mode. Run `pip show <package>` to find the source directory before modifying or referencing them.

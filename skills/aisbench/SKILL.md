@@ -57,6 +57,10 @@ Edit the printed config files directly. Key model fields: `host_ip`, `host_port`
 - **Accuracy Evaluation**: [aisbench-accuracy.md](aisbench-accuracy.md) — dataset selection, model client config, troubleshooting
 - **Performance Benchmarking**: [aisbench-performance.md](aisbench-performance.md) — streaming backend, `ignore_eos`, synthetic dataset, concurrency sweep
 
+## Run Commands via Shell Script
+
+All `ais_bench` commands must be saved to a shell script and executed through it so output is captured in a timestamped log file. See the template in `/ascend` → "Common Requirement: Run via Shell Script with Log Output".
+
 ## Common Notes
 
 - Results land in `outputs/default/<timestamp>/`

@@ -28,7 +28,10 @@ The E2E loop is: quantize → serve → evaluate → (if fail) analyze → retry
 - **Serve the quantized model**: use `/vllm` with `quantization="ascend"` set in the LLM config
 - **Evaluate accuracy**: use `/aisbench` (GSM8K; threshold ≤ 1 pp drop vs FP16 baseline)
 
+## Run Commands via Shell Script
+
+All quantization commands must be saved to a shell script and executed through it so output is captured in a timestamped log file. See the template in `/ascend` → "Common Requirement: Run via Shell Script with Log Output".
+
 ## Core Tips
 
 - `msmodelslim` is installed in editable mode. Run `pip show msmodelslim` to find the source directory.
-- All quantization commands must run via a shell script with log capture — see the run script template in `/ascend`.
