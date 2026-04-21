@@ -2,6 +2,7 @@
 name: aisbench
 description: AISBench LLM evaluation framework. Use when installing AISBench, running accuracy benchmarks (GSM8K, MMLU, AIME, etc.), or running performance benchmarks (throughput, latency) against vLLM services on Ascend NPUs.
 argument-hint: install / accuracy / performance
+license: MIT
 ---
 
 # AISBench Evaluation

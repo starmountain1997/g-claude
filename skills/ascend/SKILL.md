@@ -2,6 +2,7 @@
 name: ascend
 description: Ascend NPU hardware and toolchain entry point. Use when checking NPU health, setting up the Ascend environment, quantizing models with msmodelslim, or debugging NPU-level errors. Also the starting point for any Ascend workflow — triggers the hardware check before vLLM serving or evaluation begins.
 argument-hint: npu check / quantization / environment setup
+license: MIT
 ---
 
 # Ascend NPU Toolchain

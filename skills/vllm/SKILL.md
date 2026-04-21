@@ -2,6 +2,7 @@
 name: vllm
 description: vLLM-Ascend serving toolchain. Use when installing vLLM on Ascend NPUs, running offline inference, launching a model as an OpenAI-compatible API server, tuning throughput/latency for a specific serving scenario, or contributing to the vllm-ascend project. Trigger whenever the user discusses vLLM deployment, vLLM errors, serving a model on Ascend, or wants to get inference running before evaluation.
 argument-hint: install / run / serve / contribute
+license: MIT
 ---
 
 # vLLM-Ascend

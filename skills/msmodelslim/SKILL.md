@@ -2,6 +2,7 @@
 name: msmodelslim
 description: msmodelslim model quantization on Ascend NPUs. Use when quantizing LLMs or VLMs to W4A8, W8A8, W4A4, or other dtypes using msmodelslim. Covers one-click quantization, custom YAML configs, mixed quantization for MoE models, sensitive layer analysis, and adding new model adapters. Trigger whenever the user wants to compress a model, reduce memory footprint, or produce a quantized checkpoint for Ascend NPU serving.
 argument-hint: quantize / analyze / new model
+license: MIT
 ---
 
 # msmodelslim

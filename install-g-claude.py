@@ -1,86 +1,124 @@
 #!/usr/bin/env python3
+"""
+Install g-claude skills and optional extras.
+
+Usage:
+    python install-g-claude.py [--context7-key <KEY>]
+
+Without arguments: registers the marketplace and installs all skills.
+With --context7-key: also installs Context7 MCP for Claude Code and OpenCode.
+"""
 
 import json
 import os
-import shutil
 import subprocess
 import sys
 
 
-def main():
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    skills_dir = os.path.join(script_dir, "skills")
+MARKETPLACE_REPO = "starmountain1997/g-claude"
+MARKETPLACE_NAME = "g-claude"
 
-    # Remove and copy skills
+SKILLS = [
+    "ascend",
+    "vllm",
+    "msmodelslim",
+    "aisbench",
+    "commit-as-prompt",
+]
+
+KARPATHY_MARKETPLACE = "forrestchang/andrej-karpathy-skills"
+KARPATHY_PLUGIN = "andrej-karpathy-skills@karpathy-skills"
+
+ANTHROPIC_MARKETPLACE = "anthropics/skills"
+ANTHROPIC_PLUGINS = [
+    "skill-creator@anthropics/skills",
+]
+
+
+def run(cmd):
+    subprocess.run(cmd, capture_output=True)
+
+
+def install_skills():
+    print(f"Adding marketplace: {MARKETPLACE_REPO}")
+    run(["claude", "plugin", "marketplace", "add", MARKETPLACE_REPO])
+
+    for skill in SKILLS:
+        print(f"Installing skill: {skill}@{MARKETPLACE_NAME}")
+        run(["claude", "plugin", "install", f"{skill}@{MARKETPLACE_NAME}"])
+
+    print("All g-claude skills installed.\n")
+
+
+def install_karpathy():
+    print(f"Adding marketplace: {KARPATHY_MARKETPLACE}")
+    run(["claude", "plugin", "marketplace", "add", KARPATHY_MARKETPLACE])
+    print(f"Installing plugin: {KARPATHY_PLUGIN}")
+    run(["claude", "plugin", "install", KARPATHY_PLUGIN])
+    print("karpathy-skills installed.\n")
+
+
+def install_anthropic():
+    print(f"Adding marketplace: {ANTHROPIC_MARKETPLACE}")
+    run(["claude", "plugin", "marketplace", "add", ANTHROPIC_MARKETPLACE])
+    for plugin in ANTHROPIC_PLUGINS:
+        print(f"Installing plugin: {plugin}")
+        run(["claude", "plugin", "install", plugin])
+    print("anthropics/skills plugins installed.\n")
+
+
+def install_context7(api_key):
     home = os.path.expanduser("~")
 
-    claude_skills = os.path.join(home, ".claude", "skills")
-    gemini_skills = os.path.join(home, ".gemini", "skills")
+    print("Installing Context7 MCP for Claude Code...")
+    run(["claude", "mcp", "add", "--scope", "user", "context7", "--",
+         "npx", "-y", "@upstash/context7-mcp", "--api-key", api_key])
+    print("Claude Code: context7 MCP added.")
 
-    shutil.rmtree(claude_skills, ignore_errors=True)
-    shutil.rmtree(gemini_skills, ignore_errors=True)
-
-    shutil.copytree(skills_dir, claude_skills, dirs_exist_ok=True)
-    shutil.copytree(skills_dir, gemini_skills, dirs_exist_ok=True)
-
-    print("所有 skills 注册完成")
-
-    if len(sys.argv) < 2:
-        print("用法: python install-g-claude.py <CONTEXT7_API_KEY>")
-        sys.exit(1)
-
-    context7_api_key = sys.argv[1]
-
-    # Install plugins
-    # Ref: https://github.com/forrestchang/andrej-karpathy-skills
-    # Installs karpathy-skills marketplace + andrej-karpathy-skills plugin
-    print("添加 karpathy-skills marketplace...")
-    subprocess.run(
-        ["claude", "plugin", "marketplace", "add", "forrestchang/andrej-karpathy-skills"],
-        capture_output=True,
-    )
-    print("安装 karpathy-skills 插件...")
-    subprocess.run(
-        ["claude", "plugin", "install", "andrej-karpathy-skills@karpathy-skills"],
-        capture_output=True,
-    )
-
-    # Install Context7 MCP for Claude Code
-    print("安装 Context7 MCP for Claude Code...")
-    try:
-        subprocess.run(
-            ["claude", "mcp", "add", "--scope", "user", "context7", "--",
-             "npx", "-y", "@upstash/context7-mcp", "--api-key", context7_api_key],
-            capture_output=True,
-        )
-        print("Claude Code MCP context7 已添加")
-    except Exception as e:
-        print(f"Claude Code MCP 已存在或安装失败: {e}")
-
-    # Install Context7 MCP for OpenCode
-    print("安装 Context7 MCP for OpenCode...")
-    opencode_config_path = os.path.join(home, ".config", "opencode", "config.json")
-    os.makedirs(os.path.dirname(opencode_config_path), exist_ok=True)
+    print("Installing Context7 MCP for OpenCode...")
+    config_path = os.path.join(home, ".config", "opencode", "config.json")
+    os.makedirs(os.path.dirname(config_path), exist_ok=True)
 
     config = {}
-    if os.path.exists(opencode_config_path):
+    if os.path.exists(config_path):
         try:
-            with open(opencode_config_path, "r") as f:
+            with open(config_path) as f:
                 config = json.load(f)
         except Exception:
-            config = {}
+            pass
 
     config.setdefault("mcp", {})["context7"] = {
         "type": "local",
-        "command": ["npx", "-y", "@upstash/context7-mcp", "--api-key", context7_api_key],
+        "command": ["npx", "-y", "@upstash/context7-mcp", "--api-key", api_key],
         "enabled": True,
     }
 
-    with open(opencode_config_path, "w") as f:
+    with open(config_path, "w") as f:
         json.dump(config, f, indent=2)
 
-    print("OpenCode MCP context7 已添加")
-    print("Context7 MCP 安装完成")
+    print("OpenCode: context7 MCP added.\n")
+
+
+def main():
+    args = sys.argv[1:]
+    context7_key = None
+
+    if "--context7-key" in args:
+        idx = args.index("--context7-key")
+        if idx + 1 < len(args):
+            context7_key = args[idx + 1]
+        else:
+            print("Error: --context7-key requires a value")
+            sys.exit(1)
+
+    install_skills()
+    install_karpathy()
+    install_anthropic()
+
+    if context7_key:
+        install_context7(context7_key)
+    else:
+        print("Tip: pass --context7-key <KEY> to also install Context7 MCP.")
 
 
 if __name__ == "__main__":
