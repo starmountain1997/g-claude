@@ -1,6 +1,6 @@
 ---
 name: aisbench
-description: AISBench LLM evaluation framework. Use when installing AISBench, running accuracy benchmarks (GSM8K, MMLU, etc.), or running performance benchmarks (throughput, latency) against vLLM services on Ascend NPUs.
+description: AISBench LLM evaluation framework. Use when installing AISBench, running accuracy benchmarks (GSM8K, MMLU, AIME, etc.), or running performance benchmarks (throughput, latency) against vLLM services on Ascend NPUs.
 argument-hint: install / accuracy / performance
 ---
 
@@ -8,27 +8,51 @@ argument-hint: install / accuracy / performance
 
 AISBench evaluates LLM service accuracy and performance via an OpenAI-compatible API.
 
+Both accuracy and performance benchmarks share the same CLI structure:
+
+```bash
+ais_bench --models <model_task> --datasets <dataset_task> [--mode perf]
+```
+
+The only structural differences between accuracy and performance runs:
+
+| | Accuracy | Performance |
+|---|---|---|
+| `--mode` flag | omit (default) | `--mode perf` |
+| Model backend | text or streaming | **streaming only** (e.g. `vllm_api_stream_chat`) |
+| `ignore_eos` | False | **True** (forces full output length) |
+| Output dir | `summary/` (accuracy scores) | `performances/` (latency/throughput) |
+
 ## Start Here
 
-Before any evaluation task, locate the AISBench installation:
+Locate the AISBench installation before anything else:
 
 ```bash
 pip show ais_bench_benchmark
 ```
 
-If not found, follow [aisbench-install.md](aisbench-install.md) to install first.
+If not found, follow [aisbench-install.md](aisbench-install.md). Use `Editable project location` as `$LOCATION`.
 
-Use the `Editable project location` field as `$LOCATION` in all paths.
+## Configure: Use `--search` to find config files
+
+Every named task (model or dataset) corresponds to a `.py` config file. Find the paths:
+
+```bash
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --search
+```
+
+Edit the printed config files directly. Key model fields: `host_ip`, `host_port`, `model`, `max_out_len`, `batch_size`.
 
 ## Task Specifics
 
-- **Installation**: See [aisbench-install.md](aisbench-install.md)
-- **Accuracy Evaluation**: See [aisbench-accuracy.md](aisbench-accuracy.md) — dataset selection, model client config, and accuracy troubleshooting
-- **Performance Benchmarking**: See [aisbench-performance.md](aisbench-performance.md) — throughput/latency measurement with GSM8K dataset generation
+- **Installation**: [aisbench-install.md](aisbench-install.md)
+- **Accuracy Evaluation**: [aisbench-accuracy.md](aisbench-accuracy.md) — dataset selection, model client config, troubleshooting
+- **Performance Benchmarking**: [aisbench-performance.md](aisbench-performance.md) — streaming backend, `ignore_eos`, synthetic dataset, concurrency sweep
 
 ## Common Notes
 
-- AISBench is installed in editable mode — always use `pip show` to find the source path
-- For accuracy evals, prefer `chat_prompt` dataset variants
-- For performance evals, use `ignore_eos=True` and `request_rate=0` (burst mode) to measure peak throughput
 - Results land in `outputs/default/<timestamp>/`
+- Use `--debug` on first runs to see request logs on screen
+- Use `--reuse <timestamp>` to resume interrupted runs or re-evaluate without re-running inference
+- For accuracy: prefer `chat_prompt` dataset variants; use low temperature (`temperature=0`)
+- For performance: `vllm_api_stream_chat` is required; `ignore_eos=True` is essential for meaningful throughput numbers

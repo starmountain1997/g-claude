@@ -1,71 +1,70 @@
 # AISBench Performance Evaluation Guide
 
-This guide covers performance benchmarking (throughput, latency, concurrency) for LLM services on Ascend NPUs using AISBench.
+Performance benchmarking measures throughput, latency, and concurrency of a running vLLM service. The CLI pattern is identical to accuracy evaluation with two differences:
 
-______________________________________________________________________
+1. Add `--mode perf`
+2. Use a **streaming** model backend (`vllm_api_stream_chat` instead of `vllm_api_general_chat`)
 
-## Locate the Installation
+---
 
-AISBench is installed in editable mode. Find its source root before doing anything else:
+## Prerequisite: vLLM Service
+
+```bash
+vllm serve /path/to/model --host 0.0.0.0 --port 8080 --served-model-name DeepSeek-R1
+```
+
+---
+
+## Step 1 — Locate AISBench
 
 ```bash
 pip show ais_bench_benchmark
 ```
 
-If the package is not found, follow [aisbench-install.md](aisbench-install.md) to install it first, then return here.
+Use `Editable project location` as `$LOCATION`.
 
-Use the `Editable project location` field from `pip show` as `$LOCATION` in all paths below.
+---
 
-______________________________________________________________________
+## Step 2 — Choose a Dataset
 
-## Step 1 — Prepare the Dataset
+Performance eval supports all accuracy datasets plus `synthetic_gen` for custom sequence lengths.
 
-For performance benchmarking you need a dataset with a fixed, controlled input length and a known batch size. Use the provided script to generate one from GSM8K.
-
-**Requirements**: `pip install click loguru modelscope transformers`
+**Option A: Use an existing dataset** (same as accuracy eval — place files under `$LOCATION/ais_bench/datasets/`):
 
 ```bash
-python ${CLAUDE_SKILL_DIR}/scripts/make_gsm8k.py \
-    --input-len 64000 \
-    --batch-size 2800 \
-    --model-id deepseek-ai/DeepSeek-V3 \
-    --zip-path ./gsm8k.zip
+ais_bench --models vllm_api_stream_chat --datasets demo_gsm8k_gen_4_shot_cot_chat_prompt --mode perf --search
 ```
 
-This produces `GSM8K-in{input_len}-bs{batch_size}.jsonl` (e.g. `GSM8K-in64000-bs2800.jsonl`) in the current directory. Each line is `{"question": "<text padded/truncated to input_len tokens>", "answer": "none"}`.
+**Option B: Synthetic dataset** (recommended for controlled input/output length testing):
 
-**Options**:
+```bash
+ais_bench --models vllm_api_stream_chat --datasets synthetic_gen --mode perf
+```
 
-- `--input-len`: Target token count per sample (text is repeated then truncated to hit this length exactly).
-- `--batch-size`: Total number of samples in the output file.
-- `--model-id`: Tokenizer to use for token counting (downloaded via ModelScope).
-- `--zip-path`: Path to GSM8K zip (auto-downloaded from OpenCompass if absent).
+Configure `$LOCATION/ais_bench/datasets/synthetic/synthetic_config.py`:
 
-______________________________________________________________________
+```python
+synthetic_config = {
+    "Type": "string",
+    "RequestCount": 1000,
+    "StringConfig": {
+        "Input":  {"Method": "uniform", "Params": {"MinValue": 512, "MaxValue": 2048}},
+        "Output": {"Method": "uniform", "Params": {"MinValue": 128, "MaxValue": 512}},
+    }
+}
+```
 
-## Step 2 — Configure the Model Client
+---
 
-Ask the user:
+## Step 3 — Configure the Model Client
 
-- **vLLM host IP** — e.g. `localhost` or a remote IP
-- **vLLM port** — e.g. `8080`
-- **Model-served-name** — from `curl http://<host>:<port>/v1/models`
-- **Target concurrency** — how many concurrent requests to send
-- **Output length** — max tokens to generate per request
-
-### Locate the config file
+Find the config file path:
 
 ```bash
 ais_bench --models vllm_api_stream_chat --mode perf --search
 ```
 
-Copy it to the working directory:
-
-```bash
-cp $LOCATION/ais_bench/benchmark/configs/models/vllm_api/vllm_api_stream_chat.py ./perf_model.py
-```
-
-Edit `perf_model.py`:
+Edit `vllm_api_stream_chat.py`:
 
 ```python
 from ais_bench.benchmark.models import VLLMCustomAPIChatStream
@@ -76,114 +75,86 @@ models = [
         type=VLLMCustomAPIChatStream,
         abbr='vllm-api-stream-chat',
         path="",
-        model="DeepSeek-V3",   # ← vLLM served model name (from /v1/models); empty = auto-detect
-        request_rate=0,        # ← 0 = burst (all requests at once); use float for rate-limited
+        model="DeepSeek-R1",       # model name from /v1/models; empty = auto-detect
+        request_rate=0,            # 0 = burst mode (all requests at once); use float for rate-limited
         retry=2,
-        host_ip="localhost",   # ← vLLM host IP
-        host_port=8080,        # ← vLLM port
-        max_out_len=2048,      # ← desired output length for this test case
-        batch_size=200,        # ← concurrent requests (tune to target concurrency)
+        host_ip="localhost",       # ← vLLM host IP
+        host_port=8080,            # ← vLLM port
+        max_out_len=512,           # ← output length for this test case
+        batch_size=64,             # ← concurrency (primary variable to sweep)
         generation_kwargs=dict(
             temperature=1.0,
             top_p=1.0,
             seed=None,
-            ignore_eos=True,   # ← force output to reach max_out_len (no early stop)
+            ignore_eos=True,       # ← force output to reach max_out_len (no early stop)
         )
     )
 ]
 ```
 
-Key fields for performance testing:
+Key differences from accuracy config:
+- `type=VLLMCustomAPIChatStream` (streaming required)
+- `ignore_eos=True` (forces full output length — essential for meaningful throughput numbers)
+- Higher `batch_size` (concurrency is the main variable to sweep)
 
-- `batch_size`: concurrency level — the primary variable to sweep across runs
-- `max_out_len`: must match the desired output length for the test
-- `ignore_eos=True`: prevents early EOS so every request generates exactly `max_out_len` tokens
-- `request_rate=0`: burst mode — all requests sent immediately for max-throughput measurement
+---
 
-______________________________________________________________________
-
-## Step 3 — Run
+## Step 4 — Run
 
 ```bash
-ais_bench \
-    --models ./perf_model.py \
-    --custom-dataset-path ./GSM8K-in64000-bs2800.jsonl \
-    --custom-dataset-data-type qa \
-    --mode perf \
-    --debug
+ais_bench --models vllm_api_stream_chat --datasets demo_gsm8k_gen_4_shot_cot_chat_prompt --mode perf --debug
 ```
 
-Add `--num-prompts N` to cap the number of requests (useful for smoke tests or warm-up):
+Cap request count for smoke tests:
 
 ```bash
-ais_bench \
-    --models ./perf_model.py \
-    --custom-dataset-path ./GSM8K-in64000-bs2800.jsonl \
-    --mode perf \
-    --num-prompts 100
+ais_bench --models vllm_api_stream_chat --datasets demo_gsm8k_gen_4_shot_cot_chat_prompt --mode perf --num-prompts 100
 ```
 
-Results are saved under `outputs/default/<timestamp>/` and printed to screen.
+---
 
-______________________________________________________________________
+## Step 5 — Read Results
 
-## Step 4 — Read the Results
-
-Performance results are printed at the end of the run:
-
-```
-Performance Parameters  | Average       | P75           | P90           | P99
-E2EL                    | 2048 ms       | ...           | ...           | ...
-TTFT                    | 50 ms         | ...           | ...           | ...
-TPOT                    | 10 ms         | ...           | ...           | ...
-OutputTokenThroughput   | 3200 token/s  | ...           | ...           | ...
-
-Common Metric                | Value
-Output Token Throughput      | 3200 token/s
-Total Token Throughput       | 4000 token/s
-Request Throughput           | 1.5 req/s
-Concurrency                  | 128
-```
+Results are printed at the end and saved under `outputs/default/<timestamp>/performances/<model-abbr>/`:
+- `<dataset>.csv` — per-request latency breakdown
+- `<dataset>.json` — end-to-end summary metrics
+- `<dataset>_plot.html` — concurrency visualization (open in browser)
 
 Key metrics:
 
-- **TTFT** (Time To First Token): prefill latency — reflects KV cache fill cost
-- **TPOT** (Time Per Output Token): per-step decode latency
-- **E2EL** (End-to-End Latency): total wall-clock time per request
-- **Output Token Throughput**: decode tokens/s — the primary throughput metric
-- **Total Token Throughput**: (input + output) tokens/s
+| Metric | What it measures |
+|--------|-----------------|
+| **TTFT** | Time To First Token — prefill latency |
+| **TPOT** | Time Per Output Token — per-step decode latency |
+| **E2EL** | End-to-End Latency — total wall-clock per request |
+| **Output Token Throughput** | decode tokens/s — primary throughput metric |
+| **Total Token Throughput** | (input + output) tokens/s |
 
-Detailed per-request CSV/JSON and a concurrency visualization HTML are saved at:
-`outputs/default/<timestamp>/performances/vllm-api-stream-chat/`
+---
 
-______________________________________________________________________
+## Concurrency Sweep
 
-## Troubleshooting
-
-### Output token count is lower than `max_out_len`
-
-The model stopped early despite `ignore_eos=True`. Some backends don't support `ignore_eos`. Check whether the vLLM version passes the parameter through; if not, use `min_tokens` in `generation_kwargs` to set a minimum output floor.
-
-### All requests fail (`Failed Requests = N`)
-
-vLLM is unreachable or OOMing. Check:
-
-1. Is the service running? `curl http://<host>:<port>/v1/models`
-1. Is `batch_size` too high for available HBM? Halve it and retry.
-1. Check vLLM logs for OOM or NCCL errors.
-
-### Throughput lower than expected
-
-1. Confirm `ignore_eos=True` is effective — low `OutputTokens` average in results means requests are stopping early.
-1. Check `request_rate` — if set above 0.1, requests are rate-limited, reducing observed throughput.
-1. Run a concurrency sweep to find the saturation point:
+To find the throughput saturation point, sweep `batch_size`:
 
 ```bash
 for BS in 1 4 16 64 128 256; do
-    sed -i "s/batch_size=.*/batch_size=$BS,/" ./perf_model.py
-    ais_bench \
-        --models ./perf_model.py \
-        --custom-dataset-path ./GSM8K-in64000-bs2800.jsonl \
-        --mode perf
+    sed -i "s/batch_size=.*/batch_size=$BS,/" $LOCATION/ais_bench/benchmark/configs/models/vllm_api/vllm_api_stream_chat.py
+    ais_bench --models vllm_api_stream_chat --datasets synthetic_gen --mode perf --num-prompts 200
 done
+```
+
+---
+
+## Troubleshooting
+
+**Output tokens lower than `max_out_len`**: `ignore_eos` not taking effect. Add `min_tokens` to `generation_kwargs` as a fallback minimum.
+
+**All requests fail**: service unreachable or OOM. Halve `batch_size` and retry. Check `curl http://<host>:<port>/v1/models`.
+
+**Recalculate metrics without re-running** (e.g., to add P95 percentile):
+
+Edit the summarizer config, then:
+```bash
+ais_bench --models vllm_api_stream_chat --datasets demo_gsm8k_gen_4_shot_cot_chat_prompt \
+          --summarizer default_perf --mode perf_viz --pressure --reuse 20250628_151326
 ```

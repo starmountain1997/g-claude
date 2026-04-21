@@ -1,209 +1,151 @@
 # AISBench Accuracy Evaluation Guide
 
-AISBench evaluates LLM service accuracy via an OpenAI-compatible API.
+AISBench evaluates model accuracy by sending requests to a running vLLM service and comparing outputs against reference answers.
 
-______________________________________________________________________
+---
 
-## Locate the Installation
+## Prerequisite: vLLM Service
 
-AISBench is installed in editable mode. Find its source root before doing anything else:
+Both accuracy and performance benchmarks require an OpenAI-compatible vLLM server. Start it like:
+
+```bash
+vllm serve /path/to/model --host 0.0.0.0 --port 8080 --served-model-name DeepSeek-R1
+```
+
+Verify it's up: `curl http://<host>:<port>/v1/models`
+
+---
+
+## Step 1 — Locate AISBench
 
 ```bash
 pip show ais_bench_benchmark
 ```
 
-If the package is not found, follow [aisbench-install.md](aisbench-install.md) to install it first, then return here.
+If not found, follow [aisbench-install.md](aisbench-install.md). Use `Editable project location` as `$LOCATION`.
 
-Use the `Editable project location` field from `pip show` as the root for all config paths below.
+---
 
-______________________________________________________________________
+## Step 2 — Choose a Dataset
 
-## Setup: Two Things to Configure
-
-Every evaluation needs exactly two pieces of configuration:
-
-1. **Dataset** — which benchmark to run, and which config variant to use
-1. **Model client** — how to reach the vLLM service
-
-Work through them in order.
-
-______________________________________________________________________
-
-## Step 1 — Dataset
-
-Ask the user: **which dataset do you want to use?**
-
-Once they answer, investigate the AISBench installation to check support and requirements:
-
-Use `$LOCATION` to mean the `Editable project location` path from `pip show ais_bench_benchmark`.
-
-1. **Check if the dataset is supported** — look for a matching folder:
-
-   ```bash
-   ls $LOCATION/ais_bench/benchmark/configs/datasets/
-   ```
-
-1. **Read the dataset README** to understand:
-
-   - What the dataset tests
-   - Whether it requires a VLM (multimodal) or works with text-only LLMs
-   - How to obtain the data files and where to place them
-
-   ```bash
-   cat $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/README.md
-   ```
-
-1. **List available config variants** for that dataset:
-
-   ```bash
-   ls $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/
-   ```
-
-   For accuracy eval, prefer `chat_prompt` variants (e.g. `gsm8k_gen_0_shot_cot_chat_prompt`).
-
-1. **Check model compatibility**: if the dataset is multimodal (images/video/audio), the user's model must be a VLM with vision support enabled in vLLM. If the user's model is a text-only LLM, tell them and suggest a text-only alternative.
-
-Report your findings to the user — dataset name confirmed, variant chosen, data placement instructions — before moving to Step 2.
-
-______________________________________________________________________
-
-## Step 2 — Model Client
-
-Ask the user:
-
-- **vLLM host IP** — e.g. `localhost` or a remote IP
-- **vLLM port** — e.g. `8080`
-- **Model-served-name** — from `curl http://<host>:<port>/v1/models`
-
-### Create the config file
-
-Copy the example template from the AISBench source (`$LOCATION` = `Editable project location` from `pip show ais_bench_benchmark`) to the current working directory:
+Ask the user which benchmark to run. List available datasets:
 
 ```bash
-cp $LOCATION/ais_bench/configs/api_examples/infer_vllm_api_stream_chat.py ./eval.py
+ls $LOCATION/ais_bench/benchmark/configs/datasets/
 ```
 
-Edit `eval.py`. There are two things to set:
+Read the dataset README to understand data file requirements and placement:
 
-**1. Dataset import** — replace the gsm8k import with the dataset chosen in Step 1:
-
-```python
-with read_base():
-    from ais_bench.benchmark.configs.datasets.$DATASET.<variant> import $DATASET_datasets as datasets_to_eval
-
-datasets = [
-    *datasets_to_eval,
-]
+```bash
+cat $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/README.md
 ```
 
-**2. Model fields**:
+List config variants for the dataset:
+
+```bash
+ls $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/
+```
+
+Prefer `chat_prompt` variants for accuracy eval (e.g. `gsm8k_gen_4_shot_cot_chat_prompt`). Place dataset files under `$LOCATION/ais_bench/datasets/`.
+
+---
+
+## Step 3 — Configure Model and Dataset
+
+Find the config file paths with `--search`:
+
+```bash
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --search
+```
+
+This prints absolute paths to the model and dataset config `.py` files. Edit the **model config** (`vllm_api_general_chat.py`):
 
 ```python
 from ais_bench.benchmark.models import VLLMCustomAPIChat
-from ais_bench.benchmark.utils.postprocess.model_postprocessors import (
-    extract_non_reasoning_content,
-)
 
 models = [
     dict(
         attr="service",
         type=VLLMCustomAPIChat,
-        abbr="vllm-api-stream-chat",
-        path="/path/to/model",  # ← $MODEL_PATH from model-download.md
-        model="",  # ← vLLM served model name (from /v1/models); empty = auto-detect
-        stream=True,
-        request_rate=0,
-        use_timestamp=False,
+        abbr='vllm-api-general-chat',
+        path="",                   # tokenizer path (optional for accuracy eval)
+        model="DeepSeek-R1",       # model name from /v1/models; empty = auto-detect
+        request_rate=0,            # <0.1 = send all at once
         retry=2,
-        api_key="",
-        host_ip="localhost",  # ← vLLM host IP
-        host_port=8080,  # ← vLLM port
-        url="",
-        max_out_len=512,  # ← set according to vLLM --max-model-len config
-        batch_size=1,  # ← set according to vLLM --max-num-seqs / available memory
-        trust_remote_code=False,
+        host_ip="localhost",       # ← vLLM host IP
+        host_port=8080,            # ← vLLM port
+        max_out_len=512,           # ← raise if answers are truncated
+        batch_size=4,              # ← concurrent requests
         generation_kwargs=dict(
-            temperature=0.01,  # ← use low temperature for deterministic accuracy eval
-            ignore_eos=False,
-        ),
-        pred_postprocessor=dict(type=extract_non_reasoning_content),
+            temperature=0,         # low temperature for deterministic accuracy
+            top_p=0.95,
+            seed=None,
+        )
     )
 ]
 ```
 
-______________________________________________________________________
+The dataset config rarely needs changes if data is in `ais_bench/datasets/`.
 
-## Step 3 — Run
+---
 
-```bash
-ais_bench eval.py
-```
-
-Results in `outputs/default/$TIMESTAMP/summary/summary_*.txt`.
-
-______________________________________________________________________
-
-## Troubleshooting: Accuracy Too Low
-
-### Step 1 — Inspect raw model outputs
-
-Predictions are saved as JSONL (one JSON object per line) under:
-
-```
-outputs/default/$TIMESTAMP/predictions/$MODEL_ABBR/$DATASET.jsonl
-```
-
-Each line has this structure:
-
-```json
-{
-  "data_abbr": "gsm8k",
-  "id": 0,
-  "success": true,
-  "uuid": "...",
-  "origin_prompt": "...",
-  "prediction": "<model output>",
-  "gold": "<expected answer>"
-}
-```
-
-Print a few samples to see what the model is actually producing:
+## Step 4 — Run
 
 ```bash
-head -n 5 outputs/default/$TIMESTAMP/predictions/$MODEL_ABBR/$DATASET.jsonl | python3 -c "
-import sys, json
-for line in sys.stdin:
-    d = json.loads(line)
-    print('--- id', d['id'])
-    print('GOLD     :', d.get('gold'))
-    print('PREDICT  :', d.get('prediction'))
-    print()
-"
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --debug
 ```
 
-If some requests failed, check the failed file:
+`--debug` prints request logs to screen (recommended on first run). Drop it for batch runs.
+
+Results are printed at the end and saved under `outputs/default/<timestamp>/`:
+- `summary/summary_*.txt|csv|md` — final accuracy scores
+- `predictions/<model>/` — raw model outputs (JSON) for inspection
+- `results/<model>/` — per-sample evaluation scores
+- `logs/` — infer and eval phase logs
+
+---
+
+## Multi-Task Evaluation
+
+Run multiple models or datasets in one command:
 
 ```bash
-cat outputs/default/$TIMESTAMP/predictions/$MODEL_ABBR/$DATASET_failed.jsonl
+ais_bench --models vllm_api_general_chat vllm_api_stream_chat \
+          --datasets gsm8k_gen_4_shot_cot_str aime2024_gen_0_shot_chat_prompt
 ```
 
-### Step 2 — Diagnose from what you see
+Tasks = product of models × datasets. For parallel execution (lower concurrency per task):
 
-#### Output truncated (answers cut off mid-sentence)
+```bash
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen aime2024_gen \
+          --disable-cb --max-num-workers 4
+```
 
-The model is hitting a length limit before finishing. Check two things:
+---
 
-1. **vLLM `--max-model-len`** — if set too low on the server side, responses are cut. Check the vLLM launch command (see `vllm-run.md`).
-1. **`max_out_len` in `eval.py`** — raise it (e.g. `1024` → `2048`) and rerun.
+## Resume an Interrupted Run
 
-#### Output is garbled
+```bash
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen --reuse 20250628_151326
+```
 
-The model is generating incoherent tokens. This is a model-level issue — likely a quantization accuracy regression. Tell the user: the quantization config needs further tuning (e.g. adjust quantization sensitivity or exclude affected layers — see `msmodelslim.md`).
+---
 
-#### Prediction format wrong (correct answer present but not extracted)
+## Troubleshooting
 
-The model produces the right answer but the evaluator misses it — e.g. the number appears inside a sentence rather than at the end. Check whether `pred_postprocessor` is set correctly in `eval.py`. For reasoning models (DeepSeek-R1, QwQ), ensure `extract_non_reasoning_content` is applied so the `<think>...</think>` block is stripped before evaluation.
+**Accuracy too low — inspect raw outputs:**
 
-#### Failures (`success: false` in the JSONL)
+```bash
+cat outputs/default/$TS/predictions/vllm-api-general-chat/gsm8k.json | \
+  python3 -c "import sys,json; [print(json.loads(l)['prediction'][:200]) for l in sys.stdin]" | head -20
+```
 
-Network or server errors during inference. Check `error_info` in `$DATASET_failed.jsonl`. Common causes: vLLM OOM (reduce `batch_size`), request timeout (check vLLM logs), or model not loaded yet.
+- **Truncated output**: raise `max_out_len`; check vLLM `--max-model-len`
+- **Wrong answer format extracted**: add `pred_postprocessor=dict(type=extract_non_reasoning_content)` to model config (strips `<think>...</think>` for reasoning models)
+- **Failed requests**: check `predictions/.../gsm8k_failed.json`; reduce `batch_size` if OOM
+
+**Re-evaluate without re-running inference** (e.g., to fix answer extraction):
+
+```bash
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen --mode eval --reuse 20250628_151326
+```
