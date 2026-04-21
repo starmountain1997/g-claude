@@ -1,55 +1,47 @@
 ---
 name: python-with-uv
-description: Initializes and manages a Python project using uv. Performs 'uv init', configures Aliyun mirror, adds development dependencies, sets up pre-commit, and runs 'uv sync'.
+description: Set up a Python project with uv — use this skill whenever the user wants to start a new Python project, initialize a uv project, scaffold a Python package or app, or wire up a pre-commit + linting setup. Also use when an existing project needs uv mirror config, dev deps, or pre-commit installed.
 disable-model-invocation: true
 argument-hint: '[python-version]'
 ---
 
-This skill initializes a new Python project or manages an existing one using `uv` with Aliyun mirror configuration and a comprehensive pre-commit setup.
+This skill initializes a new Python project (or brings an existing one up to standard) using `uv` with Aliyun mirror configuration, ruff-based linting/formatting, and a comprehensive pre-commit setup.
 
 ### Workflow
 
-1. **Confirm Python Version**:
+1. **Gather options** — if not provided as `$0`, ask:
+   - Python version (e.g., `3.12`)
+   - Project type: **app** (default, script/service) or **lib** (installable package, uses `--lib`)
 
-   - If a Python version is provided as an argument ($0), use it.
-   - If no argument is provided, ask the user: "What Python version do you want to use for this project? (e.g., 3.12)".
+2. **Initialize project** (skip if `pyproject.toml` already exists):
+   - Run `uv init --python <version> [--lib]` — this also runs `git init` automatically.
 
-1. **Initialize Project**:
-
-   - Run `uv init --python <version>` in the current directory to set up the project structure and `pyproject.toml`.
-
-1. **Configure Aliyun Mirror**:
-
-   Append the following configuration to `pyproject.toml` to use Aliyun as the default pip source:
-
+3. **Configure Aliyun mirror** — append to `pyproject.toml`:
    ```toml
    [[tool.uv.index]]
-                                 url = "https://mirrors.aliyun.com/pypi/simple"
-                                 default = true
+   url = "https://mirrors.aliyun.com/pypi/simple"
+   default = true
    ```
 
-1. **Add Development Dependencies**:
+4. **Configure ruff** — append to `pyproject.toml` to enable import sorting and unused-import removal:
+   ```toml
+   [tool.ruff.lint]
+   select = ["E", "F", "I"]
+   ```
 
-   - Run `uv add ruff autoflake isort pytest radon vulture basedpyright pre-commit mdformat --dev` to install standard development, linting, and formatting tools.
+5. **Add development dependencies**:
+   ```
+   uv add ruff pytest radon vulture basedpyright pre-commit mdformat --dev
+   ```
 
-1. **Sync Dependencies**:
+6. **Set up pre-commit**:
+   - Create `.pre-commit-config.yaml` using [pre-commit-config.yaml](pre-commit-config.yaml) as the template.
+   - Replace `$PYTHON_VERSION` with the confirmed version (e.g., `3.12`).
+   - Run `pre-commit install` to register the git hooks.
 
-   - Run `uv sync` to ensure the virtual environment and `uv.lock` are fully synchronized.
-
-1. **Setup Pre-commit Configuration**:
-
-   - Create a `.pre-commit-config.yaml` file in the project root.
-   - Use the content from [pre-commit-config.yaml](pre-commit-config.yaml) as a template.
-   - **Important**: Replace `$PYTHON_VERSION` with the confirmed version (e.g., 3.12) and ensure any directory placeholders (like `./`) match the project structure.
-
-1. **Initialize Pre-commit**:
-
-   - Run `pre-commit install` to set up git hooks.
-
-1. **Finalize**:
-
-   - Inform the user that the project has been successfully initialized with the specified Python version, Aliyun mirror, development tools, and pre-commit hooks.
+7. **Finalize** — confirm to the user: Python version, mirror, dev tools installed, and pre-commit hooks active.
 
 ### Requirements
 
 - `uv` must be installed on the system.
+- The directory must be (or become) a git repo — `uv init` handles this for new projects; for existing projects without git, run `git init` before `pre-commit install`.
