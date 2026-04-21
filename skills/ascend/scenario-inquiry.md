@@ -44,4 +44,4 @@ ______________________________________________________________________
 Based on the inquiry results, proceed to manual empirical tuning.
 
 1. **Go to [vllm-run.md](vllm-run.md) Phase 2**. The scenario summary from this inquiry becomes the input to Phase 2 Step 1.
-2. **Empirical Mapping**: Use the "Scenario-Based Parameter Tuning" table in Phase 2 Step 3 of that document to translate inquiry results into vLLM CLI arguments.
+1. **Empirical Mapping**: Use the "Scenario-Based Parameter Tuning" table in Phase 2 Step 3 of that document to translate inquiry results into vLLM CLI arguments.

@@ -57,5 +57,5 @@ Keep `SKILL.md` under 500 lines. Move detailed reference material into separate 
 
 ## Current Skills
 
-- **`ascend/`** — Ascend NPU inference toolchain: vLLM-Ascend setup, msmodelslim quantization, AISBench evaluation. Auto-invoked when user discusses NPU/vLLM/Ascend topics. Supporting files: `vllm-install.md`, `vllm-run.md`, `msmodelslim.md`, `sensitivity-analysis.md`, `aisbench-accuracy.md`, `aisbench-install.md`.
+- **`ascend/`** — Ascend NPU inference toolchain: vLLM-Ascend setup, msmodelslim quantization, AISBench evaluation, and gDS automation. Auto-invoked when user discusses NPU/vLLM/Ascend topics. Supporting files: `vllm-install.md`, `vllm-run.md`, `msmodelslim-quant.md`, `msmodelslim-analysis.md`, `aisbench-accuracy.md`, `aisbench-install.md`, `gds.md`.
 - **`commit-as-prompt/`** — Structured Git commit workflow with WHAT/WHY/HOW message format. `disable-model-invocation: true` (user-triggered only via `/commit-as-prompt`). Supporting files: `reference.md`, `examples.md`.

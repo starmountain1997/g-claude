@@ -1,3 +1,5 @@
+exclude: ^(\.venv|third.party)/
+
 repos:
   - repo: local
     hooks:
@@ -23,7 +25,7 @@ repos:
       - id: vulture
         name: vulture
         entry: vulture
-        args: ["./", "--min-confidence", "80", "--exclude", ".venv", "--ignore-names", "env_settings,dotenv_settings,file_secret_settings"]
+        args: ["./", "--min-confidence", "80", "--ignore-names", "env_settings,dotenv_settings,file_secret_settings"]
         language: system
         pass_filenames: false
 

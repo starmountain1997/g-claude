@@ -73,10 +73,11 @@ For detailed instructions on specific tools, refer to:
 - **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for DCO signature requirements and PR description template.
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols.
 - **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking.
+- **gDS Automation**: See [gds.md](gds.md) for automated benchmarking and configuration utilities.
 
 ## Core Tips
 
-- **Editable Installs**: All toolkits — `vllm`, `vllm-ascend`, `msmodelslim`, and `ais_bench` — are installed in editable mode. Before referencing or modifying any of them, run `pip show <package>` to locate the source directory. Never assume a fixed path.
+- **Editable Installs**: All toolkits — `vllm`, `vllm-ascend`, `msmodelslim`, `ais_bench`, and `gds` — are installed in editable mode. Before referencing or modifying any of them, run `pip show <package>` to locate the source directory. Never assume a fixed path.
 - **Source Debugging**: Use `pip show <package>` to find the editable source location for deep debugging.
 - **Debugging Branch**: Before any debugging session, create a new git branch to isolate changes:
   ```bash
