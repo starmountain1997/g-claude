@@ -57,6 +57,8 @@ Keep `SKILL.md` under 500 lines. Move detailed reference material into separate 
 
 ## Current Skills
 
-- **`ascend/`** — Ascend NPU inference toolchain: vLLM-Ascend setup, msmodelslim quantization. Auto-invoked when user discusses NPU/vLLM/Ascend topics. Supporting files: `vllm-install.md`, `vllm-run.md`, `msmodelslim-quant.md`, `msmodelslim-analysis.md`, `scenario-inquiry.md`, `vllm-contribute.md`, `model-download.md`.
+- **`ascend/`** — Ascend NPU hardware entry point: NPU health check, environment setup (`ASCEND_RT_VISIBLE_DEVICES`), shell script template. Starting point for any Ascend workflow; delegates to `/vllm`, `/msmodelslim`, `/aisbench`.
+- **`vllm/`** — vLLM-Ascend serving toolchain: installation, model download, offline validation, scenario tuning, online serving, contribution guide. Supporting files: `vllm-install.md`, `vllm-run.md`, `scenario-inquiry.md`, `vllm-contribute.md`, `model-download.md`.
+- **`msmodelslim/`** — msmodelslim quantization on Ascend NPUs: W4A8/W8A8/W4A4, one-click and custom YAML, MoE mixed precision, VLM support, sensitive layer analysis. Supporting files: `msmodelslim-quant.md`, `msmodelslim-analysis.md`.
 - **`aisbench/`** — AISBench LLM evaluation framework: installation, accuracy benchmarking, and performance benchmarking against vLLM services. Supporting files: `aisbench-install.md`, `aisbench-accuracy.md`, `aisbench-performance.md`, `scripts/make_gsm8k.py`.
 - **`commit-as-prompt/`** — Structured Git commit workflow with WHAT/WHY/HOW message format. `disable-model-invocation: true` (user-triggered only via `/commit-as-prompt`). Supporting files: `reference.md`, `examples.md`.

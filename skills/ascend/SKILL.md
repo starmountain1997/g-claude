@@ -1,12 +1,12 @@
 ---
 name: ascend
-description: Entry point for Ascend NPU inference toolchain. Use when running vLLM on Ascend/NPU, quantizing models with msmodelslim, or debugging NPU errors.
-argument-hint: vllm issue / quantization / npu usage
+description: Ascend NPU hardware and toolchain entry point. Use when checking NPU health, setting up the Ascend environment, quantizing models with msmodelslim, or debugging NPU-level errors. Also the starting point for any Ascend workflow — triggers the hardware check before vLLM serving or evaluation begins.
+argument-hint: npu check / quantization / environment setup
 ---
 
-# Ascend Inference Toolchain
+# Ascend NPU Toolchain
 
-This skill manages Ascend NPU-related tasks, troubleshooting, and toolchain usage.
+This skill handles Ascend NPU hardware verification, environment configuration, and model quantization.
 
 ## Hardware Check
 
@@ -64,21 +64,10 @@ chmod +x run.sh
 
 ## Task Specifics
 
-For detailed instructions on specific tools, refer to:
-
-- **Model Download**: Before inference or quantization, get the model locally. See [model-download.md](model-download.md) — ModelScope first, HuggingFace as fallback. Always ask the user where to store before downloading. Never use online model IDs in vLLM or msmodelslim commands.
-- **vLLM-Ascend**:
-  - **Installation**: See [vllm-install.md](vllm-install.md).
-  - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you to [vllm-run.md](vllm-run.md) for Manual Tuning & Deployment.
-- **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for DCO signature requirements and PR description template.
-- **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols.
-- **AISBench Evaluation**: Use the `/aisbench` skill for installation, accuracy benchmarking, and performance benchmarking.
+- **vLLM Serving**: Use the `/vllm` skill — installation, model download, scenario tuning, and online serving.
+- **Quantization**: Use the `/msmodelslim` skill — W4A8/W8A8/W4A4, mixed precision, VLM support, accuracy recovery.
+- **Evaluation**: Use the `/aisbench` skill — accuracy and performance benchmarks against a running vLLM service.
 
 ## Core Tips
 
-- **Editable Installs**: All toolkits — `vllm`, `vllm-ascend`, `msmodelslim`, and `ais_bench` — are installed in editable mode. Before referencing or modifying any of them, run `pip show <package>` to locate the source directory. Never assume a fixed path.
-- **Source Debugging**: Use `pip show <package>` to find the editable source location for deep debugging.
-- **Debugging Branch**: Before any debugging session, create a new git branch to isolate changes:
-  ```bash
-  git checkout -b debug/TOPIC
-  ```
+- **Editable Installs**: All toolkits — `vllm`, `vllm-ascend`, `msmodelslim`, and `ais_bench` — are installed in editable mode. Run `pip show <package>` to locate the source directory. Never assume a fixed path.
