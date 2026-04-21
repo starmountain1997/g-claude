@@ -72,7 +72,7 @@ For detailed instructions on specific tools, refer to:
   - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you to [vllm-run.md](vllm-run.md) for Manual Tuning & Deployment.
 - **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for DCO signature requirements and PR description template.
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols.
-- **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation, [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy, and [aisbench-performance.md](aisbench-performance.md) for performance benchmarking.
+- **AISBench Evaluation**: Use the `/aisbench` skill for installation, accuracy benchmarking, and performance benchmarking.
 
 ## Core Tips
 
