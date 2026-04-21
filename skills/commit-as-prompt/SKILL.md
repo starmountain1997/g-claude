@@ -6,34 +6,64 @@ disable-model-invocation: true
 
 # Commit-As-Prompt
 
-This skill guides you through creating a high-quality Git commit structured for both humans and AI.
+Creates a Git commit whose message is useful to both humans and future AI sessions — structured, purposeful, and self-contained.
 
-## Current Workspace State
+## Workspace Snapshot
 
-### Status Summary
-
+### Unstaged / Staged Changes
 !`git status -s`
 
-### Changed Files Impact
-
+### Diff Summary
 !`git diff HEAD --stat`
 
-## Task Instructions
+## Commit Message Format
 
-1. **Review Changes**: Analyze the diffs to ensure only relevant changes are included. Remove any temporary logs, debuggers, or "dead" code. When running `git diff` on specific files, always use `git diff HEAD -- "filename"` to see all changes (staged or not). Never omit `HEAD` or `--`; omitting `--` causes "ambiguous argument" errors for non-ASCII filenames (e.g., Chinese), and omitting `HEAD` misses staged-only changes.
-1. **Stage Files**: If files aren't staged, interact with the user or use `git add -- "filename"` to prepare the commit.
-1. **Draft the Commit Message**: Use the provided summary "$ARGUMENTS" as the starting point.
-1. **Follow WHAT/WHY/HOW**:
-   - **WHAT**: One-sentence imperative description of the change.
-   - **WHY**: Business context, user needs, or bug background.
-   - **HOW**: Technical strategy, compatibility, and verification steps.
-1. **Commit Types**:
-   - `prompt(scope):` for commits intended as AI context.
-   - Standard `feat:`, `fix:`, etc. for regular work.
+```
+<type>(<scope>): <imperative subject>
 
-## References
+WHAT: <one sentence — what changed>
+WHY:  <business context, user need, or bug background>
+HOW:  <technical approach; note compatibility concerns or verification steps>
+```
 
-- For detailed staging principles, see [reference.md](reference.md)
-- For message examples, see [examples.md](examples.md)
+**Type prefixes:**
+- `prompt(scope):` — commits intended as AI context (skill files, prompts, docs that feed future sessions)
+- `feat`, `fix`, `refactor`, `docs`, `chore` — standard Conventional Commits for regular code
+
+See [examples.md](examples.md) for full worked examples.
+
+## Steps
+
+**1. Review the diff**
+
+Check that only relevant changes are staged. Remove debug logs, commented-out code, or unrelated formatting.
+
+When inspecting a specific file, always use:
+```bash
+git diff HEAD -- "filename"
+```
+Omitting `HEAD` misses staged-only changes; omitting `--` causes errors on non-ASCII filenames.
+
+**2. Stage**
+
+If files aren't staged yet, add them:
+```bash
+git add -- "filename"
+```
+If the workspace mixes unrelated changes, split into separate commits.
+
+**3. Draft the message**
+
+Use `$ARGUMENTS` as your starting point if provided. Otherwise derive the subject from the diff.
+
+Fill in WHAT/WHY/HOW. The WHY is the most important line — don't repeat the subject, explain the *reason* it was worth changing. See [reference.md](reference.md) for principles.
+
+**4. Commit**
+
+```bash
+git commit -m "<subject>" -m "WHAT: ...
+WHY:  ...
+HOW:  ..."
+```
 
 **Input summary:** $ARGUMENTS
