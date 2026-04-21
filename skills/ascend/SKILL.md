@@ -72,12 +72,11 @@ For detailed instructions on specific tools, refer to:
   - **Running & Tuning**: **Always start with [scenario-inquiry.md](scenario-inquiry.md)** to define your performance goals and serving scenario. It will guide you to [vllm-run.md](vllm-run.md) for Manual Tuning & Deployment.
 - **vLLM-Ascend Contribution**: See [vllm-contribute.md](vllm-contribute.md) for DCO signature requirements and PR description template.
 - **msmodelslim**: See [msmodelslim-quant.md](msmodelslim-quant.md) for quantization protocols.
-- **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation and [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy benchmarking.
-- **gDS Automation**: See [gds.md](gds.md) for automated benchmarking and configuration utilities.
+- **AISBench Evaluation**: See [aisbench-install.md](aisbench-install.md) for installation, [aisbench-accuracy.md](aisbench-accuracy.md) for accuracy, and [aisbench-performance.md](aisbench-performance.md) for performance benchmarking.
 
 ## Core Tips
 
-- **Editable Installs**: All toolkits — `vllm`, `vllm-ascend`, `msmodelslim`, `ais_bench`, and `gds` — are installed in editable mode. Before referencing or modifying any of them, run `pip show <package>` to locate the source directory. Never assume a fixed path.
+- **Editable Installs**: All toolkits — `vllm`, `vllm-ascend`, `msmodelslim`, and `ais_bench` — are installed in editable mode. Before referencing or modifying any of them, run `pip show <package>` to locate the source directory. Never assume a fixed path.
 - **Source Debugging**: Use `pip show <package>` to find the editable source location for deep debugging.
 - **Debugging Branch**: Before any debugging session, create a new git branch to isolate changes:
   ```bash

@@ -15,7 +15,7 @@ ______________________________________________________________________
 | 模型量化（W4A8 / W8A8 / W4A4 等） | `msmodelslim-quant.md` |
 | 敏感层分析与精度恢复 | `msmodelslim-analysis.md` |
 | 精度评测（AISBench） | `aisbench-install.md` / `aisbench-accuracy.md` |
-| 自动化评测与配置（gDS） | `gds.md` |
+| 性能评测（AISBench） | `aisbench-performance.md` |
 | 社区贡献（DCO 签名 / PR 模板） | `vllm-contribute.md` |
 
 ______________________________________________________________________
@@ -66,8 +66,7 @@ ascend/
 ├── msmodelslim-quant.md          # 量化主流程：端到端迭代工作流 + 参数选择指南
 ├── msmodelslim-analysis.md       # 敏感层分析：精度恢复回退路径
 ├── aisbench-install.md           # AISBench 安装
-├── aisbench-accuracy.md          # 精度评测：配置、运行、结果排查
-└── gds.md                        # 自动化评测与配置：gDS 辅助工具
+└── aisbench-accuracy.md          # 精度评测：配置、运行、结果排查
 ```
 
 ______________________________________________________________________
@@ -99,6 +98,5 @@ ______________________________________________________________________
 - msmodelslim / 模型量化
 - W4A8 / W8A8 / W4A4 等量化类型
 - AISBench / 精度评测
-- gDS / 自动化评测
 
 也可手动调用：`/ascend`
