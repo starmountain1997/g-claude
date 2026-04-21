@@ -14,7 +14,7 @@ Handles vLLM-Ascend installation, running, performance tuning, and contribution 
 Before any vLLM task:
 
 1. **NPU hardware check** — use `/ascend` to verify NPUs are healthy and free (`npu-smi info`)
-2. **Model on disk** — see [model-download.md](model-download.md). Never pass an online model ID to vLLM; always use a local path.
+1. **Model on disk** — see [model-download.md](model-download.md). Never pass an online model ID to vLLM; always use a local path.
 
 ## Task Specifics
 

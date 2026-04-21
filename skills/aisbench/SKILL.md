@@ -12,6 +12,7 @@ AISBench evaluates LLM service accuracy and performance via an OpenAI-compatible
 ## Prerequisites
 
 You need a running vLLM API server before benchmarking. If one isn't up yet:
+
 - Use `/vllm` to install and launch the model as a service
 - Use `/ascend` first to verify NPU health
 

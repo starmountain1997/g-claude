@@ -18,50 +18,50 @@ ______________________________________________________________________
 
    ```python
    import json, os
-                                    from pathlib import Path
-                                    from safetensors import safe_open
-                                    import math
+                                                from pathlib import Path
+                                                from safetensors import safe_open
+                                                import math
 
-                                    model_dir = Path("/path/to/model")
+                                                model_dir = Path("/path/to/model")
 
-                                    # parameter count from safetensors
-                                    total_params = 0
-                                    layer_shapes: dict[str, tuple] = {}
-                                    for shard in sorted(model_dir.glob("*.safetensors")):
-                                        with safe_open(shard, framework="pt", device="cpu") as f:
-                                            for key in f.keys():
-                                                t = f.get_slice(key)
-                                                shape = tuple(t.get_shape())
-                                                layer_shapes[key] = shape
+                                                # parameter count from safetensors
+                                                total_params = 0
+                                                layer_shapes: dict[str, tuple] = {}
+                                                for shard in sorted(model_dir.glob("*.safetensors")):
+                                                    with safe_open(shard, framework="pt", device="cpu") as f:
+                                                        for key in f.keys():
+                                                            t = f.get_slice(key)
+                                                            shape = tuple(t.get_shape())
+                                                            layer_shapes[key] = shape
 
-                                    total_params = sum(math.prod(s) for s in layer_shapes.values())
-                                    print(f"Total params : {total_params/1e9:.2f} B")
+                                                total_params = sum(math.prod(s) for s in layer_shapes.values())
+                                                print(f"Total params : {total_params/1e9:.2f} B")
 
-                                    # model config
-                                    cfg = json.loads((model_dir / "config.json").read_text())
-                                    num_experts   = cfg.get("num_experts") or cfg.get("num_local_experts", 0)
-                                    hidden_size   = cfg.get("hidden_size", 0)
-                                    num_layers    = cfg.get("num_hidden_layers", 0)
-                                    print(f"Hidden size  : {hidden_size},  Layers: {num_layers},  Experts: {num_experts}")
+                                                # model config
+                                                cfg = json.loads((model_dir / "config.json").read_text())
+                                                num_experts   = cfg.get("num_experts") or cfg.get("num_local_experts", 0)
+                                                hidden_size   = cfg.get("hidden_size", 0)
+                                                num_layers    = cfg.get("num_hidden_layers", 0)
+                                                print(f"Hidden size  : {hidden_size},  Layers: {num_layers},  Experts: {num_experts}")
 
-                                    # parallelism planning
-                                    num_npus   = 8          # e.g. from `npu-smi info`
-                                    hbm_per_npu_gib = 64   # e.g. 64 GiB per 910B card
+                                                # parallelism planning
+                                                num_npus   = 8          # e.g. from `npu-smi info`
+                                                hbm_per_npu_gib = 64   # e.g. 64 GiB per 910B card
 
-                                    bytes_per_param = 2     # bf16; use 1 for W8, 0.5 for W4
-                                    model_gib = total_params * bytes_per_param / 1024**3
-                                    kv_overhead = 0.2       # rough 20 % for KV cache + activations
-                                    needed_gib  = model_gib * (1 + kv_overhead)
+                                                bytes_per_param = 2     # bf16; use 1 for W8, 0.5 for W4
+                                                model_gib = total_params * bytes_per_param / 1024**3
+                                                kv_overhead = 0.2       # rough 20 % for KV cache + activations
+                                                needed_gib  = model_gib * (1 + kv_overhead)
 
-                                    tp = 1
-                                    while tp * hbm_per_npu_gib < needed_gib and tp < num_npus:
-                                        tp *= 2
+                                                tp = 1
+                                                while tp * hbm_per_npu_gib < needed_gib and tp < num_npus:
+                                                    tp *= 2
 
-                                    dp = num_npus // tp
-                                    ep = min(num_experts, tp * dp) if num_experts else 1  # EP ≤ total NPUs
+                                                dp = num_npus // tp
+                                                ep = min(num_experts, tp * dp) if num_experts else 1  # EP ≤ total NPUs
 
-                                    print(f"Model size   : {model_gib:.1f} GiB  (needed ≈{needed_gib:.1f} GiB)")
-                                    print(f"Recommended  : TP={tp}  DP={dp}  EP={ep}")
+                                                print(f"Model size   : {model_gib:.1f} GiB  (needed ≈{needed_gib:.1f} GiB)")
+                                                print(f"Recommended  : TP={tp}  DP={dp}  EP={ep}")
    ```
 
    Key rules:
@@ -112,7 +112,7 @@ ______________________________________________________________________
 
    ```python
    # Example: max-num-seqs=256, add common sizes
-                  cudagraph_capture_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256]
+                              cudagraph_capture_sizes = [1, 2, 4, 8, 16, 32, 64, 128, 256]
    ```
 
 ______________________________________________________________________

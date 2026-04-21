@@ -3,9 +3,9 @@
 Performance benchmarking measures throughput, latency, and concurrency of a running vLLM service. The CLI pattern is identical to accuracy evaluation with two differences:
 
 1. Add `--mode perf`
-2. Use a **streaming** model backend (`vllm_api_stream_chat` instead of `vllm_api_general_chat`)
+1. Use a **streaming** model backend (`vllm_api_stream_chat` instead of `vllm_api_general_chat`)
 
----
+______________________________________________________________________
 
 ## Prerequisite: vLLM Service
 
@@ -13,7 +13,7 @@ Performance benchmarking measures throughput, latency, and concurrency of a runn
 vllm serve /path/to/model --host 0.0.0.0 --port 8080 --served-model-name DeepSeek-R1
 ```
 
----
+______________________________________________________________________
 
 ## Step 1 — Locate AISBench
 
@@ -23,7 +23,7 @@ pip show ais_bench_benchmark
 
 Use `Editable project location` as `$LOCATION`.
 
----
+______________________________________________________________________
 
 ## Step 2 — Choose a Dataset
 
@@ -54,7 +54,7 @@ synthetic_config = {
 }
 ```
 
----
+______________________________________________________________________
 
 ## Step 3 — Configure the Model Client
 
@@ -93,11 +93,12 @@ models = [
 ```
 
 Key differences from accuracy config:
+
 - `type=VLLMCustomAPIChatStream` (streaming required)
 - `ignore_eos=True` (forces full output length — essential for meaningful throughput numbers)
 - Higher `batch_size` (concurrency is the main variable to sweep)
 
----
+______________________________________________________________________
 
 ## Step 4 — Run
 
@@ -111,11 +112,12 @@ Cap request count for smoke tests:
 ais_bench --models vllm_api_stream_chat --datasets demo_gsm8k_gen_4_shot_cot_chat_prompt --mode perf --num-prompts 100
 ```
 
----
+______________________________________________________________________
 
 ## Step 5 — Read Results
 
 Results are printed at the end and saved under `outputs/default/<timestamp>/performances/<model-abbr>/`:
+
 - `<dataset>.csv` — per-request latency breakdown
 - `<dataset>.json` — end-to-end summary metrics
 - `<dataset>_plot.html` — concurrency visualization (open in browser)
@@ -130,7 +132,7 @@ Key metrics:
 | **Output Token Throughput** | decode tokens/s — primary throughput metric |
 | **Total Token Throughput** | (input + output) tokens/s |
 
----
+______________________________________________________________________
 
 ## Concurrency Sweep
 
@@ -143,7 +145,7 @@ for BS in 1 4 16 64 128 256; do
 done
 ```
 
----
+______________________________________________________________________
 
 ## Troubleshooting
 
@@ -154,6 +156,7 @@ done
 **Recalculate metrics without re-running** (e.g., to add P95 percentile):
 
 Edit the summarizer config, then:
+
 ```bash
 ais_bench --models vllm_api_stream_chat --datasets demo_gsm8k_gen_4_shot_cot_chat_prompt \
           --summarizer default_perf --mode perf_viz --pressure --reuse 20250628_151326

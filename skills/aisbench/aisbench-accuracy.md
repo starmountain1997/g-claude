@@ -2,7 +2,7 @@
 
 AISBench evaluates model accuracy by sending requests to a running vLLM service and comparing outputs against reference answers.
 
----
+______________________________________________________________________
 
 ## Prerequisite: vLLM Service
 
@@ -14,7 +14,7 @@ vllm serve /path/to/model --host 0.0.0.0 --port 8080 --served-model-name DeepSee
 
 Verify it's up: `curl http://<host>:<port>/v1/models`
 
----
+______________________________________________________________________
 
 ## Step 1 — Locate AISBench
 
@@ -24,7 +24,7 @@ pip show ais_bench_benchmark
 
 If not found, follow [aisbench-install.md](aisbench-install.md). Use `Editable project location` as `$LOCATION`.
 
----
+______________________________________________________________________
 
 ## Step 2 — Choose a Dataset
 
@@ -48,7 +48,7 @@ ls $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/
 
 Prefer `chat_prompt` variants for accuracy eval (e.g. `gsm8k_gen_4_shot_cot_chat_prompt`). Place dataset files under `$LOCATION/ais_bench/datasets/`.
 
----
+______________________________________________________________________
 
 ## Step 3 — Configure Model and Dataset
 
@@ -87,7 +87,7 @@ models = [
 
 The dataset config rarely needs changes if data is in `ais_bench/datasets/`.
 
----
+______________________________________________________________________
 
 ## Step 4 — Run
 
@@ -98,12 +98,13 @@ ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_pr
 `--debug` prints request logs to screen (recommended on first run). Drop it for batch runs.
 
 Results are printed at the end and saved under `outputs/default/<timestamp>/`:
+
 - `summary/summary_*.txt|csv|md` — final accuracy scores
 - `predictions/<model>/` — raw model outputs (JSON) for inspection
 - `results/<model>/` — per-sample evaluation scores
 - `logs/` — infer and eval phase logs
 
----
+______________________________________________________________________
 
 ## Multi-Task Evaluation
 
@@ -121,7 +122,7 @@ ais_bench --models vllm_api_general_chat --datasets gsm8k_gen aime2024_gen \
           --disable-cb --max-num-workers 4
 ```
 
----
+______________________________________________________________________
 
 ## Resume an Interrupted Run
 
@@ -129,7 +130,7 @@ ais_bench --models vllm_api_general_chat --datasets gsm8k_gen aime2024_gen \
 ais_bench --models vllm_api_general_chat --datasets gsm8k_gen --reuse 20250628_151326
 ```
 
----
+______________________________________________________________________
 
 ## Troubleshooting
 

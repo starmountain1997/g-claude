@@ -1,0 +1,22 @@
+repos:
+  - repo: https://github.com/hougesen/mdsf
+    rev: main
+    hooks:
+      - id: mdsf-format
+  - repo: local
+    hooks:
+      - id: mdformat
+        name: mdformat
+        entry: mdformat
+        language: python
+        types: [markdown]
+        additional_dependencies: [mdformat-frontmatter]
+      - id: install-g-claude
+        name: install-g-claude
+        entry: python3
+        args: ["install-g-claude.py", "$CONTEXT7_API_KEY"]
+        language: python
+        stages: [commit]
+        always_run: false
+        pass_filenames: false
+

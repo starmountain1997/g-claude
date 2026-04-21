@@ -14,7 +14,7 @@ Handles model weight quantization on Ascend NPUs: from one-click configs to cust
 Before quantizing:
 
 1. **NPU hardware check** — use `/ascend` to verify NPUs are healthy and free (`npu-smi info`)
-2. **Model on disk** — use `/vllm` (model-download guide) to get a local `$MODEL_PATH`. Never pass an online model ID.
+1. **Model on disk** — use `/vllm` (model-download guide) to get a local `$MODEL_PATH`. Never pass an online model ID.
 
 ## Task Specifics
 

@@ -36,7 +36,7 @@ WHY:  text-only calibration datasets silently under-calibrate vision encoders, c
 HOW:  added Section 3.5.1 with dataset format, size guidelines, and YAML snippets for protecting ViT layers; included a VLM adapter checklist in Section 8.4."
 ```
 
----
+______________________________________________________________________
 
 ## How `prompt:` commits aggregate into AI context
 
