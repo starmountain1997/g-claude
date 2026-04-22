@@ -1,0 +1,58 @@
+{
+  "name": "g-claude",
+  "id": "g-claude",
+  "owner": {
+    "name": "starmountain1997"
+  },
+  "metadata": {
+    "description": "Claude Code skills for Ascend NPU inference, model quantization, LLM evaluation, and structured Git commits",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "ascend",
+      "description": "Ascend NPU hardware entry point — health check, environment setup, shell script template. Starting point for any Ascend workflow.",
+      "source": "./",
+      "version": "1.0.0",
+      "keywords": ["ascend", "npu", "huawei", "cann"],
+      "category": "infrastructure",
+      "skills": ["./skills/ascend"]
+    },
+    {
+      "name": "vllm",
+      "description": "vLLM-Ascend serving toolchain — install, model download, offline validation, scenario tuning, online serving, contribution guide.",
+      "source": "./",
+      "version": "1.0.0",
+      "keywords": ["vllm", "ascend", "npu", "llm", "serving"],
+      "category": "ml",
+      "skills": ["./skills/vllm"]
+    },
+    {
+      "name": "msmodelslim",
+      "description": "Model quantization on Ascend NPUs — W4A8/W8A8/W4A4, one-click and custom YAML, MoE mixed precision, VLM support, accuracy recovery.",
+      "source": "./",
+      "version": "1.0.0",
+      "keywords": ["quantization", "ascend", "npu", "msmodelslim", "w4a8", "w8a8"],
+      "category": "ml",
+      "skills": ["./skills/msmodelslim"]
+    },
+    {
+      "name": "aisbench",
+      "description": "AISBench evaluation framework — accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
+      "source": "./",
+      "version": "1.0.0",
+      "keywords": ["benchmark", "evaluation", "aisbench", "gsm8k", "mmlu"],
+      "category": "ml",
+      "skills": ["./skills/aisbench"]
+    },
+    {
+      "name": "commit-as-prompt",
+      "description": "Structured Git commits with WHAT/WHY/HOW format, optimized as AI context for future sessions.",
+      "source": "./",
+      "version": "1.0.0",
+      "keywords": ["git", "commit", "workflow"],
+      "category": "workflow",
+      "skills": ["./skills/commit-as-prompt"]
+    }
+  ]
+}
