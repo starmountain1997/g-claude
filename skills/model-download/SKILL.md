@@ -1,6 +1,13 @@
+---
+name: model-download
+description: Download models from ModelScope or HuggingFace to local storage. Use when the user wants to get a model onto disk before running inference, quantization, or evaluation. Trigger whenever a model path is needed and the model is not yet on disk.
+argument-hint: none
+license: MIT
+---
+
 # Model Download
 
-Before running any inference or quantization task, download the model to local storage. Always use a local path — never pass a HuggingFace repo ID or ModelScope model ID directly to vLLM or msmodelslim.
+Download models to local storage before running inference, quantization, or evaluation. Always use a local path — never pass a HuggingFace repo ID or ModelScope model ID directly to vLLM or msmodelslim.
 
 ## Step 0 — Ask for Local Storage Path
 
@@ -9,8 +16,6 @@ Before running any inference or quantization task, download the model to local s
 > "Where do you want to store the model? (e.g. `/data/models` or `/home/user/models`)"
 
 Do not proceed until you have a confirmed `$MODEL_DIR`. All models MUST be stored under this directory: `$MODEL_DIR/<model-name>/`.
-
-______________________________________________________________________
 
 ## Step 1 — Try ModelScope First
 
@@ -44,7 +49,7 @@ modelscope download \
 - `deepseek-ai/DeepSeek-R1`
 - `ZhipuAI/glm-4-9b-chat`
 
-If the user provides only a HuggingFace model ID, search for the equivalent on ModelScope: the organization and model name are usually identical or very close.
+If the user provides only a HuggingFace model ID, search for the equivalent on ModelScope — the organization and model name are usually identical or very close.
 
 ### Verify download
 
@@ -53,15 +58,11 @@ ls "$MODEL_DIR/<model-name>"
 # Must contain: config.json + tokenizer files + weight files (*.safetensors or *.bin)
 ```
 
-______________________________________________________________________
-
 ## Step 2 — Fallback: HuggingFace
 
 Use this only if ModelScope does not have the model or the download fails.
 
 ### Check if huggingface_hub is installed
-
-Before checking, confirm the storage path with the user if not already done.
 
 ```bash
 pip show huggingface_hub
@@ -95,8 +96,6 @@ huggingface-cli download \
 ```
 
 If the download is interrupted, rerun the same command — `huggingface-cli` resumes from where it left off.
-
-______________________________________________________________________
 
 ## Step 3 — Record the Local Path
 
