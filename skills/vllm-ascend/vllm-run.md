@@ -69,7 +69,7 @@ Set `max_concurrency` and `max_tokens_budget` in `common.yaml` as the tuning kno
 | `serving_config.max_tokens_budget` | `--max-num-batched-tokens` |
 | `parallel_config.tp_size` | `--tensor-parallel-size` |
 
-See [msmodeling-usage.md](../msmodeling/msmodeling-usage.md) for the full config templates, output format, and tuning loop.
+See [msmodeling-usage.md](../msmodeling/serving-cast-simulation/msmodeling-usage.md) for the full config templates, output format, and tuning loop.
 
 **Next**: Proceed to Phase 1 — strip graph mode params first, then validate the eager baseline before applying any scenario tuning.
 
