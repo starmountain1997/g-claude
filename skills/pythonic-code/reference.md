@@ -17,7 +17,7 @@ Detailed anti-patterns and idiomatic replacements.
 | 9 | `if val != None:` | `if val is not None:` | Identity vs equality |
 | 10 | `if val == None:` | `if val is None:` | Identity vs equality |
 | 11 | `for key in dict.keys():` | `for key in dict:` | Iterate dict directly |
-| 12 | `for val in dict.values():` | `for val in dict.values():` | Already correct, but prefer `dict.items()` when both needed |
+| 12 | `for val in dict.values():` | `for val in dict.values():` | Already correct — prefer `items()` when both needed |
 | 13 | `for k, v in dict.items():` | `for k, v in dict.items():` | Correct — use when iterating k,v |
 | 14 | `result = map(str, items)` (consumed once) | `result = [str(x) for x in items]` | Materialize lazy iterator |
 | 15 | `result = filter(cond, items)` | `result = [x for x in items if cond(x)]` | Clarity; or use itertools |
@@ -46,62 +46,43 @@ Detailed anti-patterns and idiomatic replacements.
 | 38 | `x = x + ""` to convert to string | `str(x)` | Explicit |
 | 39 | `type(x) == int` | `isinstance(x, int)` | Works for subclasses |
 | 40 | `hasattr(obj, "field")` then `getattr` | `getattr(obj, "field", default)` | EAFP over LBYL |
+| 41 | `if x: return x else: return y` | `return x or y` | For default values (careful with falsy x) |
+| 42 | `x = None; if cond: x = compute()` | `x = compute() if cond else None` | Conditional assignment |
+| 43 | `result = []; for ...: result.append(f(x))` | `result = [f(x) for x in ...]` | Map in comprehension |
+| 44 | `all(cond(x) for x in data)` (checking boolean) | `all(cond(x) for x in data)` | Already correct — don't use `== True` |
+| 45 | `for i, _ in enumerate(seq):` | `for _ in seq:` | Drop enumerate if index unused |
 
-## Walrus Operator (`:=`)
+## defaultdict Patterns
 
-Use sparingly. Good when assignment and use are co-located:
+`defaultdict` eliminates manual key initialization:
 
 ```python
-# Good: avoids repeating the expression
-if (match := pattern.search(data)) is not None:
-    print(match.group(0))
+# BAD: Manual check-and-init
+counts = {}
+for item in items:
+    if item.category not in counts:
+        counts[item.category] = 0
+    counts[item.category] += 1
 
-# Bad: just assign, walrus adds noise
-(y := x + 1)
-
-# Bad: assignment far from use
-if condition:
-    data = compute()
-process(data)
+# GOOD: defaultdict(int) auto-defaults to 0
+from collections import defaultdict
+counts = defaultdict(int)
+for item in items:
+    counts[item.category] += 1
 ```
 
-## EAFP vs LBYL
+Factory options:
 
-**LBYL** (Look Before You Leap) — check before acting:
+- `defaultdict(int)` → 0 for missing
+- `defaultdict(list)` → empty list for missing
+- `defaultdict(set)` → empty set for missing
+- `defaultdict(lambda: "N/A")` → custom default
 
-```python
-if key in my_dict:
-    value = my_dict[key]
-```
-
-**EAFP** (Easier to Ask Forgiveness than Permission):
+For simple counting, `collections.Counter` is even cleaner:
 
 ```python
-try:
-    value = my_dict[key]
-except KeyError:
-    ...
-```
-
-EAFP is preferred when the key is *usually* present (common case), or when atomicity matters. LBYL is preferred when the condition is genuinely uncertain and checking is much cheaper than handling the exception.
-
-## Dataclasses
-
-Use `dataclasses` for simple state aggregation instead of `__init__` boilerplate:
-
-```python
-from dataclasses import dataclass
-
-@dataclass
-class Point:
-    x: float
-    y: float
-
-# frozen=True for immutable/hashable
-@dataclass(frozen=True)
-class Config:
-    host: str
-    port: int
+from collections import Counter
+counts = Counter(item.category for item in items)
 ```
 
 ## Context Managers
@@ -109,13 +90,19 @@ class Config:
 All resource management should use context managers:
 
 ```python
-# Good
+# GOOD
 with open("file.txt") as f:
     data = f.read()
 
-# Bad — file handle may leak
+# BAD — file handle may leak
 f = open("file.txt")
 data = f.read()
+f.close()
+
+# BAD — exception between open and close leaks the handle
+f = open("file.txt")
+data = f.read()
+# If error occurs here, f.close() never runs
 f.close()
 ```
 
@@ -133,14 +120,105 @@ def managed_resource():
         release()
 ```
 
+## Exception Handling Hierarchy
+
+Catch specific exceptions, not generic ones:
+
+```python
+# BAD
+try:
+    value = my_dict[key]
+except Exception:  # Catches everything including KeyboardInterrupt!
+    ...
+
+# GOOD — catch what you expect
+try:
+    value = my_dict[key]
+except KeyError:
+    # Handle missing key specifically
+    value = default
+```
+
+Common exception types:
+
+- `KeyError` — dict key missing
+- `IndexError` — list index out of range
+- `ValueError` — invalid value for type (e.g., `int("abc")`)
+- `TypeError` — wrong type passed
+- `FileNotFoundError` — file doesn't exist
+- `PermissionError` — access denied
+
+## String Formatting
+
+Prefer f-strings for readability:
+
+```python
+# GOOD
+name = "Alice"
+greeting = f"Hello, {name}!"
+
+# ACCEPTABLE — for simple single-variable cases
+greeting = "Hello, {}!".format(name)
+
+# BAD — concatenation is harder to read
+greeting = "Hello, " + name + "!"
+```
+
+For complex formatting:
+
+```python
+# Alignment and precision
+value = f"{result:.2f}"  # 2 decimal places
+table = f"{name:20} {score:5d}"  # fixed-width columns
+
+# Debugging (Python 3.8+)
+f"{x=}"  # prints "x=42"
+```
+
+## Comprehensions
+
+List/dict/set comprehensions are idiomatic but don't overuse:
+
+```python
+# GOOD — clear transformation
+squares = [x**2 for x in range(10)]
+
+# GOOD — filter + transform
+evens_squared = [x**2 for x in range(10) if x % 2 == 0]
+
+# BAD — too complex, should be a loop
+result = [f(x) for x in items if g(x) if h(x) and k(x)]
+
+# BAD — side effects in comprehension
+[print(x) for x in items]  # Never do this
+```
+
+Dict comprehension pattern:
+
+```python
+# Build lookup dict
+lookup = {item.id: item.name for item in items}
+
+# Filter + transform
+filtered = {k: v for k, v in data.items() if v > 0}
+```
+
 ## Type Hint Cheat Sheet
 
 ```python
-from collections.abc import Sequence, Iterable, Callable
-from typing import Any, Union
+from collections.abc import Sequence, Iterable, Callable, Mapping
+from typing import Any, Union, Optional
 
 def f(x: Sequence[str]) -> list[str]: ...
 def g(x: Iterable[int]) -> None: ...
 def h(x: Callable[[int, str], bool]) -> Union[int, None]: ...
 def i(x: Any) -> None: ...  # avoid Any
+def j(x: Optional[str] = None) -> str: ...  # Optional = Union with None
 ```
+
+For generic collections, prefer `collections.abc`:
+
+- `Sequence` — str, list, tuple (supports `len`, `__getitem__`)
+- `Iterable` — anything you can iterate
+- `Mapping` — dict, dict-like
+- `Callable` — functions/callables

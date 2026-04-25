@@ -104,7 +104,7 @@
       "description": "Review Python code for idiomatic style and suggest improvements. Flags unpythonic patterns and applies refactors.",
       "source": "./",
       "strict": false,
-      "version": "v0.0.3",
+      "version": "v0.0.5",
       "keywords": [
         "python",
         "refactor",
