@@ -10,7 +10,7 @@ cd msmodeling
 ## Install Dependencies
 
 ```bash
-pip install -r requirements.txt
+uv pip install -r requirements.txt
 ```
 
 > If you run tools outside the msmodeling directory, set `PYTHONPATH` first:

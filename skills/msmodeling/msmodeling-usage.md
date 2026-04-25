@@ -2,15 +2,24 @@
 
 msmodeling simulates theoretical LLM serving performance on Ascend NPUs given a hardware config and a workload. Use it before any real vLLM run to get data-backed starting values for `--max-num-seqs`, `--max-num-batched-tokens`, and `--tensor-parallel-size`.
 
-______________________________________________________________________
+## Pipeline Position
+
+```
+Phase 0 (vllm-ascend)          Phase 1 (this skill)         Phase 2 (vllm-ascend)
+───────────────────            ───────────────────           ───────────────────
+Collect workload dims    →     Simulate with msmodeling   →     Real vLLM runs
+- input_tokens                                      - Tune max_concurrency
+- output_tokens          ←                          ←     - Tune max_tokens_budget
+- target QPS                                          - Apply validated params
+```
 
 ## Step 1 — Write the Two Config Files
 
-msmodeling takes two YAML files. Create them from the scenario dimensions collected in `/vllm-ascend` Phase 0.
+msmodeling takes two YAML files. Create them from the scenario dimensions collected in `vllm-ascend` Phase 0.
 
 ### `instances.yaml` — Hardware & Parallelism
 
-Maps directly to the NPU hardware from `npu-smi info` and the TP/EP values estimated in Phase 1 Step 3.
+Maps directly to the NPU hardware from `npu-smi info` and the TP/EP values.
 
 ```yaml
 instance_groups:
@@ -32,9 +41,14 @@ instance_groups:
       device2device_rate: 0.5
 ```
 
+**Key fields:**
+- `num_devices_per_instance: 8` — Must match your hardware (8 for 910B)
+- `tp_size` — Must divide `num_attention_heads` evenly
+- `ep_size` — Set to 1 for dense models; only relevant for MoE
+
 ### `common.yaml` — Model, Workload & Serving Limits
 
-The serving knobs here (`max_concurrency`, `max_tokens_budget`) are what you are tuning — they map directly to vLLM parameters.
+The serving knobs here are what you are tuning — they map directly to vLLM parameters.
 
 ```yaml
 model_config:
@@ -58,9 +72,13 @@ serving_config:
   max_tokens_budget: 8192   # ← tuning knob → maps to vLLM --max-num-batched-tokens
 ```
 
-> Set `HF_ENDPOINT=https://hf-mirror.com` if the model config cannot be fetched from HuggingFace directly.
+**Tuning knobs:**
+| Field | vLLM param | Initial value | Adjust when |
+|-------|-----------|---------------|-------------|
+| `max_concurrency` | `--max-num-seqs` | 64 | P90 TTFT too high → decrease |
+| `max_tokens_budget` | `--max-num-batched-tokens` | `max_concurrency × avg_output` | OOM → decrease; throughput low → increase |
 
-______________________________________________________________________
+> Set `HF_ENDPOINT=https://hf-mirror.com` if the model config cannot be fetched.
 
 ## Step 2 — Run the Simulation
 
@@ -72,13 +90,18 @@ python -m serving_cast.main \
   --common_config_path=common.yaml
 ```
 
-______________________________________________________________________
+**Prerequisites:**
+- Set `PYTHONPATH=/path/to/msmodeling:$PYTHONPATH`
+- Set `HF_ENDPOINT=https://hf-mirror.com` if needed
+- Ensure model ID is accessible from HuggingFace
 
 ## Step 3 — Read the Output
 
 The simulation prints two blocks.
 
-**Per-request statistics** (E2E, TTFT, TPOT in seconds — note the unit):
+### Per-request Statistics
+
+E2E, TTFT, TPOT in seconds:
 
 ```
               E2E_TIME(s)  TTFT(s)  TPOT(s)  ...
@@ -87,7 +110,11 @@ P90               1.87      0.71     0.018   ...
 P99               2.10      0.83     0.021   ...
 ```
 
-**Overall throughput summary**:
+- **TTFT** (Time To First Token) — measures prefill performance
+- **TPOT** (Time Per Output Token) — measures decode performance
+- **E2E_TIME** — total end-to-end latency
+
+### Overall Throughput Summary
 
 ```
 ======== Overall Summary ========
@@ -97,23 +124,33 @@ request_throughput(req/s)      10.37
 output_token_throughput(tok/s) 2654.3
 ```
 
-______________________________________________________________________
+Compare `request_throughput` against your Phase 0 QPS target.
 
 ## Step 4 — Map to vLLM Parameters
 
-| msmodeling config field | vLLM parameter | Notes |
+| msmodeling field | vLLM parameter | Notes |
 | :--- | :--- | :--- |
-| `serving_config.max_concurrency` | `--max-num-seqs` | Increase until TTFT/TPOT targets are violated |
+| `serving_config.max_concurrency` | `--max-num-seqs` | Increase until TTFT/TPOT targets violated |
 | `serving_config.max_tokens_budget` | `--max-num-batched-tokens` | Should be ≥ max_concurrency × avg_output_len |
 | `parallel_config.tp_size` | `--tensor-parallel-size` | Must divide `num_attention_heads` evenly |
 | `parallel_config.ep_size` | `--pipeline-parallel-size` / EP config | MoE only |
-| `model_config.quantize_linear_action: W8A8_DYNAMIC` | `--quantization ascend` | Any non-DISABLED value means quantized |
-| `model_config.num_mtp_tokens > 0` | `--speculative-config` | Speculative decoding with MTP draft tokens |
+| `model_config.quantize_linear_action: W8A8_DYNAMIC` | `--quantization ascend` | Non-DISABLED = quantized |
+| `model_config.num_mtp_tokens > 0` | `--speculative-config` | Speculative decoding with MTP |
 
-**Tuning loop** — iterate until the simulated P90 TTFT and TPOT are within targets:
+## Step 5 — Tune and Iterate
 
-1. If P90 TTFT is too high → decrease `max_concurrency` (→ lower `--max-num-seqs`)
-1. If throughput is below target → increase `max_concurrency` or `max_tokens_budget`
-1. If memory is the bottleneck → increase `tp_size` (→ higher `--tensor-parallel-size`)
+**Tuning loop** — iterate until P90 TTFT and TPOT are within targets:
 
-Once the simulation meets your latency and throughput targets, record `max_concurrency` and `max_tokens_budget` as the **msmodeling baseline** and carry them into `/vllm-ascend` Phase 2 Step 3.
+1. **P90 TTFT too high** → decrease `max_concurrency` (→ lower `--max-num-seqs`)
+2. **Throughput below target** → increase `max_concurrency` or `max_tokens_budget`
+3. **Memory/OOM** → decrease `max_tokens_budget` or increase `tp_size`
+4. **Memory but need more throughput** → increase `tp_size` (→ higher `--tensor-parallel-size`)
+
+Once simulation meets your latency and throughput targets, record `max_concurrency` and `max_tokens_budget` as the **msmodeling baseline** and carry them into `vllm-ascend` Phase 2 Step 3.
+
+## Common Gotchas
+
+- **`num_devices_per_instance` must be 8** for 910B — setting to 1 causes wrong memory estimates
+- **`max_tokens_budget` too low** causes artificial throughput ceiling — must be ≥ max_concurrency × output_tokens
+- **Single-digit TP sizes** (1, 2, 4) work but won't utilize NPUs efficiently — use 8 for 910B
+- **MoE models** require `ep_size > 1` — set `moe_tp_size` equal to `tp_size`
