@@ -1,123 +1,104 @@
 #!/usr/bin/env python3
-"""
-Install g-claude skills and optional extras.
+"""Install or update Claude skills and optional extras."""
 
-Usage:
-    python install-g-claude.py [--context7-key <KEY>]
-
-Without arguments: registers the marketplace and installs all skills.
-With --context7-key: also installs Context7 MCP for Claude Code and OpenCode.
-"""
-
+import argparse
 import json
 import os
 import subprocess
-import sys
+
+# Dictionary mapping 'Marketplace Repo' to 'List of Plugins'
+PLUGINS = {
+    "starmountain1997/g-claude": [
+        "ascend",
+        "vllm",
+        "msmodelslim",
+        "aisbench",
+        "commit-as-prompt",
+    ],
+    "forrestchang/andrej-karpathy-skills": ["andrej-karpathy-skills@karpathy-skills"],
+    "anthropics/skills": ["skill-creator@anthropics/skills"],
+}
 
 
-MARKETPLACE_REPO = "starmountain1997/g-claude"
-MARKETPLACE_NAME = "g-claude"
-
-SKILLS = [
-    "ascend",
-    "vllm",
-    "msmodelslim",
-    "aisbench",
-    "commit-as-prompt",
-]
-
-KARPATHY_MARKETPLACE = "forrestchang/andrej-karpathy-skills"
-KARPATHY_PLUGIN = "andrej-karpathy-skills@karpathy-skills"
-
-ANTHROPIC_MARKETPLACE = "anthropics/skills"
-ANTHROPIC_PLUGINS = [
-    "skill-creator@anthropics/skills",
-]
+def claude(*args):
+    """Helper to run Claude CLI commands silently."""
+    subprocess.run(["claude", *args], capture_output=True)
 
 
-def run(cmd):
-    subprocess.run(cmd, capture_output=True)
+def setup_plugins(update=False):
+    """Installs or updates all configured marketplaces and plugins."""
+    action = "update" if update else "install"
 
+    for repo, items in PLUGINS.items():
+        if not update:
+            print(f"Adding marketplace: {repo}")
+            claude("plugin", "marketplace", "add", repo)
 
-def install_skills():
-    print(f"Adding marketplace: {MARKETPLACE_REPO}")
-    run(["claude", "plugin", "marketplace", "add", MARKETPLACE_REPO])
+        for item in items:
+            # Auto-append the marketplace name if no '@' is specified
+            plugin = item if "@" in item else f"{item}@{repo.split('/')[-1]}"
+            print(f"{action.title()}ing plugin: {plugin}")
+            claude("plugin", action, plugin)
 
-    for skill in SKILLS:
-        print(f"Installing skill: {skill}@{MARKETPLACE_NAME}")
-        run(["claude", "plugin", "install", f"{skill}@{MARKETPLACE_NAME}"])
-
-    print("All g-claude skills installed.\n")
-
-
-def install_karpathy():
-    print(f"Adding marketplace: {KARPATHY_MARKETPLACE}")
-    run(["claude", "plugin", "marketplace", "add", KARPATHY_MARKETPLACE])
-    print(f"Installing plugin: {KARPATHY_PLUGIN}")
-    run(["claude", "plugin", "install", KARPATHY_PLUGIN])
-    print("karpathy-skills installed.\n")
-
-
-def install_anthropic():
-    print(f"Adding marketplace: {ANTHROPIC_MARKETPLACE}")
-    run(["claude", "plugin", "marketplace", "add", ANTHROPIC_MARKETPLACE])
-    for plugin in ANTHROPIC_PLUGINS:
-        print(f"Installing plugin: {plugin}")
-        run(["claude", "plugin", "install", plugin])
-    print("anthropics/skills plugins installed.\n")
+    print(f"\nAll skills successfully {action}ed.")
 
 
 def install_context7(api_key):
-    home = os.path.expanduser("~")
-
-    print("Installing Context7 MCP for Claude Code...")
-    run(["claude", "mcp", "add", "--scope", "user", "context7", "--",
-         "npx", "-y", "@upstash/context7-mcp", "--api-key", api_key])
-    print("Claude Code: context7 MCP added.")
+    """Installs Context7 MCP for both Claude Code and OpenCode."""
+    print("\nInstalling Context7 MCP for Claude Code...")
+    claude(
+        "mcp",
+        "add",
+        "--scope",
+        "user",
+        "context7",
+        "--",
+        "npx",
+        "-y",
+        "@upstash/context7-mcp",
+        "--api-key",
+        api_key,
+    )
 
     print("Installing Context7 MCP for OpenCode...")
-    config_path = os.path.join(home, ".config", "opencode", "config.json")
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
+    conf_path = os.path.expanduser("~/.config/opencode/config.json")
+    os.makedirs(os.path.dirname(conf_path), exist_ok=True)
 
     config = {}
-    if os.path.exists(config_path):
-        try:
-            with open(config_path) as f:
+    if os.path.exists(conf_path):
+        with open(conf_path, "r") as f:
+            try:
                 config = json.load(f)
-        except Exception:
-            pass
+            except ValueError:
+                pass
 
     config.setdefault("mcp", {})["context7"] = {
         "type": "local",
-        "command": ["npx", "-y", "@upstash/context7-mcp", "--api-key", api_key],
         "enabled": True,
+        "command": ["npx", "-y", "@upstash/context7-mcp", "--api-key", api_key],
     }
 
-    with open(config_path, "w") as f:
+    with open(conf_path, "w") as f:
         json.dump(config, f, indent=2)
 
-    print("OpenCode: context7 MCP added.\n")
+    print("Context7 MCP installation complete.")
 
 
 def main():
-    args = sys.argv[1:]
-    context7_key = None
+    parser = argparse.ArgumentParser(
+        description="Manage Claude skills and Context7 MCP."
+    )
+    parser.add_argument(
+        "--update", action="store_true", help="Update skills instead of installing"
+    )
+    parser.add_argument("--context7-key", help="API key to install Context7 MCP")
+    args = parser.parse_args()
 
-    if "--context7-key" in args:
-        idx = args.index("--context7-key")
-        if idx + 1 < len(args):
-            context7_key = args[idx + 1]
-        else:
-            print("Error: --context7-key requires a value")
-            sys.exit(1)
+    setup_plugins(args.update)
 
-    install_skills()
-    install_karpathy()
-    install_anthropic()
-
-    if context7_key:
-        install_context7(context7_key)
-    else:
+    if args.context7_key:
+        install_context7(args.context7_key)
+    elif not args.update:
         print("Tip: pass --context7-key <KEY> to also install Context7 MCP.")
 
 

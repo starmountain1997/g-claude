@@ -1,16 +1,30 @@
 repos:
-  - repo: https://github.com/hougesen/mdsf
-    rev: main
-    hooks:
-      - id: mdsf-format
+  # - repo: https://github.com/hougesen/mdsf
+  #   rev: main
+  #   hooks:
+  #     - id: mdsf-format
   - repo: local
     hooks:
+      - id: bump-skill-versions
+        name: bump-skill-versions
+        entry: python3 scripts/bump-skill-versions.py
+        language: system
+        stages: [pre-commit]
+        always_run: true
+        pass_filenames: false
       - id: mdformat
         name: mdformat
         entry: mdformat
         language: python
         types: [markdown]
         additional_dependencies: [mdformat-frontmatter]
+      - id: ruff-format
+        name: ruff-format
+        entry: ruff
+        args: [format]
+        language: python
+        types: [python]
+        additional_dependencies: [ruff]
       # - id: install-g-claude
       #   name: install-g-claude
       #   entry: python3
