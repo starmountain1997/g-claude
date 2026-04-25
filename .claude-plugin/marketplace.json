@@ -1,6 +1,5 @@
 {
   "name": "g-claude",
-  "id": "g-claude",
   "owner": {
     "name": "starmountain1997"
   },
@@ -11,48 +10,130 @@
   "plugins": [
     {
       "name": "ascend",
-      "description": "Ascend NPU hardware entry point — health check, environment setup, shell script template. Starting point for any Ascend workflow.",
+      "description": "Ascend NPU hardware entry point \u2014 health check, environment setup, shell script template. Starting point for any Ascend workflow.",
       "source": "./",
-      "version": "1.0.0",
-      "keywords": ["ascend", "npu", "huawei", "cann"],
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "ascend",
+        "npu",
+        "huawei",
+        "cann"
+      ],
       "category": "infrastructure",
-      "skills": ["./skills/ascend"]
+      "skills": [
+        "./skills/ascend"
+      ]
     },
     {
-      "name": "vllm",
-      "description": "vLLM-Ascend serving toolchain — install, model download, offline validation, scenario tuning, online serving, contribution guide.",
+      "name": "vllm-ascend",
+      "description": "vLLM-Ascend serving toolchain \u2014 install, offline validation, scenario tuning, online serving, contribution guide.",
       "source": "./",
-      "version": "1.0.0",
-      "keywords": ["vllm", "ascend", "npu", "llm", "serving"],
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "vllm-ascend",
+        "ascend",
+        "npu",
+        "llm",
+        "serving",
+        "vllm"
+      ],
       "category": "ml",
-      "skills": ["./skills/vllm"]
+      "skills": [
+        "./skills/vllm-ascend"
+      ]
+    },
+    {
+      "name": "model-download",
+      "description": "Download models from ModelScope or HuggingFace to local storage before inference, quantization, or evaluation.",
+      "source": "./",
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "model",
+        "download",
+        "modelscope",
+        "huggingface",
+        "hugging_face"
+      ],
+      "category": "ml",
+      "skills": [
+        "./skills/model-download"
+      ]
     },
     {
       "name": "msmodelslim",
-      "description": "Model quantization on Ascend NPUs — W4A8/W8A8/W4A4, one-click and custom YAML, MoE mixed precision, VLM support, accuracy recovery.",
+      "description": "Model quantization on Ascend NPUs \u2014 W4A8/W8A8/W4A4, one-click and custom YAML, MoE mixed precision, VLM support, accuracy recovery.",
       "source": "./",
-      "version": "1.0.0",
-      "keywords": ["quantization", "ascend", "npu", "msmodelslim", "w4a8", "w8a8"],
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "quantization",
+        "ascend",
+        "npu",
+        "msmodelslim",
+        "w4a8",
+        "w8a8"
+      ],
       "category": "ml",
-      "skills": ["./skills/msmodelslim"]
+      "skills": [
+        "./skills/msmodelslim"
+      ]
     },
     {
       "name": "aisbench",
-      "description": "AISBench evaluation framework — accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
+      "description": "AISBench evaluation framework \u2014 accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
       "source": "./",
-      "version": "1.0.0",
-      "keywords": ["benchmark", "evaluation", "aisbench", "gsm8k", "mmlu"],
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "benchmark",
+        "evaluation",
+        "aisbench",
+        "gsm8k",
+        "mmlu"
+      ],
       "category": "ml",
-      "skills": ["./skills/aisbench"]
+      "skills": [
+        "./skills/aisbench"
+      ]
     },
     {
       "name": "commit-as-prompt",
       "description": "Structured Git commits with WHAT/WHY/HOW format, optimized as AI context for future sessions.",
       "source": "./",
-      "version": "1.0.0",
-      "keywords": ["git", "commit", "workflow"],
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "git",
+        "commit",
+        "workflow"
+      ],
       "category": "workflow",
-      "skills": ["./skills/commit-as-prompt"]
+      "skills": [
+        "./skills/commit-as-prompt"
+      ]
+    },
+    {
+      "name": "msmodeling",
+      "description": "MindStudio-Modeling performance evaluation and deployment strategy tuning on Ascend NPUs. Simulate LLM serving throughput and latency, find optimal --max-num-seqs, --max-num-batched-tokens, and --tensor-parallel-size values.",
+      "source": "./",
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "msmodeling",
+        "ascend",
+        "npu",
+        "performance",
+        "simulation",
+        "throughput",
+        "latency"
+      ],
+      "category": "ml",
+      "skills": [
+        "./skills/msmodeling"
+      ]
     }
   ]
 }
