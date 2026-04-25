@@ -134,22 +134,24 @@
     },
     {
       "name": "msmodeling",
-      "description": "MindStudio-Modeling performance evaluation and deployment strategy tuning on Ascend NPUs. Simulate LLM serving throughput and latency, find optimal --max-num-seqs, --max-num-batched-tokens, and --tensor-parallel-size values.",
+      "description": "MindStudio-Modeling performance evaluation framework for Ascend NPUs. Provides tensor-cast for model-level analysis and serving-cast-simulation for LLM serving parameter tuning.",
       "source": "./",
       "strict": false,
-      "version": "v0.0.1",
+      "version": "v0.0.2",
       "keywords": [
         "msmodeling",
         "ascend",
         "npu",
         "performance",
         "simulation",
-        "throughput",
-        "latency"
+        "tensor-cast",
+        "serving-cast"
       ],
       "category": "ml",
       "skills": [
-        "./skills/msmodeling"
+        "./skills/msmodeling",
+        "./skills/msmodeling/tensor-cast",
+        "./skills/msmodeling/serving-cast-simulation"
       ]
     }
   ]
