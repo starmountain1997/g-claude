@@ -21,6 +21,13 @@ claude plugin install commit-as-prompt@g-claude
 Or install everything at once (also installs karpathy-skills and skill-creator):
 
 ```bash
+# Recommended: One-liner to download and run
+curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/install-g-claude.py | python3 -
+```
+
+Or if you have the file locally:
+
+```bash
 python install-g-claude.py
 ```
 
