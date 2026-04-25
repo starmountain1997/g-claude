@@ -28,7 +28,7 @@ curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/inst
 Or if you have the file locally:
 
 ```bash
-python install-g-claude.py
+python scripts/install-g-claude.py
 ```
 
 ## Skills
