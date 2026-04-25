@@ -86,7 +86,7 @@
       "description": "AISBench evaluation framework \u2014 accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
       "source": "./",
       "strict": false,
-      "version": "v0.0.1",
+      "version": "v0.0.2",
       "keywords": [
         "benchmark",
         "evaluation",
