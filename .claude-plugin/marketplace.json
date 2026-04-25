@@ -86,7 +86,7 @@
       "description": "AISBench evaluation framework \u2014 accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
       "source": "./",
       "strict": false,
-      "version": "v0.0.2",
+      "version": "v0.0.3",
       "keywords": [
         "benchmark",
         "evaluation",
@@ -104,7 +104,7 @@
       "description": "Review Python code for idiomatic style and suggest improvements. Flags unpythonic patterns and applies refactors.",
       "source": "./",
       "strict": false,
-      "version": "v0.0.1",
+      "version": "v0.0.3",
       "keywords": [
         "python",
         "refactor",
