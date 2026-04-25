@@ -2,7 +2,8 @@
 """Generate GSM8K dataset for benchmarking."""
 
 import json
-import subprocess
+import urllib.request
+import zipfile
 from pathlib import Path
 
 import click
@@ -36,51 +37,47 @@ def main(
     cache_dir = Path(cache_dir)
     zip_path = Path(zip_path)
     gsm8k_file = Path(gsm8k_dir) / "train.jsonl"
-
     output_file = Path(f"GSM8K-in{input_len}-bs{batch_size}.jsonl")
 
     if output_file.exists():
         logger.info(f"Dataset already exists: {output_file}")
         return
 
-    tokenizer_path = download_tokenizer_only(model_id, str(cache_dir))
+    tokenizer_path = download_tokenizer_only(model_id, cache_dir)
     logger.success(f"Tokenizer downloaded to: {tokenizer_path}")
 
+    # Use native Python libraries for downloading and unzipping (OS-independent)
     if not gsm8k_file.exists():
         if not zip_path.exists():
             download_url = "http://opencompass.oss-cn-shanghai.aliyuncs.com/datasets/data/gsm8k.zip"
             logger.info(
-                f"{zip_path} not found locally. Attempting to download from {download_url}..."
+                f"'{zip_path}' not found locally. Downloading from {download_url}..."
             )
             try:
-                # Try with wget
-                subprocess.run(["wget", "-O", str(zip_path), download_url], check=True)
+                urllib.request.urlretrieve(download_url, zip_path)
                 logger.success(f"Successfully downloaded {zip_path}")
-            except FileNotFoundError:
-                logger.error(
-                    "wget not found. Please install wget to download the zip file."
-                )
+            except Exception as e:
+                logger.error(f"Download failed: {e}")
                 return
-            except subprocess.CalledProcessError as e:
-                logger.error(f"Wget download failed: {e}")
-                return
+
         logger.info(f"Unzipping {zip_path}...")
-        subprocess.run(
-            ["unzip", "-o", str(zip_path), "-d", str(zip_path.parent)], check=True
-        )
+        try:
+            with zipfile.ZipFile(zip_path, "r") as zip_ref:
+                zip_ref.extractall(zip_path.parent)
+        except zipfile.BadZipFile as e:
+            logger.error(f"Failed to extract zip file: {e}")
+            return
 
     if not gsm8k_file.exists():
         logger.error(f"Still not found after unzip: {gsm8k_file}")
         return
 
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path)
+    tokenizer = AutoTokenizer.from_pretrained(str(tokenizer_path))
     logger.info(f"Loading GSM8K from {gsm8k_file}...")
 
-    dataset = []
-    with open(gsm8k_file, "r", encoding="utf-8") as f:
-        for line in f:
-            data = json.loads(line)
-            dataset.append(data["question"])
+    # Pythonic list comprehension for file reading
+    with gsm8k_file.open("r", encoding="utf-8") as f:
+        dataset = [json.loads(line)["question"] for line in f]
 
     logger.info(f"Processing {len(dataset)} questions...")
 
@@ -89,28 +86,24 @@ def main(
         words = tokenizer.tokenize(sentence)
         if not words:
             continue
-        # Ensure words has at least input_len tokens, by repeating if necessary
-        while len(words) < input_len:
-            words.extend(words)
-        # Then truncate to input_len
-        words = words[:input_len]
 
-        decoded_text = tokenizer.convert_tokens_to_string(words)
-        dataset_2k.append(decoded_text)
+        # Pythonic list repeating: mathematically determine the multiplier
+        multiplier = (input_len // len(words)) + 1
+        words = (words * multiplier)[:input_len]
 
-    logger.info(f"Writing {len(dataset_2k)} samples to {output_file}...")
+        dataset_2k.append(tokenizer.convert_tokens_to_string(words))
 
     if not dataset_2k:
         logger.warning("No samples to write to output file. Skipping file creation.")
         return
 
-    # Ensure dataset_2k has at least batch_size samples, by repeating if necessary
-    while len(dataset_2k) < batch_size:
-        dataset_2k.extend(dataset_2k)
-    # Then truncate to batch_size
-    dataset_2k = dataset_2k[:batch_size]
+    # Pythonic list repeating for dataset batch size
+    multiplier = (batch_size // len(dataset_2k)) + 1
+    dataset_2k = (dataset_2k * multiplier)[:batch_size]
 
-    with open(output_file, "w", encoding="utf-8") as f:
+    logger.info(f"Writing {len(dataset_2k)} samples to {output_file}...")
+
+    with output_file.open("w", encoding="utf-8") as f:
         for item in dataset_2k:
             f.write(
                 json.dumps({"question": item, "answer": "none"}, ensure_ascii=False)
@@ -120,7 +113,7 @@ def main(
     logger.success(f"Done: {output_file}")
 
 
-def download_tokenizer_only(model_id: str, cache_dir: str) -> str:
+def download_tokenizer_only(model_id: str, cache_dir: Path) -> Path:
     """Download tokenizer files only from modelscope."""
     tokenizer_files = [
         "tokenizer_config.json",
@@ -134,11 +127,11 @@ def download_tokenizer_only(model_id: str, cache_dir: str) -> str:
 
     model_path = snapshot_download(
         model_id,
-        cache_dir=cache_dir,
+        cache_dir=str(cache_dir),
         ignore_patterns=["*.bin", "*.safetensors", "*.pth", "*.model", "*.gguf"],
         allow_patterns=tokenizer_files,
     )
-    return model_path
+    return Path(model_path)
 
 
 if __name__ == "__main__":
