@@ -137,7 +137,7 @@
       "description": "MindStudio-Modeling performance evaluation framework for Ascend NPUs. Provides tensor-cast for model-level analysis and serving-cast-simulation for LLM serving parameter tuning.",
       "source": "./",
       "strict": false,
-      "version": "v0.0.2",
+      "version": "v0.0.6",
       "keywords": [
         "msmodeling",
         "ascend",

@@ -20,7 +20,7 @@ TensorCast intercepts a PyTorch program's computational graph and simulates its 
 **Text generation simulation:**
 
 ```bash
-MSMODELING_PATH=$(pip show msmodeling | grep "Location:" | cut -d' ' -f2)
+MSMODELING_PATH=$(uv pip show liuren_modeling 2>/dev/null | grep "Editable project location:" | cut -d':' -f2 | tr -d ' ')
 cd $MSMODELING_PATH
 
 python -m cli.inference.text_generate Qwen/Qwen3-32B \
@@ -32,8 +32,12 @@ python -m cli.inference.text_generate Qwen/Qwen3-32B \
 **Video generation simulation:**
 
 ```bash
+MSMODELING_PATH=$(uv pip show liuren_modeling 2>/dev/null | grep "Editable project location:" | cut -d':' -f2 | tr -d ' ')
+cd $MSMODELING_PATH
+
+# Requires a diffusers model directory with transformer/config.json and vae/config.json
 python -m cli.inference.video_generate \
-  docs/fixtures/hunyuanvideo_mock_model \
+  /path/to/your/diffusers/model \
   --batch-size 1 \
   --seq-len 16 \
   --height 576 \
@@ -48,11 +52,12 @@ python -m cli.inference.video_generate \
 Always check the latest supported matrix:
 
 ```bash
-MSMODELING_PATH=$(pip show msmodeling | grep "Location:" | cut -d' ' -f2)
-cat $MSMODELING_PATH/source_code_path/docs/en/tensor_cast_instruct.md | grep -A 20 "Supported Matrix"
+MSMODELING_PATH=$(uv pip show liuren_modeling 2>/dev/null | grep "Editable project location:" | cut -d':' -f2 | tr -d ' ')
+cat $MSMODELING_PATH/docs/en/tensor_cast_instruct.md | grep -A 20 "Supported Matrix"
 ```
 
 This lists supported:
+
 - **Text model families** (Qwen3, GLM-4, DeepSeek V3, etc.)
 - **Vision-language models** (Qwen3-VL, InternVL)
 - **Video generation models** (Wan, HunyuanVideo)
@@ -69,12 +74,13 @@ This lists supported:
 | `--decode` | Run decode-only simulation |
 | `--quantize-linear-action` | Quantization: W8A8_DYNAMIC, W4A8, etc. |
 | `--chrome-trace` | Generate Chrome trace file |
-| `--device` | Device profile (TEST_DEVICE, ATLAS_800_A2_*, etc.) |
+| `--device` | Device profile (TEST_DEVICE, ATLAS_800_A2\_\*, etc.) |
 | `--tp-size`, `--dp-size`, `--ep-size` | Parallelism config |
 
 ## Output Interpretation
 
 **Operator breakdown:**
+
 ```
 tensor_cast.static_quant_linear.default      884.004ms       1.973ms         448
 tensor_cast.attention.default                 259.855ms       4.060ms          64
@@ -82,6 +88,7 @@ aten.mul.Tensor                              198.215ms     237.668us         834
 ```
 
 **Memory breakdown:**
+
 ```
 Total device memory: 64.000 GB
   Model weight size: 31.981 GB

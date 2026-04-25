@@ -28,16 +28,16 @@ System-level LLM serving simulation for multi-instance throughput and latency op
 ## Quick Start
 
 1. **Write two configs** — `instances.yaml` (hardware/instances) + `common.yaml` (model/workload)
-2. **Run simulation:**
+1. **Run simulation:**
    ```bash
-   MSMODELING_PATH=$(pip show msmodeling | grep "Location:" | cut -d' ' -f2)
+   MSMODELING_PATH=$(uv pip show liuren_modeling 2>/dev/null | grep "Editable project location:" | cut -d':' -f2 | tr -d ' ')
    cd $MSMODELING_PATH
    python -m serving_cast.main \
      --instance_config_path=instances.yaml \
      --common_config_path=common.yaml
    ```
-3. **Interpret results** — Check P90 TTFT/TPOT against targets
-4. **Iterate** — Adjust `max_concurrency` and `max_tokens_budget` until targets met
+1. **Interpret results** — Check P90 TTFT/TPOT against targets
+1. **Iterate** — Adjust `max_concurrency` and `max_tokens_budget` until targets met
 
 ## Config Files
 
@@ -90,13 +90,14 @@ serving_config:
 Always check the latest supported matrix:
 
 ```bash
-MSMODELING_PATH=$(pip show msmodeling | grep "Location:" | cut -d' ' -f2)
-cat $MSMODELING_PATH/source_code_path/docs/en/tensor_cast_instruct.md | grep -A 20 "Supported Matrix"
+MSMODELING_PATH=$(uv pip show liuren_modeling 2>/dev/null | grep "Editable project location:" | cut -d':' -f2 | tr -d ' ')
+cat $MSMODELING_PATH/docs/en/tensor_cast_instruct.md | grep -A 20 "Supported Matrix"
 ```
 
 ## Output Interpretation
 
 **Per-request latency:**
+
 ```
               E2E_TIME(s)  TTFT(s)  TPOT(s)
 AVERAGE           1.23      0.45     0.012
@@ -104,9 +105,30 @@ P90               1.87      0.71     0.018
 ```
 
 **Throughput:**
+
 ```
 request_throughput(req/s)      10.37
 output_token_throughput(tok/s) 2654.3
+```
+
+## CLI Reference
+
+Show `throughput_optimizer` CLI arguments:
+
+```bash
+python /path/to/skills/msmodeling/serving-cast-simulation/scripts/show_throughput_optimizer_args.py
+```
+
+Or inline (requires msmodeling installed):
+
+```bash
+MSMODELING_PATH=$(uv pip show liuren_modeling 2>/dev/null | grep "Editable project location:" | cut -d':' -f2 | tr -d ' ')
+python -c "
+import sys
+sys.path.insert(0, '$MSMODELING_PATH')
+from cli.inference.throughput_optimizer import arg_parse
+arg_parse().print_help()
+"
 ```
 
 ## Common Issues
