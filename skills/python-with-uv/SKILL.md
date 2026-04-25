@@ -10,36 +10,42 @@ This skill initializes a new Python project (or brings an existing one up to sta
 ### Workflow
 
 1. **Gather options** — if not provided as `$0`, ask:
+
    - Python version (e.g., `3.12`)
    - Project type: **app** (default, script/service) or **lib** (installable package, uses `--lib`)
 
-2. **Initialize project** (skip if `pyproject.toml` already exists):
+1. **Initialize project** (skip if `pyproject.toml` already exists):
+
    - Run `uv init --python <version> [--lib]` — this also runs `git init` automatically.
 
-3. **Configure Aliyun mirror** — append to `pyproject.toml`:
+1. **Configure Aliyun mirror** — append to `pyproject.toml`:
+
    ```toml
    [[tool.uv.index]]
    url = "https://mirrors.aliyun.com/pypi/simple"
    default = true
    ```
 
-4. **Configure ruff** — append to `pyproject.toml` to enable import sorting and unused-import removal:
+1. **Configure ruff** — append to `pyproject.toml` to enable import sorting and unused-import removal:
+
    ```toml
    [tool.ruff.lint]
    select = ["E", "F", "I"]
    ```
 
-5. **Add development dependencies**:
+1. **Add development dependencies**:
+
    ```
    uv add ruff pytest radon vulture basedpyright pre-commit mdformat --dev
    ```
 
-6. **Set up pre-commit**:
+1. **Set up pre-commit**:
+
    - Create `.pre-commit-config.yaml` using [pre-commit-config.yaml](pre-commit-config.yaml) as the template.
    - Replace `$PYTHON_VERSION` with the confirmed version (e.g., `3.12`).
    - Run `pre-commit install` to register the git hooks.
 
-7. **Finalize** — confirm to the user: Python version, mirror, dev tools installed, and pre-commit hooks active.
+1. **Finalize** — confirm to the user: Python version, mirror, dev tools installed, and pre-commit hooks active.
 
 ### Requirements
 

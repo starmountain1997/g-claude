@@ -65,7 +65,7 @@ chmod +x run.sh
 
 ## Task Specifics
 
-- **vLLM Serving**: Use the `/vllm` skill — installation, model download, scenario tuning, and online serving.
+- **vLLM Serving**: Use `/vllm-ascend` for installation, offline validation, scenario tuning, and online serving. Use `/model-download` to get the model on disk first.
 - **Quantization**: Use the `/msmodelslim` skill — W4A8/W8A8/W4A4, mixed precision, VLM support, accuracy recovery.
 - **Evaluation**: Use the `/aisbench` skill — accuracy and performance benchmarks against a running vLLM service.
 

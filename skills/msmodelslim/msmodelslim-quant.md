@@ -44,7 +44,7 @@ User specifies target dtype (e.g. w4a8, w8a8, w4a4)
 
 > **Always follow the user's specified dtype.** Never silently downgrade or substitute a different dtype at any step. If a fallback is needed, stop and ask.
 
-> **Model path**: `--model_path` must point to a local directory. If the model is not yet downloaded, use `/vllm` (model-download guide) first to get `$MODEL_PATH`.
+> **Model path**: `--model_path` must point to a local directory. If the model is not yet downloaded, use `/model-download` first to get `$MODEL_PATH`.
 
 ## 1. Pre-execution Validation
 

@@ -8,7 +8,7 @@ ______________________________________________________________________
 
 | 场景 | 入口文档 |
 |:---|:---|
-| 模型下载（ModelScope / HuggingFace） | `model-download.md` |
+| 模型下载（ModelScope / HuggingFace） | `/model-download` |
 | vLLM-Ascend 安装与版本锁定 | `vllm-install.md` |
 | 性能目标调研（延迟 / 吞吐 / 并发） | `scenario-inquiry.md` |
 | 部署调优（Eager → Graph → Online Serving） | `vllm-run.md` |
@@ -58,7 +58,6 @@ ______________________________________________________________________
 ```
 ascend/
 ├── SKILL.md                      # 入口：硬件检查 + 公共约定 + 任务路由
-├── model-download.md             # 模型下载：ModelScope 优先，HuggingFace 回退
 ├── scenario-inquiry.md           # 场景调研：延迟/吞吐/并发多维访谈
 ├── vllm-install.md               # 安装：源码编译 + 版本锁定
 ├── vllm-run.md                   # 部署调优：Eager 验证 → Graph 优化 → Online Serving
