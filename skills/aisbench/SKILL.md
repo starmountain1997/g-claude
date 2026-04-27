@@ -11,29 +11,22 @@ AISBench evaluates LLM service accuracy and performance via an OpenAI-compatible
 
 ## Quick Start
 
-Three steps from zero to results:
+A **running vLLM API server** is required before any benchmark. If one isn't up yet:
 
 ```bash
-# 1. Verify NPU health
-/ascend
+/ascend        # 1. Verify NPU health
+/vllm-ascend   # 2. Start vLLM service (keep terminal open)
+```
 
-# 2. Start vLLM service (keep terminal open)
-/vllm-ascend
+Then run the benchmark in a new terminal:
 
-# 3. Run accuracy benchmark in a new terminal
+```bash
 ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --debug
 ```
 
 Results land in `outputs/default/<timestamp>/`.
 
-## Prerequisites
-
-A **running vLLM API server** is required before any benchmark. If one isn't up yet:
-
-- Use `/ascend` first to verify NPU health
-- Use `/vllm-ascend` to install and launch the model as a service
-
-Both accuracy and performance benchmarks share the same CLI structure:
+Accuracy and performance benchmarks share the same CLI structure:
 
 ```bash
 ais_bench --models <model_task> --datasets <dataset_task> [--mode perf]
@@ -142,8 +135,6 @@ Full datasets can take a long time. A limited run is cheap and catches config er
 
 ## Common Notes
 
-- Results land in `outputs/default/<timestamp>/`
 - Use `--debug` on first runs to see request logs on screen
-- Use `--reuse <timestamp>` to re-evaluate accuracy results without re-running inference (e.g. after fixing answer extraction logic)
 - For accuracy: prefer `chat_prompt` dataset variants; use low temperature (`temperature=0`)
 - For performance: `vllm_api_stream_chat` is required; `ignore_eos=True` is essential for meaningful throughput numbers

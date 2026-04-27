@@ -7,15 +7,9 @@ Performance benchmarking measures throughput, latency, and concurrency of a runn
 
 ______________________________________________________________________
 
-## Prerequisite: vLLM Service
+## Prerequisite
 
-Both benchmarks require a running vLLM server. Use **vllm-ascend** skill to install and launch the model as a service:
-
-```
-/vllm-ascend
-```
-
-Verify it's up: `curl http://<host>:<port>/v1/models`
+A running vLLM server is required — see [SKILL.md](SKILL.md) Quick Start.
 
 ______________________________________________________________________
 

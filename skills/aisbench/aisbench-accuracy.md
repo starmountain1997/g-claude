@@ -4,23 +4,13 @@ AISBench evaluates model accuracy by sending requests to a running vLLM service 
 
 ______________________________________________________________________
 
-## Step 1 — Locate AISBench
-
-```bash
-pip show ais_bench_benchmark
-```
-
-If not found, follow [aisbench-install.md](aisbench-install.md). Use `Editable project location` as `$LOCATION`.
-
-______________________________________________________________________
-
-## Step 2 — Download Dataset
+## Step 1 — Download Dataset
 
 Follow [aisbench-datasets.md](aisbench-datasets.md) to download the dataset. Place files under `$LOCATION/ais_bench/datasets/`.
 
 ______________________________________________________________________
 
-## Step 3 — Run
+## Step 2 — Run
 
 vLLM's `--max-model-len` should be at least `35000` for most datasets.
 
