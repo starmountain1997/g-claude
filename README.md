@@ -12,7 +12,7 @@ Then install individual skills:
 
 ```bash
 claude plugin install ascend@g-claude
-claude plugin install vllm@g-claude
+claude plugin install vllm-ascend@g-claude
 claude plugin install msmodelslim@g-claude
 claude plugin install aisbench@g-claude
 claude plugin install commit-as-prompt@g-claude

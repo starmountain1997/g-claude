@@ -10,7 +10,7 @@ import subprocess
 PLUGINS = {
     "starmountain1997/g-claude": [
         "ascend",
-        "vllm",
+        "vllm-ascend",
         "msmodelslim",
         "aisbench",
         "commit-as-prompt",
