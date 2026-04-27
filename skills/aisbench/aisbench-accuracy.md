@@ -4,7 +4,6 @@ AISBench evaluates model accuracy by sending requests to a running vLLM service 
 
 ______________________________________________________________________
 
-
 ## Step 1 — Locate AISBench
 
 ```bash
@@ -15,116 +14,66 @@ If not found, follow [aisbench-install.md](aisbench-install.md). Use `Editable p
 
 ______________________________________________________________________
 
-## Step 2 — Choose a Dataset
+## Step 2 — Download Dataset
 
-Ask the user which benchmark to run. List available datasets:
-
-```bash
-ls $LOCATION/ais_bench/benchmark/configs/datasets/
-```
-
-Read the dataset README to understand data file requirements and placement:
-
-```bash
-cat $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/README.md
-```
-
-List config variants for the dataset:
-
-```bash
-ls $LOCATION/ais_bench/benchmark/configs/datasets/$DATASET/
-```
-
-Prefer `chat_prompt` variants for accuracy eval (e.g. `gsm8k_gen_4_shot_cot_chat_prompt`). Place dataset files under `$LOCATION/ais_bench/datasets/`.
+Follow [aisbench-datasets.md](aisbench-datasets.md) to download the dataset. Place files under `$LOCATION/ais_bench/datasets/`.
 
 ______________________________________________________________________
 
-## Step 3 — Configure Model and Dataset
+## Step 3 — Run
 
-`--models` specifies the **model task** config (e.g., `vllm_api_general_chat`).
-`--datasets` specifies the **dataset task** config (e.g., `gsm8k_gen_4_shot_cot_chat_prompt`).
-These are the two core configurations — everything else is tuning.
-
-Find the config file paths with `--search`:
+vLLM's `--max-model-len` should be at least `35000` for most datasets.
 
 ```bash
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --search
-```
+# C-Eval
+ais_bench --models vllm_api_general_chat --datasets ceval_gen_0_shot_cot_chat_prompt.py --mode all --dump-eval-details --merge-ds
 
-This prints absolute paths to the model and dataset config `.py` files. Edit the **model config** (`vllm_api_general_chat.py`):
+# MMLU
+ais_bench --models vllm_api_general_chat --datasets mmlu_gen_0_shot_cot_chat_prompt.py --mode all --dump-eval-details --merge-ds
 
-```python
-from ais_bench.benchmark.models import VLLMCustomAPIChat
+# GPQA
+ais_bench --models vllm_api_general_chat --datasets gpqa_gen_0_shot_str.py --mode all --dump-eval-details --merge-ds
 
-models = [
-    dict(
-        attr="service",
-        type=VLLMCustomAPIChat,
-        abbr='vllm-api-general-chat',
-        path="",                   # tokenizer path (optional for accuracy eval)
-        model="DeepSeek-R1",       # model name from /v1/models; empty = auto-detect
-        request_rate=0,            # <0.1 = send all at once
-        retry=2,
-        host_ip="localhost",       # ← vLLM host IP
-        host_port=8080,            # ← vLLM port
-        max_out_len=512,           # ← raise if answers are truncated
-        batch_size=4,              # ← concurrent requests
-        generation_kwargs=dict(
-            temperature=0,         # low temperature for deterministic accuracy
-            top_p=0.95,
-            seed=None,
-        )
-    )
-]
-```
+# MATH-500
+ais_bench --models vllm_api_general_chat --datasets math500_gen_0_shot_cot_chat_prompt.py --mode all --dump-eval-details --merge-ds
 
-The dataset config rarely needs changes if data is in `ais_bench/datasets/`.
+# LiveCodeBench
+ais_bench --models vllm_api_general_chat --datasets livecodebench_code_generate_lite_gen_0_shot_chat.py --mode all --dump-eval-details --merge-ds
 
-______________________________________________________________________
+# AIME 2024
+ais_bench --models vllm_api_general_chat --datasets aime2024_gen_0_shot_chat_prompt.py --mode all --dump-eval-details --merge-ds
 
-## Step 4 — Run
-
-```bash
-# Full evaluation
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --debug
-
-# Limit to first N prompts (useful for debugging)
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --num-prompts 100
-```
-
-`--debug` prints request logs to screen (recommended on first run). Drop it for batch runs.
-
-Results are printed at the end and saved under `outputs/default/<timestamp>/`:
-
-- `summary/summary_*.txt|csv|md` — final accuracy scores
-- `predictions/<model>/` — raw model outputs (JSON) for inspection
-- `results/<model>/` — per-sample evaluation scores
-- `logs/` — infer and eval phase logs
-
-______________________________________________________________________
-
-## Multi-Task Evaluation
-
-Run multiple models or datasets in one command:
-
-```bash
-ais_bench --models vllm_api_general_chat vllm_api_stream_chat \
-          --datasets gsm8k_gen_4_shot_cot_str aime2024_gen_0_shot_chat_prompt
-```
-
-Tasks = product of models × datasets. For parallel execution (lower concurrency per task):
-
-```bash
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen aime2024_gen \
-          --disable-cb --max-num-workers 4
+# GSM8K
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_0_shot_cot_chat_prompt.py --mode all --dump-eval-details --merge-ds
 ```
 
 ______________________________________________________________________
 
-## Resume an Interrupted Run
+## Output Structure
+
+Results land in `outputs/default/<timestamp>/`:
+
+```
+20250628_151326/
+├── configs/                    # Combined config snapshot
+├── logs/
+│   ├── eval/<model>/           # Accuracy evaluation logs
+│   └── infer/<model>/          # Inference logs
+├── predictions/<model>/        # Raw model outputs (JSON)
+├── results/<model>/            # Per-sample scores
+└── summary/
+    ├── summary_*.csv           # Final accuracy scores (table)
+    ├── summary_*.md            # Final accuracy scores (Markdown)
+    └── summary_*.txt           # Final accuracy scores (text)
+```
+
+______________________________________________________________________
+
+## Resume / Re-evaluate
 
 ```bash
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen --reuse 20250628_151326
+# Re-evaluate without re-running inference (e.g. after fixing answer extraction)
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen --mode eval --reuse 20250628_151326
 ```
 
 ______________________________________________________________________
@@ -138,12 +87,6 @@ cat outputs/default/$TS/predictions/vllm-api-general-chat/gsm8k.json | \
   python3 -c "import sys,json; [print(json.loads(l)['prediction'][:200]) for l in sys.stdin]" | head -20
 ```
 
-- **Truncated output**: raise `max_out_len`; check vLLM `--max-model-len`
-- **Wrong answer format extracted**: add `pred_postprocessor=dict(type=extract_non_reasoning_content)` to model config (strips `<think>...</think>` for reasoning models)
+- **Truncated output**: raise `max_out_len`; check vLLM `--max-model-len` (needs to exceed 35000)
+- **Wrong answer format**: add `pred_postprocessor=dict(type=extract_non_reasoning_content)` for reasoning models (strips `<think>...</think>`)
 - **Failed requests**: check `predictions/.../gsm8k_failed.json`; reduce `batch_size` if OOM
-
-**Re-evaluate without re-running inference** (e.g., to fix answer extraction):
-
-```bash
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen --mode eval --reuse 20250628_151326
-```
