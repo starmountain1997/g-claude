@@ -15,59 +15,35 @@ ______________________________________________________________________
 
 ## Step 1 — Choose a Dataset
 
-Performance eval supports all accuracy datasets plus `synthetic_gen` for custom sequence lengths.
-
-**Option A: Use an existing dataset** (place files under `$LOCATION/ais_bench/datasets/` — see [aisbench-datasets.md](aisbench-datasets.md)):
-
-```bash
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_0_shot_cot_chat_prompt --mode perf --search
-```
-
-**Option B: Synthetic dataset** (recommended for controlled input/output length testing):
+Use the **Synthetic dataset** — no download needed, fully controlled input/output lengths:
 
 ```bash
 ais_bench --models vllm_api_general_chat --datasets synthetic_gen --mode perf
 ```
 
-Configure `synthetic_config.py` — see [aisbench-datasets.md](aisbench-datasets.md) for schema details.
+Configure `$LOCATION/ais_bench/datasets/synthetic/synthetic_config.py`:
+
+```python
+synthetic_config = {
+    "Type": "string",
+    "RequestCount": 1000,
+    "StringConfig": {
+        "Input":  {"Method": "uniform", "Params": {"MinValue": 512, "MaxValue": 2048}},
+        "Output": {"Method": "uniform", "Params": {"MinValue": 128, "MaxValue": 512}},
+    }
+}
+```
+
+> **Before running, ask the user:** "What input and output length ranges do you want for the synthetic dataset?" Defaults above are 512–2048 input, 128–512 output.
+
 
 ______________________________________________________________________
 
 ## Step 2 — Run
 
-**Text-only datasets:**
-
 ```bash
-# C-Eval
-ais_bench --models vllm_api_general_chat --datasets ceval_gen_0_shot_cot_chat_prompt.py --summarizer default_perf --mode perf
-
-# MMLU
-ais_bench --models vllm_api_general_chat --datasets mmlu_gen_0_shot_cot_chat_prompt.py --summarizer default_perf --mode perf
-
-# GPQA
-ais_bench --models vllm_api_general_chat --datasets gpqa_gen_0_shot_str.py --summarizer default_perf --mode perf
-
-# MATH-500
-ais_bench --models vllm_api_general_chat --datasets math500_gen_0_shot_cot_chat_prompt.py --summarizer default_perf --mode perf
-
-# LiveCodeBench
-ais_bench --models vllm_api_general_chat --datasets livecodebench_code_generate_lite_gen_0_shot_chat.py --summarizer default_perf --mode perf
-
-# AIME 2024
-ais_bench --models vllm_api_general_chat --datasets aime2024_gen_0_shot_chat_prompt.py --summarizer default_perf --mode perf
-
-# GSM8K
-ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_0_shot_cot_chat_prompt.py --summarizer default_perf --mode perf
+ais_bench --models vllm_api_general_chat --datasets synthetic_gen --summarizer default_perf --mode perf
 ```
-
-**Multi-modal (text + images) — uses streaming backend:**
-
-```bash
-# TextVQA
-ais_bench --models vllm_api_stream_chat --datasets textvqa_gen_base64 --summarizer default_perf --mode perf
-```
-
-> **TextVQA dataset setup:** See [aisbench-datasets.md](aisbench-datasets.md) — download, reorganize, and fix image paths (absolute paths required to avoid a pydantic validation error).
 
 ______________________________________________________________________
 

@@ -101,7 +101,7 @@ models = [
 ]
 ```
 
-> Multi-modal performance benchmarks (TextVQA) use a separate streaming backend — see [aisbench-performance-gsm8k.md](aisbench-performance-gsm8k.md).
+> Multi-modal performance benchmarks (TextVQA) use a separate streaming backend — see [aisbench-performance.md](aisbench-performance.md).
 
 The dataset config rarely needs changes if data is placed correctly under `ais_bench/datasets/`.
 
@@ -110,7 +110,7 @@ The dataset config rarely needs changes if data is placed correctly under `ais_b
 - **Installation**: [aisbench-install.md](aisbench-install.md)
 - **Dataset Download**: [aisbench-datasets.md](aisbench-datasets.md) — download commands for all datasets (C-Eval, MMLU, GPQA, MATH-500, LiveCodeBench, AIME, GSM8K, TextVQA, synthetic)
 - **Accuracy Evaluation**: [aisbench-accuracy.md](aisbench-accuracy.md) — run commands for all datasets, output structure, troubleshooting
-- **Performance Benchmarking**: [aisbench-performance-gsm8k.md](aisbench-performance-gsm8k.md) — synthetic dataset, concurrency sweep, multi-modal
+- **Performance Benchmarking**: [aisbench-performance.md](aisbench-performance.md) — synthetic dataset, concurrency sweep, multi-modal
 
 ## Run via Shell Script
 
