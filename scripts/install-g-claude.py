@@ -14,9 +14,10 @@ PLUGINS = {
         "msmodelslim",
         "aisbench",
         "commit-as-prompt",
+        "setup-neovim-plugin",
     ],
     "forrestchang/andrej-karpathy-skills": ["andrej-karpathy-skills@karpathy-skills"],
-    "anthropics/skills": ["skill-creator@anthropics/skills"],
+    "anthropics/skills": ["document-skills@anthropic-agent-skills", "example-skills@anthropic-agent-skills"],
 }
 
 
