@@ -133,6 +133,24 @@
       ]
     },
     {
+      "name": "source-code-based-skill-creator",
+      "description": "Creates Claude Code skills for third-party Python libraries by exploring their installed source code and embedded documentation — produces accurate, non-hallucinated API usage.",
+      "source": "./",
+      "strict": false,
+      "version": "v0.0.1",
+      "keywords": [
+        "skill",
+        "skill-creator",
+        "source-code",
+        "documentation",
+        "library"
+      ],
+      "category": "workflow",
+      "skills": [
+        "./skills/source-code-based-skill-creator"
+      ]
+    },
+    {
       "name": "msmodeling",
       "description": "MindStudio-Modeling performance evaluation framework for Ascend NPUs. Provides tensor-cast for model-level analysis and serving-cast-simulation for LLM serving parameter tuning.",
       "source": "./",
