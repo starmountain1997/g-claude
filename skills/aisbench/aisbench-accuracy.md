@@ -4,17 +4,6 @@ AISBench evaluates model accuracy by sending requests to a running vLLM service 
 
 ______________________________________________________________________
 
-## Prerequisite: vLLM Service
-
-Both accuracy and performance benchmarks require an OpenAI-compatible vLLM server. Start it like:
-
-```bash
-vllm serve /path/to/model --host 0.0.0.0 --port 8080 --served-model-name DeepSeek-R1
-```
-
-Verify it's up: `curl http://<host>:<port>/v1/models`
-
-______________________________________________________________________
 
 ## Step 1 — Locate AISBench
 
@@ -51,6 +40,10 @@ Prefer `chat_prompt` variants for accuracy eval (e.g. `gsm8k_gen_4_shot_cot_chat
 ______________________________________________________________________
 
 ## Step 3 — Configure Model and Dataset
+
+`--models` specifies the **model task** config (e.g., `vllm_api_general_chat`).
+`--datasets` specifies the **dataset task** config (e.g., `gsm8k_gen_4_shot_cot_chat_prompt`).
+These are the two core configurations — everything else is tuning.
 
 Find the config file paths with `--search`:
 
@@ -92,7 +85,11 @@ ______________________________________________________________________
 ## Step 4 — Run
 
 ```bash
+# Full evaluation
 ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --debug
+
+# Limit to first N prompts (useful for debugging)
+ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_4_shot_cot_chat_prompt --num-prompts 100
 ```
 
 `--debug` prints request logs to screen (recommended on first run). Drop it for batch runs.

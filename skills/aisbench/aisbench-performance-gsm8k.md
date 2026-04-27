@@ -1,5 +1,7 @@
 # AISBench Performance Evaluation Guide
 
+> **Note**: This skill currently only supports GSM8K for performance testing. More datasets (MMLU, AIME, etc.) will be added in future updates.
+
 Performance benchmarking measures throughput, latency, and concurrency of a running vLLM service. The CLI pattern is identical to accuracy evaluation with two differences:
 
 1. Add `--mode perf`
@@ -9,9 +11,13 @@ ______________________________________________________________________
 
 ## Prerequisite: vLLM Service
 
-```bash
-vllm serve /path/to/model --host 0.0.0.0 --port 8080 --served-model-name DeepSeek-R1
+Both benchmarks require a running vLLM server. Use **vllm-ascend** skill to install and launch the model as a service:
+
 ```
+/vllm-ascend
+```
+
+Verify it's up: `curl http://<host>:<port>/v1/models`
 
 ______________________________________________________________________
 
@@ -57,6 +63,10 @@ synthetic_config = {
 ______________________________________________________________________
 
 ## Step 3 — Configure the Model Client
+
+`--models` specifies the **model task** config (e.g., `vllm_api_stream_chat`).
+`--datasets` specifies the **dataset task** config (e.g., `demo_gsm8k_gen_4_shot_cot_chat_prompt`).
+These are the two core configurations — everything else is tuning.
 
 Find the config file path:
 
