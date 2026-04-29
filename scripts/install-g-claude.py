@@ -38,9 +38,9 @@ ASCEND_PLUGINS = {
 }
 
 
-def claude(*args):
+def opkg(*args):
     """Run Claude CLI command, log it, and return the output."""
-    cmd = ["claude", *args]
+    cmd = ["opkg", "install", *args]
     logging.info("Running: " + " ".join(cmd))
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
@@ -49,46 +49,25 @@ def claude(*args):
     return result.stdout.strip()
 
 
-def setup_claude_plugins(update=True, if_ascend=False):
+def setup_claude_plugins(platforms: str, if_ascend: bool = False):
     """Install/update and then remove plugins not in the list."""
-    action = "update" if update else "install"
     plugins = ASCEND_PLUGINS if if_ascend else COMMON_PLUGINS
 
     for repo, items in plugins.items():
-        marketplace_name = repo.split("/")[-1]
-
-        # Add marketplace if it doesn't exist (only on install, not update)
-        if not update:
-            try:
-                claude("plugin", "marketplace", "add", repo)
-            except RuntimeError:
-                # Might already exist – ignore
-                pass
-
-        # Install or update desired plugins
         for item in items:
-            plugin = item if "@" in item else f"{item}@{marketplace_name}"
-            try:
-                claude("plugin", action, plugin)
-            except RuntimeError as e:
-                logging.error(f"Failed to {action} {plugin}: {e}")
-
-    logging.info(
-        f"All skills successfully processed (desired {action}ed, extras removed)."
-    )
+            args = [f"gh@{repo}", "--plugins", item, "--platforms", platforms]
+            opkg(*args)
 
 
 def main():
     parser = argparse.ArgumentParser(description="Manage Claude skills.")
-    parser.add_argument(
-        "--update", action="store_true", help="Update skills instead of installing"
-    )
+    parser.add_argument("--platforms", default="opencode")
     parser.add_argument(
         "--ascend", action="store_true", help="Use Ascend-specific plugin list"
     )
     args = parser.parse_args()
 
-    setup_claude_plugins(args.update, args.ascend)
+    setup_claude_plugins(args.platforms, args.ascend)
 
 
 if __name__ == "__main__":

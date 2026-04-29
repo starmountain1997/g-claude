@@ -26,6 +26,25 @@ curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/scri
 
 Pass any script arguments after `python3 -`, e.g. `--update`, `--help`, etc.
 
+## Install via OpenPackage
+
+[OpenPackage](https://github.com/enulus/OpenPackage) is a universal package manager for coding agent configs. Install all skills at once:
+
+```bash
+npm install -g opkg
+opkg install gh@starmountain1997/g-claude
+```
+
+Or install individual skills:
+
+```bash
+opkg install gh@starmountain1997/g-claude --skills ascend
+opkg install gh@starmountain1997/g-claude --skills vllm-ascend
+opkg install gh@starmountain1997/g-claude --skills msmodelslim
+opkg install gh@starmountain1997/g-claude --skills aisbench
+opkg install gh@starmountain1997/g-claude --skills commit-as-prompt
+```
+
 ## Skills
 
 | Skill | Description |
