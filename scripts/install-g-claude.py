@@ -34,6 +34,7 @@ ASCEND_PLUGINS = {
         "msmodeling",
         "msmodelslim",
         "vllm-ascend",
+        "gitcode-publish",
     ],
 }
 
