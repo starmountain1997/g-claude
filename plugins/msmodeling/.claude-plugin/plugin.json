@@ -1,0 +1,23 @@
+{
+  "name": "msmodeling",
+  "description": "MindStudio-Modeling performance evaluation framework for Ascend NPUs. Provides tensor-cast for model-level analysis and serving-cast-simulation for LLM serving parameter tuning.",
+  "version": "v0.0.8",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "msmodeling",
+    "ascend",
+    "npu",
+    "performance",
+    "simulation",
+    "tensor-cast",
+    "serving-cast"
+  ],
+  "category": "ml",
+  "skills": [
+    "./skills/msmodeling",
+    "./skills/msmodeling/tensor-cast",
+    "./skills/msmodeling/serving-cast-simulation"
+  ]
+}

@@ -10,185 +10,83 @@
   "plugins": [
     {
       "name": "ascend",
-      "description": "Ascend NPU hardware entry point \u2014 health check, environment setup, shell script template. Starting point for any Ascend workflow.",
-      "source": "./",
-      "strict": false,
+      "source": "./plugins/ascend",
+      "description": "Ascend NPU hardware entry point — health check, environment setup, shell script template. Starting point for any Ascend workflow.",
       "version": "v0.0.1",
-      "keywords": [
-        "ascend",
-        "npu",
-        "huawei",
-        "cann"
-      ],
-      "category": "infrastructure",
-      "skills": [
-        "./skills/ascend"
-      ]
+      "keywords": ["ascend", "npu", "huawei", "cann"],
+      "category": "infrastructure"
     },
     {
       "name": "vllm-ascend",
-      "description": "vLLM-Ascend serving toolchain \u2014 install, offline validation, scenario tuning, online serving, contribution guide.",
-      "source": "./",
-      "strict": false,
+      "source": "./plugins/vllm-ascend",
+      "description": "vLLM-Ascend serving toolchain — install, offline validation, scenario tuning, online serving, contribution guide.",
       "version": "v0.0.1",
-      "keywords": [
-        "vllm-ascend",
-        "ascend",
-        "npu",
-        "llm",
-        "serving",
-        "vllm"
-      ],
-      "category": "ml",
-      "skills": [
-        "./skills/vllm-ascend"
-      ]
+      "keywords": ["vllm-ascend", "ascend", "npu", "llm", "serving", "vllm"],
+      "category": "ml"
     },
     {
       "name": "model-download",
+      "source": "./plugins/model-download",
       "description": "Download models from ModelScope or HuggingFace to local storage before inference, quantization, or evaluation.",
-      "source": "./",
-      "strict": false,
       "version": "v0.0.1",
-      "keywords": [
-        "model",
-        "download",
-        "modelscope",
-        "huggingface",
-        "hugging_face"
-      ],
-      "category": "ml",
-      "skills": [
-        "./skills/model-download"
-      ]
+      "keywords": ["model", "download", "modelscope", "huggingface", "hugging_face"],
+      "category": "ml"
     },
     {
       "name": "msmodelslim",
-      "description": "Model quantization on Ascend NPUs \u2014 W4A8/W8A8/W4A4, one-click and custom YAML, MoE mixed precision, VLM support, accuracy recovery.",
-      "source": "./",
-      "strict": false,
+      "source": "./plugins/msmodelslim",
+      "description": "Model quantization on Ascend NPUs — W4A8/W8A8/W4A4, one-click and custom YAML, MoE mixed precision, VLM support, accuracy recovery.",
       "version": "v0.0.1",
-      "keywords": [
-        "quantization",
-        "ascend",
-        "npu",
-        "msmodelslim",
-        "w4a8",
-        "w8a8"
-      ],
-      "category": "ml",
-      "skills": [
-        "./skills/msmodelslim"
-      ]
+      "keywords": ["quantization", "ascend", "npu", "msmodelslim", "w4a8", "w8a8"],
+      "category": "ml"
     },
     {
       "name": "aisbench",
-      "description": "AISBench evaluation framework \u2014 accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
-      "source": "./",
-      "strict": false,
+      "source": "./plugins/aisbench",
+      "description": "AISBench evaluation framework — accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
       "version": "v0.0.3",
-      "keywords": [
-        "benchmark",
-        "evaluation",
-        "aisbench",
-        "gsm8k",
-        "mmlu"
-      ],
-      "category": "ml",
-      "skills": [
-        "./skills/aisbench"
-      ]
+      "keywords": ["benchmark", "evaluation", "aisbench", "gsm8k", "mmlu"],
+      "category": "ml"
     },
     {
       "name": "pythonic-code",
+      "source": "./plugins/pythonic-code",
       "description": "Review Python code for idiomatic style and suggest improvements. Flags unpythonic patterns and applies refactors.",
-      "source": "./",
-      "strict": false,
       "version": "v0.0.5",
-      "keywords": [
-        "python",
-        "refactor",
-        "style",
-        "idiomatic"
-      ],
-      "category": "workflow",
-      "skills": [
-        "./skills/pythonic-code"
-      ]
+      "keywords": ["python", "refactor", "style", "idiomatic"],
+      "category": "workflow"
     },
     {
       "name": "commit-as-prompt",
+      "source": "./plugins/commit-as-prompt",
       "description": "Structured Git commits with WHAT/WHY/HOW format, optimized as AI context for future sessions.",
-      "source": "./",
-      "strict": false,
       "version": "v0.0.1",
-      "keywords": [
-        "git",
-        "commit",
-        "workflow"
-      ],
-      "category": "workflow",
-      "skills": [
-        "./skills/commit-as-prompt"
-      ]
+      "keywords": ["git", "commit", "workflow"],
+      "category": "workflow"
     },
     {
       "name": "python-with-uv",
+      "source": "./plugins/python-with-uv",
       "description": "Set up a Python project with uv — pyproject.toml, Aliyun mirror, ruff linting, pre-commit hooks.",
-      "source": "./",
-      "strict": false,
       "version": "v0.0.1",
-      "keywords": [
-        "python",
-        "uv",
-        "project",
-        "pre-commit",
-        "ruff"
-      ],
-      "category": "workflow",
-      "skills": [
-        "./skills/python-with-uv"
-      ]
+      "keywords": ["python", "uv", "project", "pre-commit", "ruff"],
+      "category": "workflow"
     },
     {
       "name": "setup-neovim-plugin",
+      "source": "./plugins/setup-neovim-plugin",
       "description": "Configure a Neovim plugin from GitHub — fetches docs via context7, writes minimal init.lua/init.vim config, updates README.md in Chinese.",
-      "source": "./",
-      "strict": false,
       "version": "v0.0.1",
-      "keywords": [
-        "neovim",
-        "vim",
-        "plugin",
-        "lua",
-        "init.lua"
-      ],
-      "category": "workflow",
-      "skills": [
-        "./skills/setup-neovim-plugin"
-      ]
+      "keywords": ["neovim", "vim", "plugin", "lua", "init.lua"],
+      "category": "workflow"
     },
     {
       "name": "msmodeling",
+      "source": "./plugins/msmodeling",
       "description": "MindStudio-Modeling performance evaluation framework for Ascend NPUs. Provides tensor-cast for model-level analysis and serving-cast-simulation for LLM serving parameter tuning.",
-      "source": "./",
-      "strict": false,
       "version": "v0.0.6",
-      "keywords": [
-        "msmodeling",
-        "ascend",
-        "npu",
-        "performance",
-        "simulation",
-        "tensor-cast",
-        "serving-cast"
-      ],
-      "category": "ml",
-      "skills": [
-        "./skills/msmodeling",
-        "./skills/msmodeling/tensor-cast",
-        "./skills/msmodeling/serving-cast-simulation"
-      ]
+      "keywords": ["msmodeling", "ascend", "npu", "performance", "simulation", "tensor-cast", "serving-cast"],
+      "category": "ml"
     }
   ]
 }

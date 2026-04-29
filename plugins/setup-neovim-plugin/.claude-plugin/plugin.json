@@ -1,0 +1,19 @@
+{
+  "name": "setup-neovim-plugin",
+  "description": "Configure a Neovim plugin from GitHub \u2014 fetches docs via context7, writes minimal init.lua/init.vim config, updates README.md in Chinese.",
+  "version": "v0.0.3",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "neovim",
+    "vim",
+    "plugin",
+    "lua",
+    "init.lua"
+  ],
+  "category": "workflow",
+  "skills": [
+    "./skills/setup-neovim-plugin"
+  ]
+}

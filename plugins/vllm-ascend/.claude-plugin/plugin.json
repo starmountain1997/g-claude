@@ -1,0 +1,20 @@
+{
+  "name": "vllm-ascend",
+  "description": "vLLM-Ascend serving toolchain \u2014 install, offline validation, scenario tuning, online serving, contribution guide.",
+  "version": "v0.0.3",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "vllm-ascend",
+    "ascend",
+    "npu",
+    "llm",
+    "serving",
+    "vllm"
+  ],
+  "category": "ml",
+  "skills": [
+    "./skills/vllm-ascend"
+  ]
+}

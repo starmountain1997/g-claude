@@ -42,6 +42,7 @@ instance_groups:
 ```
 
 **Key fields:**
+
 - `num_devices_per_instance: 8` — Must match your hardware (8 for 910B)
 - `tp_size` — Must divide `num_attention_heads` evenly
 - `ep_size` — Set to 1 for dense models; only relevant for MoE
@@ -91,6 +92,7 @@ python -m serving_cast.main \
 ```
 
 **Prerequisites:**
+
 - Set `PYTHONPATH=/path/to/msmodeling:$PYTHONPATH`
 - Set `HF_ENDPOINT=https://hf-mirror.com` if needed
 - Ensure model ID is accessible from HuggingFace
@@ -142,9 +144,9 @@ Compare `request_throughput` against your Phase 0 QPS target.
 **Tuning loop** — iterate until P90 TTFT and TPOT are within targets:
 
 1. **P90 TTFT too high** → decrease `max_concurrency` (→ lower `--max-num-seqs`)
-2. **Throughput below target** → increase `max_concurrency` or `max_tokens_budget`
-3. **Memory/OOM** → decrease `max_tokens_budget` or increase `tp_size`
-4. **Memory but need more throughput** → increase `tp_size` (→ higher `--tensor-parallel-size`)
+1. **Throughput below target** → increase `max_concurrency` or `max_tokens_budget`
+1. **Memory/OOM** → decrease `max_tokens_budget` or increase `tp_size`
+1. **Memory but need more throughput** → increase `tp_size` (→ higher `--tensor-parallel-size`)
 
 Once simulation meets your latency and throughput targets, record `max_concurrency` and `max_tokens_budget` as the **msmodeling baseline** and carry them into `vllm-ascend` Phase 2 Step 3.
 

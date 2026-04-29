@@ -1,0 +1,19 @@
+{
+  "name": "python-with-uv",
+  "description": "Set up a Python project with uv \u2014 pyproject.toml, Aliyun mirror, ruff linting, pre-commit hooks.",
+  "version": "v0.0.3",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "python",
+    "uv",
+    "project",
+    "pre-commit",
+    "ruff"
+  ],
+  "category": "workflow",
+  "skills": [
+    "./skills/python-with-uv"
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "name": "aisbench",
+  "description": "AISBench evaluation framework \u2014 accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services.",
+  "version": "v0.0.5",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "benchmark",
+    "evaluation",
+    "aisbench",
+    "gsm8k",
+    "mmlu"
+  ],
+  "category": "ml",
+  "skills": [
+    "./skills/aisbench"
+  ]
+}

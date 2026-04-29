@@ -22,6 +22,7 @@ If context7 returns no useful results, fall back to a basic config template usin
 ### Step 3: Detect Neovim config file
 
 Check in the current working directory for:
+
 - `init.lua` (preferred — Neovim's modern config format)
 - `init.vim`
 - `vim.cfg`
@@ -31,6 +32,7 @@ If none exist, create `init.lua`. If multiple exist, prefer `init.lua`.
 ### Step 4: Parse existing config
 
 Read the existing config file. Track:
+
 - Which plugins are already configured (via plugin managers like `use`, `plug`, `dein`, `packer`, or `lazy`).
 - Any existing config blocks for the target plugin — if found, replace the entire block with the new minimal config (no保留 redundant setup).
 - General settings to avoid duplicating.
@@ -40,6 +42,7 @@ Goal: keep config minimal and non-redundant. Rewrite sections for the same plugi
 ### Step 5: Generate and write config
 
 Use the context7 docs (or fallback) to write the minimal required config:
+
 - Plugin declaration (using the detected/preferred plugin manager, or `lazy.nvim` as default for new setups)
 - Any essential `require('plugin-name').setup({})` if the plugin uses Lua module
 - NO keybindings unless the user explicitly asks for them
@@ -51,6 +54,7 @@ If the project already has a plugin manager set up (e.g. `vim-plug`), reuse it. 
 Read the existing `README.md` in the current working directory.
 
 Add or update a `## 插件配置` (Plugin Config) section with:
+
 - Plugin name and GitHub link
 - 安装方式 (Installation method) — paste the relevant config snippet
 - 基本用法 (Basic usage) — key commands or API if applicable, in Chinese
@@ -58,7 +62,8 @@ Add or update a `## 插件配置` (Plugin Config) section with:
 Keep it concise. If the section already exists for this plugin, replace it entirely.
 
 Format example:
-```markdown
+
+````markdown
 ## 插件配置
 
 ### [plugin-name](https://github.com/org/repo)
@@ -70,11 +75,12 @@ Format example:
 return {
   "org/repo"
 }
-```
+````
 
 **基本用法**
 
 - `:` command description
+
 ```
 
 ### Step 7: Verify
@@ -82,3 +88,4 @@ return {
 - Config file is valid Lua (no syntax errors)
 - README.md has the new/updated section
 - Report to the user: what was added/modified and where
+```

@@ -1,0 +1,19 @@
+{
+  "name": "model-download",
+  "description": "Download models from ModelScope or HuggingFace to local storage before inference, quantization, or evaluation.",
+  "version": "v0.0.3",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "model",
+    "download",
+    "modelscope",
+    "huggingface",
+    "hugging_face"
+  ],
+  "category": "ml",
+  "skills": [
+    "./skills/model-download"
+  ]
+}

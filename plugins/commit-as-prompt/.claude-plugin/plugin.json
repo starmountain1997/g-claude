@@ -1,0 +1,17 @@
+{
+  "name": "commit-as-prompt",
+  "description": "Structured Git commits with WHAT/WHY/HOW format, optimized as AI context for future sessions.",
+  "version": "v0.0.3",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "git",
+    "commit",
+    "workflow"
+  ],
+  "category": "workflow",
+  "skills": [
+    "./skills/commit-as-prompt"
+  ]
+}

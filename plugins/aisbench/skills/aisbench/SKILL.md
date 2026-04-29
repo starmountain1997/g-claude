@@ -61,6 +61,7 @@ ais_bench --models vllm_api_general_chat --datasets gsm8k_gen_0_shot_cot_chat_pr
 Edit `benchmark/ais_bench/benchmark/configs/models/vllm_api/vllm_api_general_chat.py`:
 
 Key fields:
+
 - `attr`: inference backend type — `service` (vLLM serving) or `local` (local model)
 - `type`: backend API class
 - `abbr`: unique task identifier (used to distinguish multiple concurrent tasks)

@@ -113,4 +113,3 @@ synthetic_config = {
 ```
 
 Use with `--datasets synthetic_gen` in performance runs.
-

@@ -3,7 +3,7 @@
 Performance benchmarking measures throughput, latency, and concurrency of a running vLLM service. The CLI pattern is identical to accuracy evaluation — same model config, same datasets — with two differences:
 
 1. Add `--mode perf`
-2. Add `--summarizer default_perf`
+1. Add `--summarizer default_perf`
 
 ______________________________________________________________________
 
@@ -35,7 +35,6 @@ synthetic_config = {
 ```
 
 > **Before running, ask the user:** "What input and output length ranges do you want for the synthetic dataset?" Defaults above are 512–2048 input, 128–512 output.
-
 
 ______________________________________________________________________
 
