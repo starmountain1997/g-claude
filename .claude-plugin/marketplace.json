@@ -49,6 +49,14 @@
       "category": "ml"
     },
     {
+      "name": "gitcode-publish",
+      "source": "./plugins/gitcode-publish",
+      "description": "Publish model README to GitCode with auto-inferred YAML frontmatter tags from transformers config.",
+      "version": "v0.0.1",
+      "keywords": ["gitcode", "model", "publish", "frontmatter", "transformers"],
+      "category": "ml"
+    },
+    {
       "name": "pythonic-code",
       "source": "./plugins/pythonic-code",
       "description": "Review Python code for idiomatic style and suggest improvements. Flags unpythonic patterns and applies refactors.",

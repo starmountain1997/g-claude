@@ -1,0 +1,19 @@
+{
+  "name": "gitcode-publish",
+  "description": "Publish model README to GitCode with auto-inferred YAML frontmatter tags from transformers config.",
+  "version": "v0.0.3",
+  "author": {
+    "name": "guozr"
+  },
+  "keywords": [
+    "gitcode",
+    "model",
+    "publish",
+    "frontmatter",
+    "transformers"
+  ],
+  "category": "ml",
+  "skills": [
+    "./skills/gitcode-publish"
+  ]
+}

@@ -1,0 +1,184 @@
+---
+name: gitcode-publish
+description: Publish model README to GitCode with auto-inferred YAML frontmatter tags. Use this skill whenever the user mentions pushing/publishing a model to GitCode, uploading model documentation, adding frontmatter tags to a model README, or preparing a model card for GitCode. Even if they don't say "GitCode" explicitly, trigger when they talk about tagging a model README with HuggingFace-style metadata.
+---
+
+# GitCode 模型发布
+
+为模型 README.md 自动推断并添加 YAML frontmatter 标签，然后推送到 GitCode 仓库。
+
+## 工作流程
+
+### 1. 确认模型路径
+
+询问用户模型所在的路径。支持两种形式：
+
+- **本地路径**：`/path/to/model/` 或 `./my-model`
+- **HuggingFace model ID**：`Qwen/Qwen2-VL-7B-Instruct`
+
+如果是 HF model ID，用 `snapshot_download` 只下载配置文件（不下载权重）：
+
+```bash
+python3 -c "
+from huggingface_hub import snapshot_download
+snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_config.json', 'preprocessor_config.json'], local_dir='/tmp/model-temp')
+"
+```
+
+然后用 `/tmp/model-temp` 作为模型路径。
+
+### 2. 安装依赖
+
+检查 `transformers` 是否可用：
+
+```bash
+python3 -c "from transformers import AutoConfig; print('ok')" 2>&1
+```
+
+如果失败，安装：
+
+```bash
+pip3 install transformers --quiet
+```
+
+### 3. 读取模型配置并推断标签
+
+用这个脚本读取模型配置并输出推断结果：
+
+```bash
+python3 << 'PYEOF'
+import json, os, sys
+
+model_path = "MODEL_PATH"
+
+from transformers import AutoConfig
+config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
+model_type = config.model_type
+
+# 读取 pipeline_tag 映射表
+# 参考 references/pipeline_tags.md
+
+result = {
+    "model_type": model_type,
+    "library_name": "transformers",
+    "pipeline_tag": "",  # 需要映射
+    "tags": [model_type],
+    "license": "",
+    "license_name": "",
+}
+
+# 尝试从 config 或 model card 提取更多信息
+if hasattr(config, 'architectures') and config.architectures:
+    result["tags"].extend(config.architectures)
+
+# 尝试读取 README.md 中的 license 信息
+readme_path = os.path.join(model_path, "README.md")
+if os.path.exists(readme_path):
+    with open(readme_path) as f:
+        readme = f.read()
+        if "license:" in readme.lower():
+            for line in readme.split("\n"):
+                if "license:" in line.lower():
+                    result["license"] = line.split(":", 1)[1].strip()
+                    break
+
+print(json.dumps(result, indent=2, ensure_ascii=False))
+PYEOF
+```
+
+### 4. 映射 pipeline_tag
+
+读取 `references/pipeline_tags.md` 中的映射表，根据 `model_type` 找到对应的 `pipeline_tag`。
+
+如果 `model_type` 在映射表中找不到，按以下优先级推断：
+
+- model_type 包含 `vl` → `image-text-to-text`
+- model_type 包含 `audio`/`speech` → `automatic-speech-recognition`
+- model_type 属于编码器模型（bert/roberta/deberta/electra）→ `fill-mask`
+- 都不匹配 → 询问用户手动指定
+
+### 5. 展示并确认标签
+
+将推断结果展示给用户。用表格形式：
+
+```
+| 字段 | 值 |
+|------|-----|
+| library_name | transformers |
+| pipeline_tag | image-text-to-text |
+| tags | qwen2_vl, Qwen2VLForConditionalGeneration |
+| license | apache-2.0 |
+```
+
+让用户确认或修改。用户可以：
+
+- 直接确认，继续下一步
+- 修改某个字段的值
+- 添加额外字段（如 `license_name`、`datasets`、`metrics` 等）
+
+### 6. 智能合并 README frontmatter
+
+读取模型目录下的 `README.md`：
+
+**如果 README 不存在**：创建一个只有 YAML frontmatter 的新文件。
+
+**如果 README 存在但没有 YAML frontmatter**（不以 `---` 开头）：在文件最开头插入 frontmatter。
+
+**如果 README 已有 YAML frontmatter**：智能合并——保留用户手动添加的字段（如自定义 `license_name`），只更新自动推断的字段值。判断依据：
+
+- 自动推断的字段（`library_name`、`pipeline_tag`、`tags`）用新值覆盖
+- 如果用户已手动设置 `license`，保留用户的值
+- 用户自定义的字段（不在自动推断列表中的）原样保留
+
+最终写入的格式：
+
+```markdown
+---
+tags:
+- compressed-tensors
+library_name: transformers
+pipeline_tag: image-text-to-text
+license: other
+license_name: modified-mit
+---
+[原有 README 内容...]
+```
+
+YAML 格式要求：
+
+- `tags` 用列表格式（每行 `- tag-name`），写在最前面
+- 其他字段用 `key: value` 格式
+- `---` 分隔符独占一行
+- frontmatter 结束后空一行再接正文
+
+### 7. 推送到 GitCode
+
+询问用户 GitCode 仓库地址（如 `https://gitcode.com/username/repo.git`）。
+
+如果用户还没有仓库，提示他们先去 [gitcode.com](https://gitcode.com) 创建新仓库，创建好了再告诉你仓库地址。
+
+收到仓库地址后，执行推送：
+
+```bash
+# 初始化 git（如果需要）
+cd MODEL_PATH
+git init
+
+# 添加 GitCode 远程仓库
+git remote add gitcode REPO_URL || git remote set-url gitcode REPO_URL
+
+# 只提交 README.md
+git add README.md
+git commit -m "publish: add model card with auto-inferred tags"
+
+# 推送到 GitCode（假设 main 分支）
+git push -u gitcode main
+```
+
+如果推送失败（比如需要认证），告诉用户具体的错误信息，让用户处理认证后重试。
+
+## 注意事项
+
+- 整个过程不接触模型权重文件（`.safetensors`、`.bin`、`.pt` 等），只操作配置文件
+- 如果模型目录路径包含大文件，在读取 config 时加 `local_files_only=True` 避免触发下载
+- 如果用户模型不是 transformers 架构（如 MLX、GGUF），告知用户此 skill 当前只支持 transformers 格式的模型卡
