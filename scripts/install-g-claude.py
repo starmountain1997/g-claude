@@ -1,106 +1,94 @@
 #!/usr/bin/env python3
-"""Install or update Claude skills and optional extras."""
+"""Install or update Claude skills and remove any extras not in the list."""
 
 import argparse
-import json
-import os
+import logging
 import subprocess
+import re
 
-# Dictionary mapping 'Marketplace Repo' to 'List of Plugins'
-PLUGINS = {
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="[%(asctime)s] %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
+
+COMMON_PLUGINS = {
     "starmountain1997/g-claude": [
-        "ascend",
-        "vllm-ascend",
-        "msmodelslim",
-        "aisbench",
         "commit-as-prompt",
+        "python-with-uv",
+        "pythonic-code",
         "setup-neovim-plugin",
     ],
     "forrestchang/andrej-karpathy-skills": ["andrej-karpathy-skills@karpathy-skills"],
-    "anthropics/skills": ["document-skills@anthropic-agent-skills", "example-skills@anthropic-agent-skills"],
+    "anthropics/skills": [
+        "document-skills@anthropic-agent-skills",
+        "example-skills@anthropic-agent-skills",
+    ],
+}
+ASCEND_PLUGINS = {
+    "starmountain1997/g-claude": [
+        "ascend",
+        "aisbench",
+        "model-download",
+        "msmodeling",
+        "msmodelslim",
+        "vllm-ascend",
+    ],
 }
 
 
 def claude(*args):
-    """Helper to run Claude CLI commands silently."""
-    subprocess.run(["claude", *args], capture_output=True)
+    """Run Claude CLI command, log it, and return the output."""
+    cmd = ["claude", *args]
+    logging.info("Running: " + " ".join(cmd))
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        logging.error(f"Command failed: {result.stderr.strip()}")
+        raise RuntimeError(f"claude command failed: {result.stderr}")
+    return result.stdout.strip()
 
 
-def setup_plugins(update=False):
-    """Installs or updates all configured marketplaces and plugins."""
+def setup_claude_plugins(update=True, if_ascend=False):
+    """Install/update and then remove plugins not in the list."""
     action = "update" if update else "install"
+    plugins = ASCEND_PLUGINS if if_ascend else COMMON_PLUGINS
 
-    for repo, items in PLUGINS.items():
+    for repo, items in plugins.items():
+        marketplace_name = repo.split("/")[-1]
+
+        # Add marketplace if it doesn't exist (only on install, not update)
         if not update:
-            print(f"Adding marketplace: {repo}")
-            claude("plugin", "marketplace", "add", repo)
-
-        for item in items:
-            # Auto-append the marketplace name if no '@' is specified
-            plugin = item if "@" in item else f"{item}@{repo.split('/')[-1]}"
-            print(f"{action.title()}ing plugin: {plugin}")
-            claude("plugin", action, plugin)
-
-    print(f"\nAll skills successfully {action}ed.")
-
-
-def install_context7(api_key):
-    """Installs Context7 MCP for both Claude Code and OpenCode."""
-    print("\nInstalling Context7 MCP for Claude Code...")
-    claude(
-        "mcp",
-        "add",
-        "--scope",
-        "user",
-        "context7",
-        "--",
-        "npx",
-        "-y",
-        "@upstash/context7-mcp",
-        "--api-key",
-        api_key,
-    )
-
-    print("Installing Context7 MCP for OpenCode...")
-    conf_path = os.path.expanduser("~/.config/opencode/config.json")
-    os.makedirs(os.path.dirname(conf_path), exist_ok=True)
-
-    config = {}
-    if os.path.exists(conf_path):
-        with open(conf_path, "r") as f:
             try:
-                config = json.load(f)
-            except ValueError:
+                claude("plugin", "marketplace", "add", repo)
+            except RuntimeError:
+                # Might already exist – ignore
                 pass
 
-    config.setdefault("mcp", {})["context7"] = {
-        "type": "local",
-        "enabled": True,
-        "command": ["npx", "-y", "@upstash/context7-mcp", "--api-key", api_key],
-    }
+        # Install or update desired plugins
+        for item in items:
+            plugin = item if "@" in item else f"{item}@{marketplace_name}"
+            try:
+                claude("plugin", action, plugin)
+            except RuntimeError as e:
+                logging.error(f"Failed to {action} {plugin}: {e}")
 
-    with open(conf_path, "w") as f:
-        json.dump(config, f, indent=2)
-
-    print("Context7 MCP installation complete.")
+    logging.info(
+        f"All skills successfully processed (desired {action}ed, extras removed)."
+    )
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Manage Claude skills and Context7 MCP."
-    )
+    parser = argparse.ArgumentParser(description="Manage Claude skills.")
     parser.add_argument(
         "--update", action="store_true", help="Update skills instead of installing"
     )
-    parser.add_argument("--context7-key", help="API key to install Context7 MCP")
+    parser.add_argument(
+        "--ascend", action="store_true", help="Use Ascend-specific plugin list"
+    )
     args = parser.parse_args()
 
-    setup_plugins(args.update)
-
-    if args.context7_key:
-        install_context7(args.context7_key)
-    elif not args.update:
-        print("Tip: pass --context7-key <KEY> to also install Context7 MCP.")
+    setup_claude_plugins(args.update, args.ascend)
 
 
 if __name__ == "__main__":
