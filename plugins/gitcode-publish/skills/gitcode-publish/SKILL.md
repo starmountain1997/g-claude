@@ -83,15 +83,35 @@ print(json.dumps(result, indent=2, ensure_ascii=False))
 
 ModelScope API 字段映射：`Tasks[0].Name` → `pipeline_tag`，`Tags` → `tags`，`License` 是可直接使用的许可证文本。
 
-#### 2c. 本地路径 → 从 config.json 推断
+#### 2c. 本地路径 → 优先从 HuggingFace API 获取真实标签
 
-先安装检查依赖（如果还没装）：
+即使模型在本地，也应优先查询 HuggingFace 上的真实标签，而不是从 `config.json` 的 `model_type` 推断。
+
+**第一步：从本地路径推断 HuggingFace model ID**
+
+如果本地路径是 HuggingFace 缓存目录（包含 `models--org--model` 格式），提取 model ID：
+
+```bash
+MODEL_PATH="/path/to/model"
+# 尝试从缓存路径提取 HF model ID
+echo "$MODEL_PATH" | python3 -c "
+import sys, re
+path = sys.stdin.read().strip()
+m = re.search(r'models--([^-]+)--(.+?)(?:/snapshots|/blobs|$)', path)
+if m:
+    print(f'{m.group(1)}/{m.group(2)}')
+"
+```
+
+如果提取成功，用提取到的 model ID 走 **步骤 2a** 的 HF API 流程获取标签。
+
+**第二步：无法提取 model ID 时，用 config 获取基本信息（但 tags 仍需确认）**
+
+如果第一步无法提取 model ID，读取 config.json 获取 `model_type`、`architectures` 等基本信息：
 
 ```bash
 python3 -c "from transformers import AutoConfig; print('ok')" 2>&1 || pip3 install transformers --quiet
 ```
-
-读取模型配置并推断：
 
 ```bash
 python3 << 'PYEOF'
@@ -105,7 +125,7 @@ config = AutoConfig.from_pretrained(MODEL_PATH, trust_remote_code=True)
 result = {
     "model_type": config.model_type,
     "pipeline_tag": "",  # 步骤3中根据映射表推断
-    "tags": [],
+    "tags": [],  # 不要用 model_type 填充——tags 应该是 HF 平台标签
     "library_name": "transformers",
     "license": "",
     "architectures": getattr(config, 'architectures', None) or [],
@@ -114,6 +134,8 @@ result = {
 print(json.dumps(result, indent=2, ensure_ascii=False))
 PYEOF
 ```
+
+然后**询问用户该模型在 HuggingFace 上的 model ID**，用 API 获取真实 tags。如果模型不在 HuggingFace 上，才使用步骤 3 的映射表手动构造 tags。
 
 #### 2d. 无论哪种方式，都需要读取模型 config（用于步骤5的 README 生成）
 
@@ -143,7 +165,7 @@ snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_
 - model_type 属于编码器模型（bert/roberta/deberta/electra）→ `fill-mask`
 - 都不匹配 → 询问用户手动指定
 
-映射完成后，将标准 tags 补充进 `tags` 字段：`["transformers", "<pipeline_tag>", ...architectures]`。
+映射完成后，仅确定 `pipeline_tag`。**`tags` 字段应从 HuggingFace API 获取**（包含平台自动标签如 `transformers`、`pytorch`、`safetensors` 以及 `pipeline_tag` 对应的任务标签等），不要用 `model_type` 或 `architectures` 填充 tags。
 
 ### 4. 展示并确认标签
 
@@ -154,7 +176,7 @@ snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_
 |------|-----|
 | library_name | transformers |
 | pipeline_tag | image-text-to-text |
-| tags | transformers, image-text-to-text, pytorch, qwen2_vl, Qwen2VLForConditionalGeneration |
+| tags | transformers, image-text-to-text, pytorch, safetensors |
 | license | apache-2.0 |
 ```
 
