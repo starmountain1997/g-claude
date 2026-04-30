@@ -167,31 +167,68 @@ YAML 格式要求：
 - `---` 分隔符独占一行
 - frontmatter 结束后空一行再接正文
 
-### 7. 推送到 GitCode
+### 7. 创建或关联 GitCode 仓库
 
-询问用户 GitCode 仓库地址（如 `https://gitcode.com/username/repo.git`）。
+询问用户：**"创建新仓库还是使用已有仓库？"**
 
-如果用户还没有仓库，提示他们先去 [gitcode.com](https://gitcode.com) 创建新仓库，创建好了再告诉你仓库地址。
+#### 选项 A：创建新仓库（通过 API）
 
-收到仓库地址后，执行推送：
+Token 从环境变量 `ATOMGIT_USER_TOKEN` 自动读取。如果未设置，提示用户先 `export ATOMGIT_USER_TOKEN=<token>`（token 从 [gitcode.com/-/user_settings/personal_access_tokens](https://gitcode.com/-/user_settings/personal_access_tokens) 获取，勾选 `api` 和 `write_repository` 权限）。
+
+然后询问：
+
+- **仓库名称**（name）：如 `"Qwen2-VL-7B-Instruct"`
+- **仓库路径**（path）：如 `"qwen2-vl-7b-instruct"`（默认与 name 相同）
+- **是否私有**（private）：默认 `false`（公开）
+
+调用 API 创建模型仓库：
+
+```bash
+curl --location 'https://api.gitcode.com/api/v5/user/repos' \
+  --header "private-token: $ATOMGIT_USER_TOKEN" \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "name": "<REPO_NAME>",
+    "path": "<REPO_PATH>",
+    "private": false,
+    "repository_type": "model"
+  }'
+```
+
+仓库地址直接用 token 构造，无需从 API 返回值提取：
+
+```
+REPO_URL="https://auth:${ATOMGIT_USER_TOKEN}@gitcode.com/<REPO_PATH>.git"
+```
+
+如果报错 `{"message": "401 Unauthorized"}` → token 无效或过期，让用户重新生成。
+如果报错 `name has already been taken` → 提示用户换个名称，或改用选项 B。
+
+#### 选项 B：使用已有仓库
+
+询问用户仓库路径（如 `yanlp/demo1-1`），然后同样构造带认证的地址：
+
+```
+REPO_URL="https://auth:${ATOMGIT_USER_TOKEN}@gitcode.com/<路径>.git"
+```
+
+### 8. 推送到 GitCode
 
 ```bash
 # 初始化 git（在 README 所在目录操作）
 cd README_DIR
 git init
 
-# 添加 GitCode 远程仓库
-git remote add gitcode REPO_URL || git remote set-url gitcode REPO_URL
+# 添加 GitCode 远程仓库（URL 已含 token，无需额外认证）
+git remote add origin REPO_URL || git remote set-url origin REPO_URL
 
 # 只提交 README.md
 git add README.md
 git commit -m "publish: add model card with auto-inferred tags"
 
 # 推送到 GitCode（假设 main 分支）
-git push -u gitcode main
+git push -u origin main
 ```
-
-如果推送失败（比如需要认证），告诉用户具体的错误信息，让用户处理认证后重试。
 
 ## 注意事项
 
