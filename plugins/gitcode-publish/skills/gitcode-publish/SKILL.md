@@ -23,86 +23,116 @@ README 和模型是分开的两个路径，分别询问用户：
 
 **第二步：询问模型路径**
 
-模型文件在哪里？（用于读取 config 推断标签，不会触碰权重文件）支持：
+模型文件在哪里？支持：
 
+- **HuggingFace model ID**：`Qwen/Qwen2-VL-7B-Instruct`（可从 API 直接拉取真实标签和元数据）
+- **ModelScope model ID**：`damo/nlp_structbert_backbone_base_std`（同样可从 API 拉取元数据）
 - **本地路径**：`/path/to/model/` 或 `~/.cache/huggingface/hub/models--xxx/`
-- **HuggingFace model ID**：`Qwen/Qwen2-VL-7B-Instruct`
 
 这两个路径可以相同（README 在模型目录下），也可以完全不同（README 在其他地方编辑，模型在 HF cache 中）。
 
-如果是 HF model ID，用 `snapshot_download` 只下载配置文件（不下载权重）：
+### 2. 获取模型元数据
+
+**优先级：平台 API > 本地 config 推断**
+
+根据步骤1中的模型路径类型，选择对应的数据源。
+
+#### 2a. HuggingFace model ID → 用 API 获取真实标签
+
+HuggingFace Hub API 返回的 `pipeline_tag`、`tags`、`library_name`、`license` 就是平台上的真实值，无需猜测：
 
 ```bash
-python3 -c "
-import os
-os.environ["HF_ENDPOINT"] = "https://hf-mirror.com"
-from huggingface_hub import snapshot_download
-snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_config.json', 'preprocessor_config.json'], local_dir='/tmp/model-temp')
+curl -sL "https://huggingface.co/api/models/MODEL_ID" | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+card = d.get('cardData', {}) or {}
+result = {
+    'pipeline_tag': d.get('pipeline_tag', ''),
+    'tags': d.get('tags', []),
+    'library_name': d.get('library_name', ''),
+    'license': card.get('license', ''),
+    'model_type': d.get('config', {}).get('model_type', '') if d.get('config') else '',
+}
+print(json.dumps(result, indent=2, ensure_ascii=False))
 "
 ```
 
-然后用 `/tmp/model-temp` 作为模型路径。
-
-### 2. 安装依赖
-
-检查 `transformers` 是否可用：
+如果 HuggingFace 不可达（网络问题），用 `https://hf-mirror.com` 镜像：
 
 ```bash
-python3 -c "from transformers import AutoConfig; print('ok')" 2>&1
+curl -sL "https://hf-mirror.com/api/models/MODEL_ID" | python3 -c "..."  # 同上
 ```
 
-如果失败，安装：
+#### 2b. ModelScope model ID → 用 API 获取真实标签
 
 ```bash
-pip3 install transformers --quiet
+curl -sL "https://modelscope.cn/api/v1/models/MODEL_ID" | python3 -c "
+import sys, json
+d = json.load(sys.stdin).get('Data', {})
+tasks = d.get('Tasks', [])
+result = {
+    'pipeline_tag': tasks[0].get('Name', '') if tasks else '',
+    'tags': d.get('Tags', []),
+    'library_name': d.get('Libraries', [''])[0] if d.get('Libraries') else '',
+    'license': d.get('License', ''),
+    'model_type': d.get('ModelType', [''])[0] if d.get('ModelType') else '',
+}
+print(json.dumps(result, indent=2, ensure_ascii=False))
+"
 ```
 
-### 3. 读取模型配置并推断标签
+ModelScope API 字段映射：`Tasks[0].Name` → `pipeline_tag`，`Tags` → `tags`，`License` 是可直接使用的许可证文本。
 
-用这个脚本读取模型配置并输出推断结果：
+#### 2c. 本地路径 → 从 config.json 推断
+
+先安装检查依赖（如果还没装）：
+
+```bash
+python3 -c "from transformers import AutoConfig; print('ok')" 2>&1 || pip3 install transformers --quiet
+```
+
+读取模型配置并推断：
 
 ```bash
 python3 << 'PYEOF'
-import json, os, sys
+import json, os
 
-model_path = "MODEL_PATH"
+MODEL_PATH = "MODEL_PATH"
 
 from transformers import AutoConfig
-config = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
-model_type = config.model_type
-
-# 读取 pipeline_tag 映射表
-# 参考 references/pipeline_tags.md
+config = AutoConfig.from_pretrained(MODEL_PATH, trust_remote_code=True)
 
 result = {
-    "model_type": model_type,
+    "model_type": config.model_type,
+    "pipeline_tag": "",  # 步骤3中根据映射表推断
+    "tags": [],
     "library_name": "transformers",
-    "pipeline_tag": "",  # 需要映射
-    "tags": [model_type],
     "license": "",
-    "license_name": "",
+    "architectures": getattr(config, 'architectures', None) or [],
 }
-
-# 尝试从 config 或 model card 提取更多信息
-if hasattr(config, 'architectures') and config.architectures:
-    result["tags"].extend(config.architectures)
-
-# 尝试读取 README.md 中的 license 信息
-readme_file = "PATH_TO_README_MD"  # 用 README 路径，不是模型路径
-if os.path.exists(readme_file):
-    with open(readme_file) as f:
-        readme = f.read()
-        if "license:" in readme.lower():
-            for line in readme.split("\n"):
-                if "license:" in line.lower():
-                    result["license"] = line.split(":", 1)[1].strip()
-                    break
 
 print(json.dumps(result, indent=2, ensure_ascii=False))
 PYEOF
 ```
 
-### 4. 映射 pipeline_tag
+#### 2d. 无论哪种方式，都需要读取模型 config（用于步骤5的 README 生成）
+
+如果模型路径是 HF model ID 且本地没有缓存，只下载配置文件（不下载权重）：
+
+```bash
+python3 -c "
+import os
+os.environ['HF_ENDPOINT'] = 'https://hf-mirror.com'
+from huggingface_hub import snapshot_download
+snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_config.json', 'preprocessor_config.json'], local_dir='/tmp/model-temp')
+"
+```
+
+然后用 `/tmp/model-temp` 的 config.json 补充模型信息。
+
+### 3. 映射 pipeline_tag（仅本地路径需要）
+
+**如果已从 API 获取了 `pipeline_tag`，跳过此步骤。**
 
 读取 `references/pipeline_tags.md` 中的映射表，根据 `model_type` 找到对应的 `pipeline_tag`。
 
@@ -113,7 +143,9 @@ PYEOF
 - model_type 属于编码器模型（bert/roberta/deberta/electra）→ `fill-mask`
 - 都不匹配 → 询问用户手动指定
 
-### 5. 展示并确认标签
+映射完成后，将标准 tags 补充进 `tags` 字段：`["transformers", "<pipeline_tag>", ...architectures]`。
+
+### 4. 展示并确认标签
 
 将推断结果展示给用户。用表格形式：
 
@@ -122,7 +154,7 @@ PYEOF
 |------|-----|
 | library_name | transformers |
 | pipeline_tag | image-text-to-text |
-| tags | qwen2_vl, Qwen2VLForConditionalGeneration |
+| tags | transformers, image-text-to-text, pytorch, qwen2_vl, Qwen2VLForConditionalGeneration |
 | license | apache-2.0 |
 ```
 
@@ -132,7 +164,7 @@ PYEOF
 - 修改某个字段的值
 - 添加额外字段（如 `license_name`、`datasets`、`metrics` 等）
 
-### 6. 智能合并 README frontmatter
+### 5. 智能合并 README frontmatter
 
 读取用户指定的 `README.md` 文件（注意：不是模型路径下的 README，而是步骤1中用户指定的 README 路径）：
 
@@ -151,11 +183,12 @@ PYEOF
 ```markdown
 ---
 tags:
-- compressed-tensors
+- transformers
+- image-text-to-text
+- pytorch
 library_name: transformers
 pipeline_tag: image-text-to-text
-license: other
-license_name: modified-mit
+license: apache-2.0
 ---
 [原有 README 内容...]
 ```
@@ -167,7 +200,7 @@ YAML 格式要求：
 - `---` 分隔符独占一行
 - frontmatter 结束后空一行再接正文
 
-### 7. 创建或关联 GitCode 仓库
+### 6. 创建或关联 GitCode 仓库
 
 询问用户：**"创建新仓库还是使用已有仓库？"**
 
@@ -209,7 +242,7 @@ REPO_URL="https://auth:${ATOMGIT_USER_TOKEN}@gitcode.com/<REPO_PATH>.git"
 REPO_URL="https://auth:${ATOMGIT_USER_TOKEN}@gitcode.com/<路径>.git"
 ```
 
-### 8. 推送到 GitCode
+### 7. 推送到 GitCode
 
 ```bash
 # 初始化 git（在 README 所在目录操作）
@@ -229,6 +262,8 @@ git push -u origin main
 
 ## 注意事项
 
-- 整个过程不接触模型权重文件（`.safetensors`、`.bin`、`.pt` 等），只操作配置文件
-- 如果模型目录路径包含大文件，在读取 config 时加 `local_files_only=True` 避免触发下载
+- **标签来源优先级**：平台 API > 本地 config 推断。HF/ModelScope API 返回的是平台上真实使用的标签，比本地推断更准确。
+- 整个过程不接触模型权重文件（`.safetensors`、`.bin`、`.pt` 等），只操作配置文件和 API 查询
+- 如果 `tags` 中包含 `license:xxx` 格式的标签，可将其提取为独立的 `license` 字段
 - 如果用户模型不是 transformers 架构（如 MLX、GGUF），告知用户此 skill 当前只支持 transformers 格式的模型卡
+- HF API 返回的 tags 包含平台自动标签（`transformers`、`safetensors`、`pytorch`、`text-generation` 等）和用户自定义标签，应完整保留
