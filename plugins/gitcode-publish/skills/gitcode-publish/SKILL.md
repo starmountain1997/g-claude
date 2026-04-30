@@ -173,7 +173,7 @@ YAML 格式要求：
 
 #### 选项 A：创建新仓库（通过 API）
 
-Token 从环境变量 `ATOMGIT_USER_TOKEN` 自动读取。如果未设置，提示用户先 `export ATOMGIT_USER_TOKEN=<token>`（token 从 [gitcode.com/-/user_settings/personal_access_tokens](https://gitcode.com/-/user_settings/personal_access_tokens) 获取，勾选 `api` 和 `write_repository` 权限）。
+Token 从环境变量 `ATOMGIT_USER_TOKEN` 自动读取。如果未设置直接退出。
 
 然后询问：
 
@@ -200,9 +200,6 @@ curl --location 'https://api.gitcode.com/api/v5/user/repos' \
 ```
 REPO_URL="https://auth:${ATOMGIT_USER_TOKEN}@gitcode.com/<REPO_PATH>.git"
 ```
-
-如果报错 `{"message": "401 Unauthorized"}` → token 无效或过期，让用户重新生成。
-如果报错 `name has already been taken` → 提示用户换个名称，或改用选项 B。
 
 #### 选项 B：使用已有仓库
 
