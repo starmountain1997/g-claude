@@ -7,14 +7,13 @@ import sys
 from pathlib import Path
 
 PLUGINS_DIR = Path("plugins")
-STATE_FILE = Path(".git/bump-skill-versions-state.json")
 
 
 def get_changed_plugins() -> set[str]:
-    """Return names of plugins that have staged changes (diff cached vs HEAD)."""
+    """Return names of plugins that have changes vs HEAD (staged or unstaged)."""
     try:
         res = subprocess.run(
-            ["git", "diff", "--cached", "--name-only", "HEAD", "--", "plugins/"],
+            ["git", "diff", "--name-only", "HEAD", "--", "plugins/"],
             capture_output=True,
             text=True,
             check=True,
@@ -25,6 +24,20 @@ def get_changed_plugins() -> set[str]:
     except (subprocess.SubprocessError, FileNotFoundError) as e:
         print(f"Warning: git diff failed: {e}")
         return set()
+
+
+def get_head_version(plugin_path: Path) -> str | None:
+    """Return the version string from plugin.json at HEAD, or None if not committed."""
+    try:
+        res = subprocess.run(
+            ["git", "show", f"HEAD:{plugin_path}"],
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        return json.loads(res.stdout).get("version")
+    except (subprocess.SubprocessError, json.JSONDecodeError, FileNotFoundError):
+        return None
 
 
 def bump_version(version_str: str) -> str:
@@ -42,35 +55,29 @@ def main():
         print("No plugin changes detected, skipping version bump.")
         return
 
-    # Load state to avoid re-bumping within the same commit session
-    state = {}
-    if STATE_FILE.exists():
-        try:
-            state = json.loads(STATE_FILE.read_text())
-        except json.JSONDecodeError:
-            pass
-
     bumped = []
 
     for name in changed_plugins:
-        if name in state:
-            continue  # already bumped in this session
-
         plugin_json = PLUGINS_DIR / name / ".claude-plugin" / "plugin.json"
         if not plugin_json.exists():
             print(f"Warning: no plugin.json found for {name}, skipping.")
             continue
 
         data = json.loads(plugin_json.read_text())
-        old_version = data.get("version", "v0.0.0")
+        current_version = data.get("version", "v0.0.0")
+
+        # If version already differs from HEAD, this plugin was already bumped
+        head_version = get_head_version(plugin_json)
+        if head_version is not None and current_version != head_version:
+            continue
+
+        old_version = current_version
         new_version = bump_version(old_version)
         data["version"] = new_version
         plugin_json.write_text(json.dumps(data, indent=2) + "\n")
         bumped.append(f"  {name}: {old_version} -> {new_version}")
-        state[name] = new_version
 
     if bumped:
-        STATE_FILE.write_text(json.dumps(state))
         print("Bumped versions for changed plugins:\n" + "\n".join(bumped))
     else:
         print("No matching plugins found.")
