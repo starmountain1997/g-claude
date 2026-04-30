@@ -1,5 +1,6 @@
 ---
 tags:
+  - model-agent-tagged
   - transformers
   - safetensors
   - deepseek_v4
