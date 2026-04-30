@@ -66,9 +66,10 @@ def main():
         data = json.loads(plugin_json.read_text())
         current_version = data.get("version", "v0.0.0")
 
-        # If version already differs from HEAD, this plugin was already bumped
+        # If plugin.json is new (not yet committed), trust the author's version.
+        # If it already differs from HEAD, it was already bumped — skip.
         head_version = get_head_version(plugin_json)
-        if head_version is not None and current_version != head_version:
+        if head_version is None or current_version != head_version:
             continue
 
         old_version = current_version
