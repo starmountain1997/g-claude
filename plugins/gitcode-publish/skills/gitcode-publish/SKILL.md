@@ -1,6 +1,6 @@
 ---
 name: gitcode-publish
-description: Publish model README to GitCode with auto-inferred YAML frontmatter tags. Use this skill whenever the user mentions pushing/publishing a model to GitCode, uploading model documentation, adding frontmatter tags to a model README, or preparing a model card for GitCode. Even if they don't say "GitCode" explicitly, trigger when they talk about tagging a model README with HuggingFace-style metadata.
+description: Publish model README to GitCode with auto-inferred YAML frontmatter tags. Use this skill whenever the user mentions pushing/publishing a model to GitCode, uploading model documentation, adding frontmatter tags to a model README, preparing a model card for GitCode, looking up a model on HuggingFace, or searching for a model ID. Even if they don't say "GitCode" explicitly, trigger when they talk about tagging a model README with HuggingFace-style metadata or need to find the exact HuggingFace model ID.
 ---
 
 # GitCode 模型发布
@@ -30,6 +30,46 @@ README 和模型是分开的两个路径，分别询问用户：
 - **本地路径**：`/path/to/model/` 或 `~/.cache/huggingface/hub/models--xxx/`
 
 这两个路径可以相同（README 在模型目录下），也可以完全不同（README 在其他地方编辑，模型在 HF cache 中）。
+
+### 1.5. 解析模糊的 HuggingFace 模型 ID
+
+当用户提供的 HuggingFace model ID 不精确时（缺少命名空间、只有系列名、记不清全名等），**不要猜测**，用 `huggingface_hub` 库搜索并让用户确认。
+
+**触发条件**（满足任一即触发搜索）：
+
+- model ID 中没有 `/`（缺少命名空间，如 `"Qwen2-VL"` 而非 `"Qwen/Qwen2-VL-7B-Instruct"`）
+- 用户明确说不确定完整 model ID（"好像叫..."、"记不清..."、"大概是..."）
+- 后续步骤 2a 中 HF API 返回 404
+
+**搜索命令**（按 downloads 降序，优先展示热门模型。先尝试直连，SSL 失败时自动切换 hf-mirror.com 镜像）：
+
+```bash
+python3 << 'PYEOF'
+import os
+from huggingface_hub import HfApi
+
+# 先尝试直连，不行用镜像
+for endpoint in [None, 'https://hf-mirror.com']:
+    try:
+        if endpoint:
+            os.environ['HF_ENDPOINT'] = endpoint
+        api = HfApi()
+        models = list(api.list_models(search="<搜索词>", limit=15, sort="downloads"))
+        break
+    except Exception:
+        continue
+
+print(f"{'#':<3} {'Model ID':<55} {'Pipeline':<30} {'Downloads':<12} {'Created'}")
+print("-" * 115)
+for i, m in enumerate(models, 1):
+    created = str(m.created_at).split(' ')[0] if m.created_at else '-'
+    print(f"{i:<3} {m.modelId:<55} {(m.pipeline_tag or '-'):<30} {m.downloads:>10,}  {created}")
+PYEOF
+```
+
+**展示搜索结果**，用表格形式列出匹配的模型（显示 model ID、pipeline_tag、下载量、更新时间），然后让用户通过序号或完整 model ID 确认。
+
+用户确认后，用确认的完整 model ID 继续后续步骤。
 
 ### 2. 获取模型元数据
 
@@ -62,6 +102,8 @@ print(json.dumps(result, indent=2, ensure_ascii=False))
 ```bash
 curl -sL "https://hf-mirror.com/api/models/MODEL_ID" | python3 -c "..."  # 同上
 ```
+
+如果 API 返回 404（model ID 不存在），说明用户提供的 model ID 可能有误。此时应返回 **步骤 1.5**，用搜索词（取 model ID 中最有区分度的部分）进行模糊搜索，让用户从匹配结果中选择正确的 model ID。
 
 #### 2b. ModelScope model ID → 用 API 获取真实标签
 
@@ -176,7 +218,7 @@ snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_
 |------|-----|
 | library_name | transformers |
 | pipeline_tag | image-text-to-text |
-| tags | transformers, image-text-to-text, pytorch, safetensors |
+| tags | model-agent-tagged, transformers, image-text-to-text, pytorch, safetensors |
 | license | apache-2.0 |
 ```
 
@@ -205,6 +247,7 @@ snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_
 ```markdown
 ---
 tags:
+- model-agent-tagged
 - transformers
 - image-text-to-text
 - pytorch
@@ -284,6 +327,7 @@ git push -u origin main
 
 ## 注意事项
 
+- **固定标签 `model-agent-tagged`**：所有通过本 skill 发布的 README，其 `tags` 列表中都必须包含 `model-agent-tagged`。无论标签来源是 HF API、ModelScope API 还是本地推断，在最终写入 frontmatter 前，确保 `model-agent-tagged` 出现在 tags 列表中。此标签用于标识该模型文档由 Agent 自动打标。
 - **标签来源优先级**：平台 API > 本地 config 推断。HF/ModelScope API 返回的是平台上真实使用的标签，比本地推断更准确。
 - 整个过程不接触模型权重文件（`.safetensors`、`.bin`、`.pt` 等），只操作配置文件和 API 查询
 - 如果 `tags` 中包含 `license:xxx` 格式的标签，可将其提取为独立的 `license` 字段

@@ -1,5 +1,5 @@
 {
   "name": "gitcode-publish",
   "description": "Publish model README to GitCode with auto-inferred YAML frontmatter tags from HuggingFace/ModelScope API and local transformers config.",
-  "version": "v0.0.7"
+  "version": "v0.0.8"
 }
