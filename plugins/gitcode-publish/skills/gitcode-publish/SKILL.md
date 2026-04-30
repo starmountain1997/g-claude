@@ -41,15 +41,15 @@ README 和模型是分开的两个路径，分别询问用户：
 - 用户明确说不确定完整 model ID（"好像叫..."、"记不清..."、"大概是..."）
 - 后续步骤 2a 中 HF API 返回 404
 
-**搜索命令**（按 downloads 降序，优先展示热门模型。先尝试直连，SSL 失败时自动切换 hf-mirror.com 镜像）：
+**搜索命令**（按 downloads 降序，优先展示热门模型。优先使用 hf-mirror.com 镜像，不可达时回退直连）：
 
 ```bash
 python3 << 'PYEOF'
 import os
 from huggingface_hub import HfApi
 
-# 先尝试直连，不行用镜像
-for endpoint in [None, 'https://hf-mirror.com']:
+# 优先用镜像，不行再直连
+for endpoint in ['https://hf-mirror.com', None]:
     try:
         if endpoint:
             os.environ['HF_ENDPOINT'] = endpoint
@@ -82,7 +82,7 @@ PYEOF
 HuggingFace Hub API 返回的 `pipeline_tag`、`tags`、`library_name`、`license` 就是平台上的真实值，无需猜测：
 
 ```bash
-curl -sL "https://huggingface.co/api/models/MODEL_ID" | python3 -c "
+curl -sL --retry 3 --retry-delay 1 "https://hf-mirror.com/api/models/MODEL_ID" | python3 -c "
 import sys, json
 d = json.load(sys.stdin)
 card = d.get('cardData', {}) or {}
@@ -97,10 +97,10 @@ print(json.dumps(result, indent=2, ensure_ascii=False))
 "
 ```
 
-如果 HuggingFace 不可达（网络问题），用 `https://hf-mirror.com` 镜像：
+如果 hf-mirror 不可达，用 HuggingFace 直连作为后备：
 
 ```bash
-curl -sL "https://hf-mirror.com/api/models/MODEL_ID" | python3 -c "..."  # 同上
+curl -sL --retry 3 --retry-delay 1 "https://huggingface.co/api/models/MODEL_ID" | python3 -c "..."  # 同上
 ```
 
 如果 API 返回 404（model ID 不存在），说明用户提供的 model ID 可能有误。此时应返回 **步骤 1.5**，用搜索词（取 model ID 中最有区分度的部分）进行模糊搜索，让用户从匹配结果中选择正确的 model ID。
