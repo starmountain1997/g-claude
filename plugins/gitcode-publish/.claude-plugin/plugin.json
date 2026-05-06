@@ -1,7 +1,7 @@
 {
   "name": "gitcode-publish",
   "description": "Publish model README to GitCode with auto-inferred YAML frontmatter tags from HuggingFace/ModelScope API and local transformers config.",
-  "version": "v0.0.10",
+  "version": "v0.0.11",
   "author": {
     "name": "starmountain1997"
   },

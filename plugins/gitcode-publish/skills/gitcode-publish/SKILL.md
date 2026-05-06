@@ -1,8 +1,6 @@
 ---
 name: gitcode-publish
-<<<<<<< HEAD
 description: Publish model README to GitCode with auto-inferred YAML frontmatter tags. The agent auto-discovers the README from /workspace — user only needs to provide the model name. Use this skill whenever the user mentions pushing/publishing a model to GitCode, uploading model documentation, adding frontmatter tags to a model README, preparing a model card for GitCode, looking up a model on HuggingFace, or searching for a model ID. Even if they don't say "GitCode" explicitly, trigger when they talk about tagging a model README with HuggingFace-style metadata, need to find the exact HuggingFace model ID, or when they give just a model name and want to publish it.
->>>>>>> 61264a4 (prompt(gitcode-publish): auto-discover README from /workspace instead of asking user for path)
 ---
 
 # GitCode 模型发布
@@ -24,6 +22,8 @@ description: Publish model README to GitCode with auto-inferred YAML frontmatter
 1. 如果以上未找到，搜索模型目录下的 `config.json`（`find /workspace -maxdepth 4 -name "config.json"`），读取 `_name_or_path` 字段匹配模型名称来定位
 
 如果自动搜索找到唯一匹配，直接使用；如果有多个候选，展示给用户选择；如果没有找到，再询问用户 README 路径作为兜底。
+
+记下搜索到的 README 路径（下面用 `$README_PATH` 表示），后续步骤需要用它。
 
 #### 确定模型路径
 
@@ -79,7 +79,7 @@ PYEOF
 
 **优先级：平台 API > 本地 config 推断**
 
-根据步骤1中的模型路径类型，选择对应的数据源。
+根据步骤 1.2 中确定的模型来源类型，选择对应的数据源。
 
 #### 2a. HuggingFace model ID → 用 API 获取真实标签
 
@@ -315,7 +315,7 @@ REPO_URL="https://auth:${ATOMGIT_USER_TOKEN}@gitcode.com/<路径>.git"
 
 ```bash
 # 初始化 git（在 README 所在目录操作）
-cd README_DIR
+cd "$(dirname "$README_PATH")"
 git init
 
 # 添加 GitCode 远程仓库（URL 已含 token，无需额外认证）
