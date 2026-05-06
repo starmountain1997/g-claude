@@ -1,6 +1,8 @@
 ---
 name: gitcode-publish
-description: Publish model README to GitCode with auto-inferred YAML frontmatter tags. Use this skill whenever the user mentions pushing/publishing a model to GitCode, uploading model documentation, adding frontmatter tags to a model README, preparing a model card for GitCode, looking up a model on HuggingFace, or searching for a model ID. Even if they don't say "GitCode" explicitly, trigger when they talk about tagging a model README with HuggingFace-style metadata or need to find the exact HuggingFace model ID.
+<<<<<<< HEAD
+description: Publish model README to GitCode with auto-inferred YAML frontmatter tags. The agent auto-discovers the README from /workspace — user only needs to provide the model name. Use this skill whenever the user mentions pushing/publishing a model to GitCode, uploading model documentation, adding frontmatter tags to a model README, preparing a model card for GitCode, looking up a model on HuggingFace, or searching for a model ID. Even if they don't say "GitCode" explicitly, trigger when they talk about tagging a model README with HuggingFace-style metadata, need to find the exact HuggingFace model ID, or when they give just a model name and want to publish it.
+>>>>>>> 61264a4 (prompt(gitcode-publish): auto-discover README from /workspace instead of asking user for path)
 ---
 
 # GitCode 模型发布
@@ -9,27 +11,29 @@ description: Publish model README to GitCode with auto-inferred YAML frontmatter
 
 ## 工作流程
 
-### 1. 确认两个路径
+### 1. 获取模型信息
 
-README 和模型是分开的两个路径，分别询问用户：
+用户只需提供模型名称（如 HuggingFace model ID `Qwen/Qwen2-VL-7B-Instruct`、ModelScope ID、或本地路径/目录名）。
 
-**第一步：询问 README 路径**
+#### Agent 自动搜索 README
 
-要发布的 README.md 文件在哪里？支持：
+获取模型名称后，agent 按以下优先级在 `/workspace` 下自动搜索模型对应的 README.md：
 
-- **本地文件**：`/path/to/README.md` 或 `./my-model/README.md`
-- **目录**：`/path/to/model/`（自动找目录下的 `README.md`）
-- **新建**：如果用户还没有 README，从模型配置自动生成一个
+1. 如果模型名包含 `/`（如 `org/model-name`），首先搜索 `/workspace/model-name/README.md`
+1. 用 `find /workspace -maxdepth 4 -name "README.md"` 列出所有 README，结合 `grep -i` 过滤与模型名称匹配的路径
+1. 如果以上未找到，搜索模型目录下的 `config.json`（`find /workspace -maxdepth 4 -name "config.json"`），读取 `_name_or_path` 字段匹配模型名称来定位
 
-**第二步：询问模型路径**
+如果自动搜索找到唯一匹配，直接使用；如果有多个候选，展示给用户选择；如果没有找到，再询问用户 README 路径作为兜底。
 
-模型文件在哪里？支持：
+#### 确定模型路径
 
-- **HuggingFace model ID**：`Qwen/Qwen2-VL-7B-Instruct`（可从 API 直接拉取真实标签和元数据）
-- **ModelScope model ID**：`damo/nlp_structbert_backbone_base_std`（同样可从 API 拉取元数据）
-- **本地路径**：`/path/to/model/` 或 `~/.cache/huggingface/hub/models--xxx/`
+模型路径按以下优先级确定：
 
-这两个路径可以相同（README 在模型目录下），也可以完全不同（README 在其他地方编辑，模型在 HF cache 中）。
+- 如果搜索 README 时已经找到包含 `config.json` 的模型目录，直接使用该路径读取配置
+- 如果用户提供的是 HuggingFace model ID，优先从 API 获取元数据（走 2a），同时如果本地缓存目录 `~/.cache/huggingface/hub/models--{org}--{name}/` 存在，读取本地 config 补充信息
+- 如果自动搜索未找到，询问用户模型路径
+
+**关键变更**：用户不再需要手动提供 README 路径，agent 自动从 `/workspace` 搜索。
 
 ### 1.5. 解析模糊的 HuggingFace 模型 ID
 
@@ -230,7 +234,7 @@ snapshot_download('MODEL_ID', allow_patterns=['config.json', '*.md', 'tokenizer_
 
 ### 5. 智能合并 README frontmatter
 
-读取用户指定的 `README.md` 文件（注意：不是模型路径下的 README，而是步骤1中用户指定的 README 路径）：
+读取步骤1中自动搜索到的 `README.md` 文件（注意：不是模型路径下的 README，而是步骤1中搜索到的 README 路径）：
 
 **如果 README 不存在**：创建一个只有 YAML frontmatter 的新文件。
 
