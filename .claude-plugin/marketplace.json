@@ -95,6 +95,14 @@
       "version": "v0.0.6",
       "keywords": ["msmodeling", "ascend", "npu", "performance", "simulation", "tensor-cast", "serving-cast"],
       "category": "ml"
+    },
+    {
+      "name": "npu-verification",
+      "source": "./plugins/npu-verification",
+      "description": "Verify NPU competition entries — clone work and original model repos, check model class name overlap, validate script syntax, and test runnability.",
+      "version": "v0.0.1",
+      "keywords": ["npu", "verification", "competition", "ascend", "model-check"],
+      "category": "ml"
     }
   ]
 }
