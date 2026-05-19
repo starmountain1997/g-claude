@@ -1,0 +1,6 @@
+{
+  "dependencies": ["mindstudio-agent"],
+  "graphs": {
+    "msagent": "msagent.web.graph:graph"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "typeCheckingMode": "basic",
+  "reportAny": false,
+  "reportUnusedCallResult": false,
+  "reportMissingParameterType": false,
+  "reportUnknownParameterType": false,
+  "reportUnknownArgumentType": false,
+  "reportUnknownMemberType": false,
+  "reportUnknownVariableType": false,
+  "reportUnknownLambdaType": false,
+  "reportMissingTypeStubs": false,
+  "reportOptionalMemberAccess": "warning",
+  "reportAttributeAccessIssue": "warning",
+  "reportArgumentType": false,
+  "reportPrivateImportUsage": false,
+  "reportCallIssue": false
+}
