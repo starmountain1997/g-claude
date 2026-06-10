@@ -103,6 +103,14 @@
       "version": "v0.0.1",
       "keywords": ["npu", "verification", "competition", "ascend", "model-check"],
       "category": "ml"
+    },
+    {
+      "name": "novel-writter",
+      "source": "./plugins/novel-writter",
+      "description": "小说创作流水线——从故事梗概到完稿。三阶段子技能：outline（创作大纲→分章大纲）、detailed-outline（场景细纲→起伏线与情感线规划）、writing（正文写作→逐场叙事与文本质检）。",
+      "version": "v0.1.0",
+      "keywords": ["小说", "写作", "故事", "大纲", "novel", "writing", "story", "creative-writing"],
+      "category": "creative"
     }
   ]
 }
