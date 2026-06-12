@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install or update Claude skills and remove any extras not in the list."""
+"""Install or update Claude skills via native `claude plugin` commands."""
 
 import argparse
 import logging
@@ -12,50 +12,46 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-# Plugins installed via opkg (OpenPackage).
-COMMON_PLUGINS = {
-    "starmountain1997/g-claude": [
-        "commit-as-prompt",
-        "python-with-uv",
-        "pythonic-code",
-        "setup-neovim-plugin",
-        "novel-writter",
-    ],
-    "forrestchang/andrej-karpathy-skills": ["andrej-karpathy-skills@karpathy-skills"],
-    "asinkLuno/humanizer": ["humanizer"],
-    "asinkLuno/Humanizer-zh": ["Humanizer-zh"],
+# All plugins installed via native `claude plugin` commands.
+# Format: { "github_repo": ("registered_name", ["plugin1", ...]) }
+# - github_repo: "owner/repo" for `claude plugin marketplace add`
+# - registered_name: canonical marketplace name for `claude plugin install`
+COMMON_MARKETPLACES = {
+    "starmountain1997/g-claude": (
+        "g-claude",
+        [
+            "commit-as-prompt",
+            "python-with-uv",
+            "pythonic-code",
+            "setup-neovim-plugin",
+            "novel-writter",
+        ],
+    ),
+    "forrestchang/andrej-karpathy-skills": (
+        "karpathy-skills",
+        ["andrej-karpathy-skills"],
+    ),
+    "asinkLuno/humanizer": ("humanizer", ["humanizer"]),
+    "anthropics/skills": (
+        "anthropic-agent-skills",
+        ["document-skills", "example-skills"],
+    ),
 }
 
-# Marketplaces installed via native `claude plugin` commands.
-# Format: { "owner/repo": ["plugin@marketplace", ...] }
-NATIVE_MARKETPLACES = {
-    "anthropics/skills": [
-        "document-skills@anthropic-agent-skills",
-        "example-skills@anthropic-agent-skills",
-    ],
+ASCEND_MARKETPLACES = {
+    "starmountain1997/g-claude": (
+        "g-claude",
+        [
+            "ascend",
+            "aisbench",
+            "model-download",
+            "msmodeling",
+            "msmodelslim",
+            "vllm-ascend",
+            "gitcode-publish",
+        ],
+    ),
 }
-ASCEND_PLUGINS = {
-    "starmountain1997/g-claude": [
-        "ascend",
-        "aisbench",
-        "model-download",
-        "msmodeling",
-        "msmodelslim",
-        "vllm-ascend",
-        "gitcode-publish",
-    ],
-}
-
-
-def opkg(*args):
-    """Run opkg install command, log it, and return the output."""
-    cmd = ["opkg", "install", *args]
-    logging.info("Running: " + " ".join(cmd))
-    result = subprocess.run(cmd, capture_output=True, text=True)
-    if result.returncode != 0:
-        logging.error(f"opkg command failed: {result.stderr.strip()}")
-        raise RuntimeError(f"opkg command failed: {result.stderr}")
-    return result.stdout.strip()
 
 
 def claude_plugin(*args):
@@ -69,35 +65,25 @@ def claude_plugin(*args):
     return result.stdout.strip()
 
 
-def setup_claude_plugins(platforms: str, if_ascend: bool = False):
-    """Install/update plugins via opkg."""
-    plugins = ASCEND_PLUGINS if if_ascend else COMMON_PLUGINS
+def setup_claude_plugins(if_ascend: bool = False):
+    """Install plugins via native `claude plugin` commands."""
+    marketplaces = ASCEND_MARKETPLACES if if_ascend else COMMON_MARKETPLACES
 
-    for repo, items in plugins.items():
-        for item in items:
-            args = [f"gh@{repo}", "--plugins", item, "--platforms", platforms]
-            opkg(*args)
-
-
-def setup_native_marketplaces():
-    """Install plugins via native `claude plugin` commands (no opkg)."""
-    for marketplace, plugins in NATIVE_MARKETPLACES.items():
+    for github_repo, (reg_name, plugins) in marketplaces.items():
         # Add the marketplace first (idempotent — safe to re-add).
-        claude_plugin("marketplace", "add", marketplace)
-        for plugin_ref in plugins:
-            claude_plugin("install", plugin_ref)
+        claude_plugin("marketplace", "add", github_repo)
+        for plugin_name in plugins:
+            claude_plugin("install", f"{plugin_name}@{reg_name}")
 
 
 def main():
     parser = argparse.ArgumentParser(description="Manage Claude skills.")
-    parser.add_argument("--platforms", default="opencode")
     parser.add_argument(
         "--ascend", action="store_true", help="Use Ascend-specific plugin list"
     )
     args = parser.parse_args()
 
-    setup_claude_plugins(args.platforms, args.ascend)
-    setup_native_marketplaces()
+    setup_claude_plugins(args.ascend)
 
 
 if __name__ == "__main__":
