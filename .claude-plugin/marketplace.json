@@ -49,43 +49,11 @@
       "category": "ml"
     },
     {
-      "name": "gitcode-publish",
-      "source": "./plugins/gitcode-publish",
-      "description": "Publish model README to GitCode with auto-inferred YAML frontmatter tags from HuggingFace/ModelScope API and local transformers config.",
-      "version": "v0.0.7",
-      "keywords": ["gitcode", "model", "publish", "frontmatter", "transformers"],
-      "category": "ml"
-    },
-    {
-      "name": "pythonic-code",
-      "source": "./plugins/pythonic-code",
-      "description": "Review Python code for idiomatic style and suggest improvements. Flags unpythonic patterns and applies refactors.",
-      "version": "v0.0.5",
-      "keywords": ["python", "refactor", "style", "idiomatic"],
-      "category": "workflow"
-    },
-    {
       "name": "commit-as-prompt",
       "source": "./plugins/commit-as-prompt",
       "description": "Structured Git commits with WHAT/WHY/HOW format, optimized as AI context for future sessions.",
       "version": "v0.0.1",
       "keywords": ["git", "commit", "workflow"],
-      "category": "workflow"
-    },
-    {
-      "name": "python-with-uv",
-      "source": "./plugins/python-with-uv",
-      "description": "Set up a Python project with uv — pyproject.toml, Aliyun mirror, ruff linting, pre-commit hooks.",
-      "version": "v0.0.1",
-      "keywords": ["python", "uv", "project", "pre-commit", "ruff"],
-      "category": "workflow"
-    },
-    {
-      "name": "setup-neovim-plugin",
-      "source": "./plugins/setup-neovim-plugin",
-      "description": "Configure a Neovim plugin from GitHub — fetches docs via context7, writes minimal init.lua/init.vim config, updates README.md in Chinese.",
-      "version": "v0.0.1",
-      "keywords": ["neovim", "vim", "plugin", "lua", "init.lua"],
       "category": "workflow"
     },
     {
@@ -103,14 +71,6 @@
       "version": "v0.0.1",
       "keywords": ["npu", "verification", "competition", "ascend", "model-check"],
       "category": "ml"
-    },
-    {
-      "name": "novel-writter",
-      "source": "./plugins/novel-writter",
-      "description": "小说创作流水线——从故事梗概到完稿。三阶段子技能：outline（创作大纲→分章大纲）、detailed-outline（场景细纲→起伏线与情感线规划）、writing（正文写作→逐场叙事与文本质检）。",
-      "version": "v0.1.0",
-      "keywords": ["小说", "写作", "故事", "大纲", "novel", "writing", "story", "creative-writing"],
-      "category": "creative"
     }
   ]
 }

@@ -21,10 +21,6 @@ COMMON_MARKETPLACES = {
         "g-claude",
         [
             "commit-as-prompt",
-            "python-with-uv",
-            "pythonic-code",
-            "setup-neovim-plugin",
-            "novel-writter",
         ],
     ),
     "forrestchang/andrej-karpathy-skills": (
@@ -36,6 +32,7 @@ COMMON_MARKETPLACES = {
         "anthropic-agent-skills",
         ["document-skills", "example-skills"],
     ),
+    "DietrichGebert/ponytail": ("ponytail", ["ponytail"]),
 }
 
 ASCEND_MARKETPLACES = {
