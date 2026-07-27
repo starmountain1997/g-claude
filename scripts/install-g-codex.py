@@ -82,6 +82,7 @@ def setup_codex_plugins(if_ascend: bool = False):
         if git_ref := MARKETPLACE_REFS.get(github_repo):
             marketplace_args.extend(["--ref", git_ref])
         codex_plugin(*marketplace_args)
+        codex_plugin("marketplace", "upgrade", reg_name)
         for plugin_name in plugins:
             codex_plugin("add", f"{plugin_name}@{reg_name}")
 

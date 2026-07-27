@@ -75,6 +75,7 @@ def setup_claude_plugins(if_ascend: bool = False):
     for github_repo, (reg_name, plugins) in marketplaces.items():
         # Add the marketplace first (idempotent — safe to re-add).
         claude_plugin("marketplace", "add", github_repo)
+        claude_plugin("marketplace", "update", reg_name)
         for plugin_name in plugins:
             claude_plugin("install", f"{plugin_name}@{reg_name}")
 
