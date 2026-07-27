@@ -77,6 +77,23 @@ def setup_claude_plugins(if_ascend: bool = False):
         for plugin_name in plugins:
             claude_plugin("install", f"{plugin_name}@{reg_name}")
 
+    if not if_ascend:
+        subprocess.run(
+            [
+                "npx",
+                "-y",
+                "skills",
+                "add",
+                "vercel-labs/agent-skills",
+                "--skill",
+                "*",
+                "--agent",
+                "claude-code",
+                "--global",
+                "--yes",
+            ]
+        )
+
 
 def main():
     parser = argparse.ArgumentParser(description="Manage Claude skills.")

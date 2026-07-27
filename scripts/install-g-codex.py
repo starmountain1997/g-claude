@@ -84,6 +84,23 @@ def setup_codex_plugins(if_ascend: bool = False):
         for plugin_name in plugins:
             codex_plugin("add", f"{plugin_name}@{reg_name}")
 
+    if not if_ascend:
+        subprocess.run(
+            [
+                "npx",
+                "-y",
+                "skills",
+                "add",
+                "vercel-labs/agent-skills",
+                "--skill",
+                "*",
+                "--agent",
+                "codex",
+                "--global",
+                "--yes",
+            ]
+        )
+
 
 def main():
     parser = argparse.ArgumentParser(description="Manage Codex plugins.")
