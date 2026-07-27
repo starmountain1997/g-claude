@@ -16,6 +16,7 @@ claude plugin install vllm-ascend@g-claude
 claude plugin install msmodelslim@g-claude
 claude plugin install aisbench@g-claude
 claude plugin install commit-as-prompt@g-claude
+claude plugin install rust-idiomatic@g-claude
 ```
 
 Or install everything at once (also installs karpathy-skills and skill-creator):
@@ -60,6 +61,7 @@ opkg install gh@starmountain1997/g-claude --skills commit-as-prompt
 | **msmodelslim** | Model quantization on Ascend NPUs — W4A8/W8A8/W4A4, one-click and custom YAML, MoE mixed precision, VLM support, accuracy recovery. |
 | **aisbench** | AISBench evaluation framework — accuracy benchmarks (GSM8K, MMLU, AIME) and performance benchmarks against vLLM services. |
 | **commit-as-prompt** | Structured Git commits with WHAT/WHY/HOW format, optimized as AI context for future sessions. |
+| **rust-idiomatic** | Concise, idiomatic Rust patterns for implementation, review, testing, and required quality checks. Source: [Rust Users Forum](https://users.rust-lang.org/t/skills-md-for-rust-development/140098/17#p-569555-idiomatic-rust-patterns-1). |
 
 ## Workflow
 

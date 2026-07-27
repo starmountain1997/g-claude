@@ -21,6 +21,7 @@ COMMON_MARKETPLACES = {
         "g-claude",
         [
             "commit-as-prompt",
+            "rust-idiomatic",
         ],
     ),
     "forrestchang/andrej-karpathy-skills": (

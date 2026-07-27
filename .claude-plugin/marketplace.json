@@ -57,6 +57,14 @@
       "category": "workflow"
     },
     {
+      "name": "rust-idiomatic",
+      "source": "./plugins/rust-idiomatic",
+      "description": "Concise, idiomatic Rust patterns for implementation, review, testing, and required quality checks.",
+      "version": "v0.0.1",
+      "keywords": ["rust", "cargo", "clippy", "idiomatic"],
+      "category": "development"
+    },
+    {
       "name": "msmodeling",
       "source": "./plugins/msmodeling",
       "description": "MindStudio-Modeling performance evaluation framework for Ascend NPUs. Provides tensor-cast for model-level analysis and serving-cast-simulation for LLM serving parameter tuning.",

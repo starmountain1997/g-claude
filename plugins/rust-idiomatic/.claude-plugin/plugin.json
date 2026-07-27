@@ -1,0 +1,18 @@
+{
+  "name": "rust-idiomatic",
+  "description": "Concise, idiomatic Rust patterns for implementation, review, testing, and required quality checks.",
+  "version": "v0.0.1",
+  "author": {
+    "name": "starmountain1997"
+  },
+  "keywords": [
+    "rust",
+    "cargo",
+    "clippy",
+    "idiomatic"
+  ],
+  "category": "development",
+  "skills": [
+    "./skills/rust-idiomatic"
+  ]
+}

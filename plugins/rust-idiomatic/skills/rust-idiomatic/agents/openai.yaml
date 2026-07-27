@@ -1,0 +1,4 @@
+interface:
+  display_name: "Idiomatic Rust Patterns"
+  short_description: "Write concise, idiomatic, well-checked Rust code"
+  default_prompt: "Use $rust-idiomatic to implement this Rust change idiomatically and run the required checks."
