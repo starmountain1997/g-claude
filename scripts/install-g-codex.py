@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install or update Claude skills via native `claude plugin` commands."""
+"""Install or update Codex plugins via native `codex plugin` commands."""
 
 import argparse
 import logging
@@ -12,10 +12,10 @@ logging.basicConfig(
     datefmt="%Y-%m-%d %H:%M:%S",
 )
 
-# All plugins installed via native `claude plugin` commands.
+# All plugins installed via native `codex plugin` commands.
 # Format: { "github_repo": ("registered_name", ["plugin1", ...]) }
-# - github_repo: "owner/repo" for `claude plugin marketplace add`
-# - registered_name: canonical marketplace name for `claude plugin install`
+# - github_repo: "owner/repo" for `codex plugin marketplace add`
+# - registered_name: canonical marketplace name for `codex plugin add`
 COMMON_MARKETPLACES = {
     "starmountain1997/g-claude": (
         "g-claude",
@@ -32,7 +32,7 @@ COMMON_MARKETPLACES = {
         "obsidian-visual-skills",
         ["obsidian-visual-skills"],
     ),
-    "asinkLuno/WEFT@release": ("weft", ["weft-yaml"]),
+    "asinkLuno/WEFT": ("weft", ["weft-yaml"]),
     "anthropics/skills": (
         "anthropic-agent-skills",
         ["document-skills", "example-skills"],
@@ -55,37 +55,44 @@ ASCEND_MARKETPLACES = {
     ),
 }
 
+MARKETPLACE_REFS = {
+    "asinkLuno/WEFT": "release",
+}
 
-def claude_plugin(*args):
-    """Run native `claude plugin` command, log it, and return the output."""
-    cmd = ["claude", "plugin", *args]
+
+def codex_plugin(*args):
+    """Run a native `codex plugin` command, log it, and return the output."""
+    cmd = ["codex", "plugin", *args]
     logging.info("Running: " + " ".join(cmd))
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        logging.warning(f"claude plugin command failed: {result.stderr.strip()}")
+        logging.warning(f"codex plugin command failed: {result.stderr.strip()}")
         return None
     return result.stdout.strip()
 
 
-def setup_claude_plugins(if_ascend: bool = False):
-    """Install plugins via native `claude plugin` commands."""
+def setup_codex_plugins(if_ascend: bool = False):
+    """Install plugins via native `codex plugin` commands."""
     marketplaces = ASCEND_MARKETPLACES if if_ascend else COMMON_MARKETPLACES
 
     for github_repo, (reg_name, plugins) in marketplaces.items():
         # Add the marketplace first (idempotent — safe to re-add).
-        claude_plugin("marketplace", "add", github_repo)
+        marketplace_args = ["marketplace", "add", github_repo]
+        if git_ref := MARKETPLACE_REFS.get(github_repo):
+            marketplace_args.extend(["--ref", git_ref])
+        codex_plugin(*marketplace_args)
         for plugin_name in plugins:
-            claude_plugin("install", f"{plugin_name}@{reg_name}")
+            codex_plugin("add", f"{plugin_name}@{reg_name}")
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Manage Claude skills.")
+    parser = argparse.ArgumentParser(description="Manage Codex plugins.")
     parser.add_argument(
         "--ascend", action="store_true", help="Use Ascend-specific plugin list"
     )
     args = parser.parse_args()
 
-    setup_claude_plugins(args.ascend)
+    setup_codex_plugins(args.ascend)
 
 
 if __name__ == "__main__":

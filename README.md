@@ -21,10 +21,16 @@ claude plugin install commit-as-prompt@g-claude
 Or install everything at once (also installs karpathy-skills and skill-creator):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/scripts/install-g-claude.py | python3 - --update
+curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/scripts/install-g-claude.py | python3 -
 ```
 
-Pass any script arguments after `python3 -`, e.g. `--update`, `--help`, etc.
+Pass any script arguments after `python3 -`, e.g. `--ascend` or `--help`.
+
+For Codex, use the corresponding installer:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/scripts/install-g-codex.py | python3 -
+```
 
 ## Install via OpenPackage
 
