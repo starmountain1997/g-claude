@@ -97,14 +97,39 @@ def setup_claude_plugins(if_ascend: bool = False):
         )
 
 
+def setup_opencode_skills():
+    """Install this repository's skills for OpenCode."""
+    subprocess.run(
+        [
+            "npx",
+            "-y",
+            "skills",
+            "add",
+            "starmountain1997/g-claude",
+            "--skill",
+            "*",
+            "--agent",
+            "opencode",
+            "--global",
+            "--yes",
+        ]
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(description="Manage Claude skills.")
     parser.add_argument(
         "--ascend", action="store_true", help="Use Ascend-specific plugin list"
     )
+    parser.add_argument(
+        "--opencode", action="store_true", help="Install g-claude skills for OpenCode"
+    )
     args = parser.parse_args()
 
-    setup_claude_plugins(args.ascend)
+    if args.opencode:
+        setup_opencode_skills()
+    else:
+        setup_claude_plugins(args.ascend)
 
 
 if __name__ == "__main__":

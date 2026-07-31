@@ -33,6 +33,12 @@ For Codex, use the corresponding installer:
 curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/scripts/install-g-codex.py | python3 -
 ```
 
+For OpenCode, install all skills globally:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/starmountain1997/g-claude/main/scripts/install-g-claude.py | python3 - --opencode
+```
+
 ## Install via OpenPackage
 
 [OpenPackage](https://github.com/enulus/OpenPackage) is a universal package manager for coding agent configs. Install all skills at once:
