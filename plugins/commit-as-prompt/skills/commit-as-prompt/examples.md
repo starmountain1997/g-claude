@@ -36,6 +36,22 @@ WHY:  text-only calibration datasets silently under-calibrate vision encoders, c
 HOW:  added Section 3.5.1 with dataset format, size guidelines, and YAML snippets for protecting ViT layers; included a VLM adapter checklist in Section 8.4."
 ```
 
+## Example 5: Open a PR with GitHub CLI (after committing)
+
+```bash
+git push -u origin HEAD
+gh pr create --title "fix(auth): replace BasicAuth with OAuth2 code flow" \
+  --body "WHAT: migrate auth middleware from BasicAuth to OAuth2 authorization code flow.
+WHY:  BasicAuth over TLS was flagged in security audit #2345 as non-compliant with the new identity policy.
+HOW:  added PKCE challenge, kept legacy token endpoint active behind a feature flag for gradual rollout; verified with existing auth test suite."
+```
+
+Pull the issue context first when the change references one:
+
+```bash
+gh issue view 2345 --json title,body,state
+```
+
 ______________________________________________________________________
 
 ## How `prompt:` commits aggregate into AI context

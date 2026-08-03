@@ -32,8 +32,16 @@
 1. **单一主题**：一次提交只做一件事；大型变更拆分多步
 1. **WHY 不能缺席**：不要只写「修复了 XX」，要写「因为 XX 导致 YY，所以…」
 1. **具体而不啰嗦**：HOW 说策略，不列文件清单
-1. **引用编号**：如有关联的 Issue / PR，在 HOW 或正文末尾注明
+1. **引用编号**：如有关联的 Issue / PR，先用 `gh issue view <n>` / `gh pr view <n>` 获取标题与描述作为 WHY 素材，再在 HOW 或正文末尾注明编号
 1. **语言统一**：标题与正文保持同一语言
+
+## GitHub CLI 优先
+
+- 获取 issue / PR 上下文：`gh issue view <n> --json title,body,state`、`gh pr view <n> --json title,body,state`
+- 创建 PR：`gh pr create --title <subject> --body <WHAT/WHY/HOW>`，与提交信息保持同构
+- 跟踪 CI：`gh pr checks --watch --fail-fast`（首个失败检查即退出）
+- 无 `gh` 等价命令的操作（status / diff / add / commit）用原生 git
+- 非 GitHub 远程时跳过 gh 步骤，退回纯 git
 
 ## 不该出现在提交里的内容
 

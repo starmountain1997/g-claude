@@ -36,6 +36,10 @@ HOW:  <technical approach; note compatibility concerns or verification steps>
 
 See [examples.md](examples.md) for full worked examples.
 
+## GitHub CLI First
+
+Prefer the GitHub CLI (`gh`) whenever the operation maps to one — pulling issue/PR context, opening a PR, watching CI. Use native `git` only where `gh` has no equivalent (`status`, `diff`, `add`, `commit`). If the remote is not GitHub, skip the `gh` steps and fall back to plain `git`.
+
 ## Steps
 
 **1. Review the diff**
@@ -49,6 +53,13 @@ git diff HEAD -- "filename"
 ```
 
 Omitting `HEAD` misses staged-only changes; omitting `--` causes errors on non-ASCII filenames.
+
+If `$ARGUMENTS` references an issue or PR number, pull its context for the WHY line:
+
+```bash
+gh issue view <n> --json title,body,state
+gh pr view <n> --json title,body,state
+```
 
 **2. Stage**
 
@@ -72,6 +83,22 @@ Fill in WHAT/WHY/HOW. The WHY is the most important line — don't repeat the su
 git commit -m "<subject>" -m "WHAT: ...
 WHY:  ...
 HOW:  ..."
+```
+
+**5. Push and open a PR**
+
+```bash
+git push -u origin HEAD
+gh pr create --title "<subject>" --body "WHAT: ...
+WHY:  ...
+HOW:  ..."
+```
+
+Then watch CI and verify the result:
+
+```bash
+gh pr checks --watch --fail-fast
+gh pr view --web
 ```
 
 **Input summary:** $ARGUMENTS
