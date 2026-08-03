@@ -68,6 +68,20 @@ def claude_plugin(*args):
     return result.stdout.strip()
 
 
+def install_skills(agent: str):
+    """Install third-party skill packages via the `skills` CLI for one agent."""
+    for repo, skill in (
+        ("vercel-labs/agent-skills", "*"),
+        ("thedivergentai/gd-agentic-skills/skills/godot-master", None),
+        ("0x0funky/agent-sprite-forge", "*"),
+        ("asinkLuno/bullet-journal/skills/manage-bullet-journal", None),
+    ):
+        cmd = ["npx", "-y", "skills", "add", repo, "--agent", agent, "--global", "--yes"]
+        if skill:
+            cmd.extend(["--skill", skill])
+        subprocess.run(cmd)
+
+
 def setup_claude_plugins(if_ascend: bool = False):
     """Install plugins via native `claude plugin` commands."""
     marketplaces = ASCEND_MARKETPLACES if if_ascend else COMMON_MARKETPLACES
@@ -80,21 +94,7 @@ def setup_claude_plugins(if_ascend: bool = False):
             claude_plugin("install", f"{plugin_name}@{reg_name}")
 
     if not if_ascend:
-        subprocess.run(
-            [
-                "npx",
-                "-y",
-                "skills",
-                "add",
-                "vercel-labs/agent-skills",
-                "--skill",
-                "*",
-                "--agent",
-                "claude-code",
-                "--global",
-                "--yes",
-            ]
-        )
+        install_skills("claude-code")
 
 
 def setup_opencode_skills():
@@ -116,6 +116,16 @@ def setup_opencode_skills():
     )
 
 
+def setup_reasonix_skills():
+    """Install third-party skills for Reasonix."""
+    install_skills("reasonix")
+
+
+def setup_pi_skills():
+    """Install third-party skills for Pi."""
+    install_skills("pi")
+
+
 def main():
     parser = argparse.ArgumentParser(description="Manage Claude skills.")
     parser.add_argument(
@@ -124,10 +134,18 @@ def main():
     parser.add_argument(
         "--opencode", action="store_true", help="Install g-claude skills for OpenCode"
     )
+    parser.add_argument(
+        "--reasonix", action="store_true", help="Install skills for Reasonix"
+    )
+    parser.add_argument("--pi", action="store_true", help="Install skills for Pi")
     args = parser.parse_args()
 
     if args.opencode:
         setup_opencode_skills()
+    elif args.reasonix:
+        setup_reasonix_skills()
+    elif args.pi:
+        setup_pi_skills()
     else:
         setup_claude_plugins(args.ascend)
 

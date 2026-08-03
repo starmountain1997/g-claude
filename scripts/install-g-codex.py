@@ -72,6 +72,20 @@ def codex_plugin(*args):
     return result.stdout.strip()
 
 
+def install_skills(agent: str):
+    """Install third-party skill packages via the `skills` CLI for one agent."""
+    for repo, skill in (
+        ("vercel-labs/agent-skills", "*"),
+        ("thedivergentai/gd-agentic-skills/skills/godot-master", None),
+        ("0x0funky/agent-sprite-forge", "*"),
+        ("asinkLuno/bullet-journal/skills/manage-bullet-journal", None),
+    ):
+        cmd = ["npx", "-y", "skills", "add", repo, "--agent", agent, "--global", "--yes"]
+        if skill:
+            cmd.extend(["--skill", skill])
+        subprocess.run(cmd)
+
+
 def setup_codex_plugins(if_ascend: bool = False):
     """Install plugins via native `codex plugin` commands."""
     marketplaces = ASCEND_MARKETPLACES if if_ascend else COMMON_MARKETPLACES
@@ -87,21 +101,7 @@ def setup_codex_plugins(if_ascend: bool = False):
             codex_plugin("add", f"{plugin_name}@{reg_name}")
 
     if not if_ascend:
-        subprocess.run(
-            [
-                "npx",
-                "-y",
-                "skills",
-                "add",
-                "vercel-labs/agent-skills",
-                "--skill",
-                "*",
-                "--agent",
-                "codex",
-                "--global",
-                "--yes",
-            ]
-        )
+        install_skills("codex")
 
 
 def main():
