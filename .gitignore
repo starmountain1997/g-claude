@@ -1,3 +1,4 @@
 skills/benchmark/
 .claude/
 .opencode/
+__pycache__/
